@@ -572,25 +572,26 @@
     }
 
     // ==========================================
-    // OPCIJA 3: IZVEŠTAJ O BRANJU
+    // OPCIJA 3: IZVEŠTAJ O BRANJU (POVEZANO SA OPCIJOM 1 I 2)
     // ==========================================
     function loadWindow3() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja o branju...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
 
-      // Pozivamo server za podatke o grupama, beračima i merenjima
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "getHarvestReportData" })
-      })
-      .then(res => res.json())
-      .then(res => {
-        // Ako backend još nema vraćen format, pravimo bezbedan fallback ili prikazujemo podatke
-        renderHarvestReportMainView(res.groups || [], res.pickers || [], res.measurements || []);
+      Promise.all([
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
+      ])
+      .then(([resWorkers, resPickers, resMeas]) => {
+        let groups = resWorkers.success ? resWorkers.groups : [];
+        let pickers = resPickers.success ? resPickers.pickers : [];
+        let measurements = resMeas.success ? resMeas.measurements : [];
+
+        renderHarvestReportMainView(groups, pickers, measurements);
       })
       .catch(err => {
-        // Fallback prikaz ako server funkcija tek treba da se implementira u Code.gs
-        renderHarvestReportMainView([], [], []);
+        alert("Greška pri učitavanju izveštaja: " + err.message);
       });
     }
 
@@ -602,47 +603,38 @@
       <p style="color:#555; font-size:14px; margin-bottom:15px;">Kliknite na karticu grupe da vidite detaljan učinak berača i gajbica:</p>
       <div class="report-card-grid" id="reportGroupsContainer">`;
 
-      // Primer simuliranih/stvarnih podataka ako ih nema sa servera
       if (groups.length === 0) {
-        // Demo podaci za testiranje dok se Code.gs ne dopuni sa akcijom
-        groups = [
-          { groupNum: "1", leaderName: "Marko Marković" },
-          { groupNum: "2", leaderName: "Jovan Jovanović" }
-        ];
-        pickers = [
-          { pickerNum: "01", groupNum: "1" },
-          { pickerNum: "02", groupNum: "1" },
-          { pickerNum: "03", groupNum: "2" }
-        ];
-        measurements = [
-          { pickerNum: "01", time: "12:05", crateNum: "01", weight: 3.4 },
-          { pickerNum: "01", time: "13:10", crateNum: "02", weight: 3.2 },
-          { pickerNum: "02", time: "12:30", crateNum: "01", weight: 3.5 }
-        ];
+        html += `<p style="text-align:center; color:#7f8c8d; grid-column: 1/-1;">Nema unetih grupovođa i grupa u sistemu (Opcija 2).</p>`;
+      } else {
+        groups.forEach(g => {
+          let groupNum = g.extra;
+          let leaderName = g.name;
+          
+          let groupPickers = pickers.filter(p => String(p.groupNum) === String(groupNum));
+          let pickerNums = groupPickers.map(p => p.pickerNum);
+          
+          let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
+          let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+
+          let pickersDataObj = JSON.stringify(groupPickers).replace(/"/g, '&quot;');
+          let measurementsDataObj = JSON.stringify(groupMeasurements).replace(/"/g, '&quot;');
+
+          html += `<div class="report-group-card" onclick='loadGroupPickersDetail("${groupNum}", "${leaderName}", ${pickersDataObj}, ${measurementsDataObj})'>
+            <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Grupa ${groupNum}</div>
+            <div style="font-size:14px; color:#555; margin-bottom:10px;">Vođa: <b>${leaderName}</b></div>
+            <div style="display:flex; justify-content:space-between; font-size:14px; border-top:1px solid #eee; padding-top:8px;">
+              <span>👥 Berača: <b>${groupPickers.length}</b></span>
+              <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+            </div>
+          </div>`;
+        });
       }
-
-      groups.forEach(g => {
-        let groupPickers = pickers.filter(p => p.groupNum === g.groupNum);
-        let pickerNums = groupPickers.map(p => p.pickerNum);
-        let groupMeasurements = measurements.filter(m => pickerNums.includes(m.pickerNum));
-        let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
-
-        html += `<div class="report-group-card" onclick="loadGroupPickersDetail('${g.groupNum}', '${g.leaderName}')">
-          <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Grupa ${g.groupNum}</div>
-          <div style="font-size:14px; color:#555; margin-bottom:10px;">Vođa: <b>${g.leaderName}</b></div>
-          <div style="display:flex; justify-content:space-between; font-size:14px; border-top:1px solid #eee; padding-top:8px;">
-            <span>👥 Berača: <b>${groupPickers.length}</b></span>
-            <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
-          </div>
-        </div>`;
-      });
 
       html += `</div>`;
       document.getElementById('modalBodyContent').innerHTML = html;
     }
 
-    function loadGroupPickersDetail(groupNum, leaderName) {
-      // Ovde prikazujemo detalje za izabranu grupu po beračima i gajbicama
+    function loadGroupPickersDetail(groupNum, leaderName, groupPickers, groupMeasurements) {
       let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <h3 style="margin:0;">👥 Grupa ${groupNum} — Vođa: ${leaderName}</h3>
         <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="loadWindow3()">← Nazad na grupe</button>
@@ -650,37 +642,44 @@
       <p style="color:#555; font-size:14px; margin-bottom:15px;">Učinak berača i pojedinačne gajbice:</p>
       <div>`;
 
-      // Demo/stvarni podaci za berače u ovoj grupi
-      let samplePickers = ["01", "02"];
-      samplePickers.forEach(pNum => {
-        let sampleCrates = [
-          { time: "11:30", crateNum: "01", weight: 3.4 },
-          { time: "12:45", crateNum: "02", weight: 3.1 }
-        ];
-        let totalPickerKg = sampleCrates.reduce((s, c) => s + c.weight, 0);
+      if (groupPickers.length === 0) {
+        html += `<p style="text-align:center; color:#7f8c8d;">Nema dodeljenih berača u ovoj grupi (Opcija 1).</p>`;
+      } else {
+        groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
 
-        html += `<div class="picker-detail-row">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div>
-              <span style="font-size:18px; color:#c0392b; font-weight:bold;">Berač br. ${pNum}</span>
-            </div>
-            <div style="text-align:right;">
-              <span style="font-size:13px; color:#666;">Ukupno gajbica: <b>${sampleCrates.length}</b></span> | 
-              <span style="font-size:15px; color:#27ae60; font-weight:bold;">${totalPickerKg.toFixed(2)} kg</span>
-            </div>
-          </div>
-          <div style="display:flex; flex-wrap:wrap; gap:8px;">`;
+        groupPickers.forEach(picker => {
+          let pNum = picker.pickerNum;
+          let pickerCrates = groupMeasurements.filter(m => String(m.pickerNum) === String(pNum));
+          let totalPickerKg = pickerCrates.reduce((sum, c) => sum + (parseFloat(c.weight) || 0), 0);
 
-        sampleCrates.forEach(c => {
-          html += `<div class="crate-pill">
-            <span>⏰ ${c.time}</span>
-            <span style="background:white; padding:2px 6px; border-radius:4px; color:#333;">Gajbica ${c.crateNum}</span>
-            <span style="color:#27ae60;">${c.weight}kg</span>
-          </div>`;
+          html += `<div class="picker-detail-row">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div>
+                <span style="font-size:18px; color:#c0392b; font-weight:bold;">Berač br. ${pNum}</span>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-size:13px; color:#666;">Ukupno gajbica: <b>${pickerCrates.length}</b></span> | 
+                <span style="font-size:15px; color:#27ae60; font-weight:bold;">${totalPickerKg.toFixed(2)} kg</span>
+              </div>
+            </div>`;
+
+          if (pickerCrates.length === 0) {
+            html += `<div style="font-size:13px; color:#95a5a6; font-style:italic;">Nema unetih merenja za ovog berača danas.</div>`;
+          } else {
+            html += `<div style="display:flex; flex-wrap:wrap; gap:8px;">`;
+            pickerCrates.forEach(c => {
+              html += `<div class="crate-pill">
+                <span>⏰ ${c.time || '-'}</span>
+                <span style="background:white; padding:2px 6px; border-radius:4px; color:#333;">Gajbica ${c.crateNum || '-'}</span>
+                <span style="color:#27ae60;">${(parseFloat(c.weight) || 0).toFixed(2)}kg</span>
+              </div>`;
+            });
+            html += `</div>`;
+          }
+
+          html += `</div>`;
         });
-
-        html += `</div></div>`;
-      });
+      }
 
       html += `</div>`;
       document.getElementById('modalBodyContent').innerHTML = html;
