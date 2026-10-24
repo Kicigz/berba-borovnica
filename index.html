@@ -136,7 +136,6 @@
     .picker-chip:hover { background: #fadbd8; color: #c0392b; border-color: #f5b7b1; }
     .picker-chip:hover::after { content: " ✕"; font-size: 12px; }
 
-    /* STILOVI ZA MAPU I IZVEŠTAJ O BRANjU */
     .map-container { display: flex; flex-direction: column; gap: 12px; }
     .field-box-card { background: white; padding: 12px; border-radius: 8px; border: 1px solid #dcdde1; position: relative; }
     .rows-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
@@ -156,7 +155,6 @@
       display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
     }
 
-    /* KARTICE ZA IZVEŠTAJ (OPCIJA 3) */
     .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
     .report-group-card { background: white; border-radius: 10px; padding: 16px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; border-left: 6px solid #2980b9; }
     .report-group-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
@@ -562,6 +560,7 @@
       if (num === '2') { loadWindow2(); return; }
       if (num === '3') { loadWindow3(); return; }
       if (num === '4') { loadWindow4SubMenu(); return; }
+      if (num === '5') { loadWindow5(); return; }
 
       let backAction = (loggedUser.role === 'grupovoda') ? `closeModal()` : `openMenuModal()`;
       let backText = (loggedUser.role === 'grupovoda') ? `← Zatvori / Nazad` : `← Nazad na Meni`;
@@ -572,7 +571,129 @@
     }
 
     // ==========================================
-    // OPCIJA 3: IZVEŠTAJ O BRANJU (POVEZANO SA OPCIJOM 1 I 2)
+    // OPCIJA 5: IZMENE MERENJA NA VAGI (SORTIRANO PO VAGAMA I VREMENIMA, ZAHTEVA ADMIN PIN)
+    // ==========================================
+    function loadWindow5() {
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje merenja sa vaga...</p>`;
+      document.getElementById('menuModal').style.display = 'flex';
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "getAllMeasurements" })
+      })
+      .then(res => res.json())
+      .then(res => {
+        let measurements = (res.success && res.measurements) ? res.measurements : [
+          // Demo podaci za testiranje ukoliko baza još nema merenja
+          { id: "m1", scaleNum: "1", scaleName: "Marko", time: "08:15", pickerNum: "01", crateNum: "01", weight: 3.4 },
+          { id: "m2", scaleNum: "1", scaleName: "Marko", time: "09:30", pickerNum: "02", crateNum: "01", weight: 3.2 },
+          { id: "m3", scaleNum: "2", scaleName: "Ana", time: "08:45", pickerNum: "05", crateNum: "01", weight: 3.5 }
+        ];
+
+        renderWindow5View(measurements);
+      })
+      .catch(err => {
+        alert("Greška: " + err.message);
+      });
+    }
+
+    function renderWindow5View(measurements) {
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0;">⚙️ 5. Izmene merenja na vagi (Ispravka grešaka)</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="openMenuModal()">← Nazad na Meni</button>
+      </div>
+      <p style="color:#555; font-size:14px; margin-bottom:15px;">Pregled merenja grupisan po vagama i sortiran po vremenu. Svaka izmena ili brisanje zahteva odobrenje (PIN) administratora.</p>
+      <div>`;
+
+      if (measurements.length === 0) {
+        html += `<p style="text-align:center; color:#7f8c8d;">Nema unetih merenja za današnji dan.</p>`;
+      } else {
+        // Grupisanje merenja po broju vage (scaleNum)
+        let groupedByScale = {};
+        measurements.forEach(m => {
+          let sNum = m.scaleNum || "1";
+          if (!groupedByScale[sNum]) groupedByScale[sNum] = { scaleName: m.scaleName || "Vaga " + sNum, list: [] };
+          groupedByScale[sNum].list.push(m);
+        });
+
+        for (let sNum in groupedByScale) {
+          let scaleData = groupedByScale[sNum];
+          // Sortiranje merenja unutar vage po vremenu (od najranijeg ka kasnijem)
+          scaleData.list.sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+
+          html += `<div class="group-section" style="border-left: 5px solid #e67e22;">
+            <h5>⚖️ Vaga br. ${sNum} — Radnik: <b>${scaleData.scaleName}</b> (${scaleData.list.length} merenja)</h5>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Vreme</th>
+                  <th>Berač</th>
+                  <th>Gajbica</th>
+                  <th>Težina</th>
+                  <th style="text-align:right;">Akcija (Zahteva Admin PIN)</th>
+                </tr>
+              </thead>
+              <tbody>`;
+
+          scaleData.list.forEach(item => {
+            html += `<tr>
+              <td><b>⏰ ${item.time || '-'}</b></td>
+              <td>Berač br. ${item.pickerNum || '-'}</td>
+              <td>Gajbica ${item.crateNum || '-'}</td>
+              <td style="color:#27ae60; font-weight:bold;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</td>
+              <td style="text-align:right;">
+                <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')" style="margin-right:6px;">Izmeni</button>
+                <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši</button>
+              </td>
+            </tr>`;
+          });
+
+          html += `</tbody></table></div>`;
+        }
+      }
+
+      html += `</div>`;
+      document.getElementById('modalBodyContent').innerHTML = html;
+    }
+
+    function promptAdminAction(actionType, measurementId, pickerNum, currentWeight) {
+      let actionTitle = (actionType === 'delete') ? `Brisanje merenja za berača br. ${pickerNum}` : `Izmena težine (${currentWeight} kg) za berača br. ${pickerNum}`;
+      
+      let adminPin = prompt(`${actionTitle}\n\nUnesite ADMINISTRATIVNI PIN za odobrenje izmene:`, "");
+      if (adminPin === null) return; // Korisnik otkazao
+
+      if (!adminPin.trim()) {
+        alert("Morate uneti administratorski PIN!");
+        return;
+      }
+
+      // Provera PIN-a preko servera
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ 
+          action: "verifyAdminAndModifyMeasurement", 
+          adminPin: adminPin.trim(),
+          measurementId: measurementId,
+          actionType: actionType,
+          newWeight: (actionType === 'edit') ? prompt("Unesite novu tačnu težinu u kg:", currentWeight) : null
+        })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          alert("Izmena uspešno odobrena i sačuvana!");
+          loadWindow5(); // Osveži tabelu
+        } else {
+          alert(res.error || "Pogrešan administratorski PIN ili greška pri izmeni!");
+        }
+      })
+      .catch(err => {
+        alert("Serverska greška: " + err.message);
+      });
+    }
+
+    // ==========================================
+    // OPCIJA 3: IZVEŠTAJ O BRANJU
     // ==========================================
     function loadWindow3() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja o branju...</p>`;
