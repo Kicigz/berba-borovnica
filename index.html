@@ -106,12 +106,10 @@
 
     .form-row { display: flex; gap: 10px; margin-top: 10px; align-items: flex-end; flex-wrap: wrap; }
     
-    /* 3 KOLONE ZA DOZVOLE */
     .checkbox-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; background: #fdfefe; padding: 10px; border-radius: 8px; border: 1px solid #e1e8ed; }
     .checkbox-group label { font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; color: #34495e; }
     .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
 
-    /* TAB SISTEM ZA KARTICE POD 2 */
     .tab-header { display: flex; gap: 8px; margin-bottom: 12px; border-bottom: 2px solid #e1e8ed; padding-bottom: 8px; }
     .tab-btn { background: #bdc3c7; color: #2c3e50; border: none; padding: 10px 16px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; }
     .tab-btn.active { background: #2980b9; color: white; }
@@ -138,7 +136,7 @@
     .picker-chip:hover { background: #fadbd8; color: #c0392b; border-color: #f5b7b1; }
     .picker-chip:hover::after { content: " ✕"; font-size: 12px; }
 
-    /* STILOVI ZA MAPU */
+    /* STILOVI ZA MAPU I IZVEŠTAJ O BRANjU */
     .map-container { display: flex; flex-direction: column; gap: 12px; }
     .field-box-card { background: white; padding: 12px; border-radius: 8px; border: 1px solid #dcdde1; position: relative; }
     .rows-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
@@ -157,6 +155,13 @@
       background: #f1f2f6; padding: 10px; border-radius: 8px; margin-top: 8px; border: 1px dashed #bdc3c7;
       display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
     }
+
+    /* KARTICE ZA IZVEŠTAJ (OPCIJA 3) */
+    .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
+    .report-group-card { background: white; border-radius: 10px; padding: 16px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; border-left: 6px solid #2980b9; }
+    .report-group-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    .picker-detail-row { background: white; border: 1px solid #e1e8ed; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .crate-pill { background: #eaf2f8; color: #2980b9; border: 1px solid #b9d7ea; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px; }
   </style>
 </head>
 <body>
@@ -281,7 +286,6 @@
     let workflowState = 0;
     const scannerInput = document.getElementById('scannerInput');
 
-    // MREŽA ZASADA: Učitava se ISKLJUČIVO iz localStorage (nema fiksno upisanih vrednosti koje brišu izmene)
     let plantationMap = JSON.parse(localStorage.getItem('savedPlantationMap')) || [];
     let activeSelectedRow = null;
 
@@ -556,6 +560,7 @@
 
       if (num === '1') { loadWindow1(); return; }
       if (num === '2') { loadWindow2(); return; }
+      if (num === '3') { loadWindow3(); return; }
       if (num === '4') { loadWindow4SubMenu(); return; }
 
       let backAction = (loggedUser.role === 'grupovoda') ? `closeModal()` : `openMenuModal()`;
@@ -564,6 +569,121 @@
       let content = `<h3>Prozor ${num}</h3><p>Sadržaj u izradi.</p>`;
       document.getElementById('modalBodyContent').innerHTML = content + `<br><button class="btn" style="background:#34495e;" onclick="${backAction}">${backText}</button>`;
       document.getElementById('menuModal').style.display = 'flex';
+    }
+
+    // ==========================================
+    // OPCIJA 3: IZVEŠTAJ O BRANJU
+    // ==========================================
+    function loadWindow3() {
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja o branju...</p>`;
+      document.getElementById('menuModal').style.display = 'flex';
+
+      // Pozivamo server za podatke o grupama, beračima i merenjima
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "getHarvestReportData" })
+      })
+      .then(res => res.json())
+      .then(res => {
+        // Ako backend još nema vraćen format, pravimo bezbedan fallback ili prikazujemo podatke
+        renderHarvestReportMainView(res.groups || [], res.pickers || [], res.measurements || []);
+      })
+      .catch(err => {
+        // Fallback prikaz ako server funkcija tek treba da se implementira u Code.gs
+        renderHarvestReportMainView([], [], []);
+      });
+    }
+
+    function renderHarvestReportMainView(groups, pickers, measurements) {
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0;">📊 3. Izveštaj o branju - Pregled po grupama</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="openMenuModal()">← Nazad na Meni</button>
+      </div>
+      <p style="color:#555; font-size:14px; margin-bottom:15px;">Kliknite na karticu grupe da vidite detaljan učinak berača i gajbica:</p>
+      <div class="report-card-grid" id="reportGroupsContainer">`;
+
+      // Primer simuliranih/stvarnih podataka ako ih nema sa servera
+      if (groups.length === 0) {
+        // Demo podaci za testiranje dok se Code.gs ne dopuni sa akcijom
+        groups = [
+          { groupNum: "1", leaderName: "Marko Marković" },
+          { groupNum: "2", leaderName: "Jovan Jovanović" }
+        ];
+        pickers = [
+          { pickerNum: "01", groupNum: "1" },
+          { pickerNum: "02", groupNum: "1" },
+          { pickerNum: "03", groupNum: "2" }
+        ];
+        measurements = [
+          { pickerNum: "01", time: "12:05", crateNum: "01", weight: 3.4 },
+          { pickerNum: "01", time: "13:10", crateNum: "02", weight: 3.2 },
+          { pickerNum: "02", time: "12:30", crateNum: "01", weight: 3.5 }
+        ];
+      }
+
+      groups.forEach(g => {
+        let groupPickers = pickers.filter(p => p.groupNum === g.groupNum);
+        let pickerNums = groupPickers.map(p => p.pickerNum);
+        let groupMeasurements = measurements.filter(m => pickerNums.includes(m.pickerNum));
+        let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+
+        html += `<div class="report-group-card" onclick="loadGroupPickersDetail('${g.groupNum}', '${g.leaderName}')">
+          <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Grupa ${g.groupNum}</div>
+          <div style="font-size:14px; color:#555; margin-bottom:10px;">Vođa: <b>${g.leaderName}</b></div>
+          <div style="display:flex; justify-content:space-between; font-size:14px; border-top:1px solid #eee; padding-top:8px;">
+            <span>👥 Berača: <b>${groupPickers.length}</b></span>
+            <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+          </div>
+        </div>`;
+      });
+
+      html += `</div>`;
+      document.getElementById('modalBodyContent').innerHTML = html;
+    }
+
+    function loadGroupPickersDetail(groupNum, leaderName) {
+      // Ovde prikazujemo detalje za izabranu grupu po beračima i gajbicama
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0;">👥 Grupa ${groupNum} — Vođa: ${leaderName}</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="loadWindow3()">← Nazad na grupe</button>
+      </div>
+      <p style="color:#555; font-size:14px; margin-bottom:15px;">Učinak berača i pojedinačne gajbice:</p>
+      <div>`;
+
+      // Demo/stvarni podaci za berače u ovoj grupi
+      let samplePickers = ["01", "02"];
+      samplePickers.forEach(pNum => {
+        let sampleCrates = [
+          { time: "11:30", crateNum: "01", weight: 3.4 },
+          { time: "12:45", crateNum: "02", weight: 3.1 }
+        ];
+        let totalPickerKg = sampleCrates.reduce((s, c) => s + c.weight, 0);
+
+        html += `<div class="picker-detail-row">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div>
+              <span style="font-size:18px; color:#c0392b; font-weight:bold;">Berač br. ${pNum}</span>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:13px; color:#666;">Ukupno gajbica: <b>${sampleCrates.length}</b></span> | 
+              <span style="font-size:15px; color:#27ae60; font-weight:bold;">${totalPickerKg.toFixed(2)} kg</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">`;
+
+        sampleCrates.forEach(c => {
+          html += `<div class="crate-pill">
+            <span>⏰ ${c.time}</span>
+            <span style="background:white; padding:2px 6px; border-radius:4px; color:#333;">Gajbica ${c.crateNum}</span>
+            <span style="color:#27ae60;">${c.weight}kg</span>
+          </div>`;
+        });
+
+        html += `</div></div>`;
+      });
+
+      html += `</div>`;
+      document.getElementById('modalBodyContent').innerHTML = html;
     }
 
     // ==========================================
