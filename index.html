@@ -281,22 +281,8 @@
     let workflowState = 0;
     const scannerInput = document.getElementById('scannerInput');
 
-    // MREŽA ZASADA (Smešteno u localStorage da se ne briše pri update-u fajla)
-    let plantationMap = JSON.parse(localStorage.getItem('savedPlantationMap')) || [
-      { 
-        fieldId: "Njiva 1", 
-        rows: [
-          { rowNum: "Red 1", status: "purple", fields: [{fNum: "P1", status: "purple"}, {fNum: "P2", status: "purple"}] },
-          { rowNum: "Red 2", status: "green", fields: [{fNum: "P1", status: "green"}, {fNum: "P2", status: "green"}] }
-        ]
-      },
-      { 
-        fieldId: "Njiva 2", 
-        rows: [
-          { rowNum: "Red 1", status: "purple", fields: [{fNum: "P1", status: "purple"}, {fNum: "P2", status: "purple"}, {fNum: "P3", status: "purple"}] }
-        ]
-      }
-    ];
+    // MREŽA ZASADA: Učitava se ISKLJUČIVO iz localStorage (nema fiksno upisanih vrednosti koje brišu izmene)
+    let plantationMap = JSON.parse(localStorage.getItem('savedPlantationMap')) || [];
     let activeSelectedRow = null;
 
     function saveMapToLocalStorage() {
@@ -664,7 +650,7 @@
     function renderMapHtml(isAdminMode, isViewOnly = false) {
       let html = "";
       if (plantationMap.length === 0) {
-        return `<p style="text-align:center; color:#7f8c8d;">Nema unetih njiva u sistemu.</p>`;
+        return `<p style="text-align:center; color:#7f8c8d;">Nema unetih njiva u sistemu. Kreirajte novu njivu iznad.</p>`;
       }
 
       plantationMap.forEach((field, fIdx) => {
