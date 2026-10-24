@@ -65,7 +65,7 @@
     .info-content { font-size: 16px; line-height: 1.6; text-align: left; background: #f8f9fa; padding: 12px; border-radius: 10px; border: 1px solid #e9ecef; }
     .highlight-picker { font-size: 24px; color: #c0392b; font-weight: bold; }
     .highlight-total { font-size: 18px; color: #27ae60; font-weight: bold; }
-    .rank-badge { font-size: 17px; color: #2980b9; font-weight: bold; background: #eaf2f8; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 4px; }
+    .rank-badge { font-size: 15px; color: #2980b9; font-weight: bold; background: #eaf2f8; padding: 4px 10px; border-radius: 6px; display: inline-block; }
 
     .weight-box { background: #34495e; color: white; padding: 14px; border-radius: 10px; margin-bottom: 12px; text-align: center; }
     .weight-box .label { font-size: 14px; text-transform: uppercase; color: #bdc3c7; letter-spacing: 1px; }
@@ -543,6 +543,7 @@
 
     function closeModal() {
       document.getElementById('modalBodyContent').innerHTML = '';
+      document.getElementById('modalBodyContent').scrollTop = 0;
       document.getElementById('menuModal').style.display = 'none';
       if (loggedUser.role === 'grupovoda') renderLeaderDashboard();
       else loadGlobalStats();
@@ -572,152 +573,233 @@
     }
 
     // ==========================================
-    // OPCIJA 6: OBRAČUN DANA (FINANSIJE I PLASMAN PO UBRANOJ KOLIČINI)
+    // OPCIJA 6: OBRAČUN DANA PO GRUPAMA (ZA ISPLATU GRUPOVOĐA)
     // ==========================================
     function loadWindow6() {
-      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje podataka za obračun dana...</p>`;
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna dana po grupama...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
 
       Promise.all([
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) }).then(r => r.json()),
         fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json()),
         fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
       ])
-      .then(([resPickers, resMeas]) => {
+      .then(([resGroups, resPickers, resMeas]) => {
+        let groups = resGroups.success ? resGroups.groups : [];
         let pickers = resPickers.success ? resPickers.pickers : [];
-        let measurements = resMeas.success ? resMeas.measurements : [
-          // Demo podaci za testiranje ukoliko baza nema merenja
-          { pickerNum: "01", weight: 35.5, kalo: 1.2 },
-          { pickerNum: "02", weight: 42.0, kalo: 0.8 },
-          { pickerNum: "03", weight: 28.3, kalo: 1.5 }
-        ];
+        let measurements = resMeas.success ? resMeas.measurements : [];
 
-        renderWindow6View(pickers, measurements);
+        renderPayrollGroupsView(groups, pickers, measurements);
       })
       .catch(err => {
         alert("Greška pri učitavanju obračuna: " + err.message);
       });
     }
 
-    function renderWindow6View(pickers, measurements) {
-      let defaultPricePerKg = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0; // podrazumevana cena po kg
+    function renderPayrollGroupsView(groups, pickers, measurements) {
+      let defaultPricePerKg = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
 
       let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="margin:0;">💰 6. Obračun dana - Finansije i Plasman berača</h3>
+        <h3 style="margin:0;">💰 6. Obračun dana - Kartice grupa za isplatu</h3>
         <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="openMenuModal()">← Nazad na Meni</button>
       </div>
-      
+
       <div class="section-card" style="background:#eaf2f8; border-color:#2980b9;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div>
             <h4 style="margin:0; color:#2980b9; border:none;">💵 Cena rada po ubranom kilogramu</h4>
-            <p style="margin:4px 0 0 0; font-size:13px; color:#555;">Unesite cenu u dinarima/evrima po kg ubrane borovnice:</p>
+            <p style="margin:4px 0 0 0; font-size:13px; color:#555;">Unesite cenu u dinarima po kg ubrane borovnice:</p>
           </div>
           <div style="display:flex; gap:8px; align-items:center;">
             <input type="number" id="inputPricePerKg" value="${defaultPricePerKg}" step="0.5" style="width:100px; padding:8px; font-size:16px; font-weight:bold; text-align:center;">
-            <button class="btn" style="background:#27ae60; width:auto; padding:8px 16px;" onclick="calculatePayroll()">Izračunaj Obračun</button>
+            <button class="btn" style="background:#27ae60; width:auto; padding:8px 16px;" onclick="recalculatePayrollGroups()">Ažuriraj Cenu</button>
           </div>
         </div>
       </div>
+      <p style="color:#555; font-size:14px; margin-bottom:15px;">Kliknite na karticu grupe da vidite detaljan obračun po beračima za isplatu i pošaljete ga na Viber:</p>
+      <div class="report-card-grid" id="payrollGroupsContainer">`;
 
-      <div id="payrollResultsContainer">`;
-
-      html += generatePayrollTableHtml(pickers, measurements, defaultPricePerKg);
-      html += `</div>`;
-
-      document.getElementById('modalBodyContent').innerHTML = html;
-    }
-
-    function calculatePayroll() {
-      let priceInput = document.getElementById('inputPricePerKg').value;
-      let pricePerKg = parseFloat(priceInput) || 0;
-      localStorage.setItem('savedPricePerKg', pricePerKg);
-
-      Promise.all([
-        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json()),
-        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
-      ])
-      .then(([resPickers, resMeas]) => {
-        let pickers = resPickers.success ? resPickers.pickers : [];
-        let measurements = resMeas.success ? resMeas.measurements : [];
-        document.getElementById('payrollResultsContainer').innerHTML = generatePayrollTableHtml(pickers, measurements, pricePerKg);
-        alert("Obračun uspešno osvežen!");
-      });
-    }
-
-    function generatePayrollTableHtml(pickers, measurements, pricePerKg) {
-      // Izračunavanje ukupno ubranih kilograma i ostalih parametara po beraču
-      let pickerStats = {};
-
-      measurements.forEach(m => {
-        let pNum = String(m.pickerNum || "-");
-        if (!pickerStats[pNum]) {
-          pickerStats[pNum] = { totalPickedKg: 0, totalKaloKg: 0, crateCount: 0 };
-        }
-        let w = parseFloat(m.weight) || 0;
-        let k = parseFloat(m.kalo) || 0;
-        pickerStats[pNum].totalPickedKg += (w + k); // ubrano = prebrano + kalo
-        pickerStats[pNum].totalKaloKg += k;
-        pickerStats[pNum].crateCount += 1;
-      });
-
-      // Dodavanje berača koji imaju upis u Opciji 1 ali nemaju merenja još
-      pickers.forEach(p => {
-        let pNum = String(p.pickerNum);
-        if (!pickerStats[pNum]) {
-          pickerStats[pNum] = { totalPickedKg: 0, totalKaloKg: 0, crateCount: 0 };
-        }
-        pickerStats[pNum].groupNum = p.groupNum;
-        pickerStats[pNum].leaderName = p.leaderName;
-      });
-
-      // Pretvaranje u niz i sortiranje po ubranoj količini silazno (za plasman)
-      let sortedPickers = Object.keys(pickerStats).map(pNum => {
-        return {
-          pickerNum: pNum,
-          ...pickerStats[pNum]
-        };
-      });
-
-      sortedPickers.sort((a, b) => b.totalPickedKg - a.totalPickedKg);
-
-      let totalActivePickers = sortedPickers.length;
-
-      let html = `<table class="data-table">
-        <thead>
-          <tr>
-            <th>Plasman</th>
-            <th>Berač br.</th>
-            <th>Gajbica</th>
-            <th>Prosek po gajbici</th>
-            <th>Kalo</th>
-            <th>Ukupno ubrano</th>
-            <th>Za isplatu (${pricePerKg} po kg)</th>
-          </tr>
-        </thead>
-        <tbody>`;
-
-      if (sortedPickers.length === 0) {
-        html += `<tr><td colspan="7" style="text-align:center; color:#7f8c8d;">Nema podataka o beračima i branju.</td></tr>`;
+      if (groups.length === 0) {
+        html += `<p style="text-align:center; color:#7f8c8d; grid-column: 1/-1;">Nema unetih grupa u sistemu (Opcija 2).</p>`;
       } else {
-        sortedPickers.forEach((p, index) => {
-          let rank = `${index + 1} od ${totalActivePickers}`;
-          let avgPerCrate = p.crateCount > 0 ? (p.totalPickedKg / p.crateCount).toFixed(2) : "0.00";
-          let payAmount = (p.totalPickedKg * pricePerKg).toFixed(2);
+        // Računanje globalnog poretka berača za plasman
+        let allPickerStats = {};
+        measurements.forEach(m => {
+          let pNum = String(m.pickerNum || "-");
+          if (!allPickerStats[pNum]) allPickerStats[pNum] = 0;
+          allPickerStats[pNum] += (parseFloat(m.weight) || 0) + (parseFloat(m.kalo) || 0);
+        });
+        pickers.forEach(p => {
+          if (!allPickerStats[String(p.pickerNum)]) allPickerStats[String(p.pickerNum)] = 0;
+        });
 
-          html += `<tr>
-            <td><span class="rank-badge">${rank}</span></td>
-            <td><b>Berač br. ${p.pickerNum}</b></td>
-            <td>${p.crateCount} kom</td>
-            <td>${avgPerCrate} kg</td>
-            <td style="color:#e74c3c;">${p.totalKaloKg.toFixed(2)} kg</td>
-            <td style="color:#27ae60; font-weight:bold; font-size:15px;">${p.totalPickedKg.toFixed(2)} kg</td>
-            <td style="color:#2980b9; font-weight:bold; font-size:15px;">${payAmount} RSD</td>
-          </tr>`;
+        let sortedAllPickers = Object.keys(allPickerStats).sort((a, b) => allPickerStats[b] - allPickerStats[a]);
+        let totalActivePickers = sortedAllPickers.length;
+
+        groups.forEach(g => {
+          let groupNum = g.extra;
+          let leaderName = g.name;
+
+          let groupPickers = pickers.filter(p => String(p.groupNum) === String(groupNum));
+          let pickerNums = groupPickers.map(p => p.pickerNum);
+
+          let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
+          
+          let totalGroupKg = 0;
+          let totalGroupPay = 0;
+          let totalGroupCrates = groupMeasurements.length;
+
+          groupPickers.forEach(picker => {
+            let pNum = String(picker.pickerNum);
+            let pCrates = groupMeasurements.filter(m => String(m.pickerNum) === pNum);
+            let pKg = pCrates.reduce((sum, c) => sum + (parseFloat(c.weight) || 0) + (parseFloat(c.kalo) || 0), 0);
+            totalGroupKg += pKg;
+            totalGroupPay += (pKg * defaultPricePerKg);
+          });
+
+          let avgKgPerPicker = groupPickers.length > 0 ? (totalGroupKg / groupPickers.length).toFixed(2) : "0.00";
+          let avgCratesPerPicker = groupPickers.length > 0 ? (totalGroupCrates / groupPickers.length).toFixed(1) : "0.0";
+
+          let groupPickersObj = JSON.stringify(groupPickers).replace(/"/g, '&quot;');
+          let groupMeasurementsObj = JSON.stringify(groupMeasurements).replace(/"/g, '&quot;');
+          let globalRanksObj = JSON.stringify(sortedAllPickers).replace(/"/g, '&quot;');
+
+          html += `<div class="report-group-card" onclick='loadGroupPayrollDetail("${groupNum}", "${leaderName}", ${groupPickersObj}, ${groupMeasurementsObj}, ${globalRanksObj}, ${defaultPricePerKg})'>
+            <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Grupa ${groupNum}</div>
+            <div style="font-size:14px; color:#555; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
+            <div style="font-size:13px; color:#666; margin-bottom:10px;">
+              Prosek po beraču: <b>${avgCratesPerPicker} gajbica</b> (${avgKgPerPicker} kg)
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:14px; border-top:1px solid #eee; padding-top:8px;">
+              <span>👥 Berača: <b>${groupPickers.length}</b></span>
+              <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:15px; margin-top:6px; color:#2980b9; font-weight:bold;">
+              <span>Za isplatu grupi:</span>
+              <span>${totalGroupPay.toFixed(2)} RSD</span>
+            </div>
+          </div>`;
         });
       }
 
-      html += `</tbody></table>`;
-      return html;
+      html += `</div>`;
+      document.getElementById('modalBodyContent').innerHTML = html;
+    }
+
+    function recalculatePayrollGroups() {
+      let pricePerKg = parseFloat(document.getElementById('inputPricePerKg').value) || 120.0;
+      localStorage.setItem('savedPricePerKg', pricePerKg);
+
+      Promise.all([
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
+      ])
+      .then(([resGroups, resPickers, resMeas]) => {
+        renderPayrollGroupsView(resGroups.groups || [], resPickers.pickers || [], resMeas.measurements || []);
+        alert("Cena uspešno ažurirana!");
+      });
+    }
+
+    function loadGroupPayrollDetail(groupNum, leaderName, groupPickers, groupMeasurements, globalRanks, pricePerKg) {
+      let totalGroupKg = 0;
+      let totalGroupPay = 0;
+      let totalGroupCrates = groupMeasurements.length;
+
+      let pickerDetailsHtml = "";
+
+      if (groupPickers.length === 0) {
+        pickerDetailsHtml = `<p style="text-align:center; color:#7f8c8d;">Nema dodeljenih berača u ovoj grupi.</p>`;
+      } else {
+        groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
+
+        groupPickers.forEach(picker => {
+          let pNum = String(picker.pickerNum);
+          let pCrates = groupMeasurements.filter(m => String(m.pickerNum) === pNum);
+          let pKalo = pCrates.reduce((sum, c) => sum + (parseFloat(c.kalo) || 0), 0);
+          let pKg = pCrates.reduce((sum, c) => sum + (parseFloat(c.weight) || 0) + (parseFloat(c.kalo) || 0), 0);
+          let pPay = pKg * pricePerKg;
+
+          totalGroupKg += pKg;
+          totalGroupPay += pPay;
+
+          let rankIndex = globalRanks.indexOf(pNum);
+          let rankStr = rankIndex !== -1 ? `${rankIndex + 1} od ${globalRanks.length}` : "-";
+
+          pickerDetailsHtml += `<div class="picker-detail-row">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
+              <div>
+                <span style="font-size:17px; color:#c0392b; font-weight:bold;">Berač br. ${pNum}</span>
+                <span style="margin-left:8px;" class="rank-badge">Plasman: ${rankStr}</span>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-size:13px; color:#666;">Gajbica: <b>${pCrates.length}</b></span> | 
+                <span style="font-size:15px; color:#27ae60; font-weight:bold;">${pKg.toFixed(2)} kg</span> | 
+                <span style="font-size:15px; color:#2980b9; font-weight:bold;">${pPay.toFixed(2)} RSD</span>
+              </div>
+            </div>
+            <div style="font-size:13px; color:#7f8c8d;">Kalo: ${pKalo.toFixed(2)} kg</div>
+          </div>`;
+        });
+      }
+
+      let avgKg = groupPickers.length > 0 ? (totalGroupKg / groupPickers.length).toFixed(2) : "0.00";
+      let avgCrates = groupPickers.length > 0 ? (totalGroupCrates / groupPickers.length).toFixed(1) : "0.0";
+
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+        <h3 style="margin:0;">👥 Isplata Grupa ${groupNum} — Vođa: ${leaderName}</h3>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" style="background:#27ae60; width:auto; padding:6px 12px; font-size:13px;" onclick='sendViberReport("${groupNum}", "${leaderName}", ${JSON.stringify(groupPickers)}, ${JSON.stringify(groupMeasurements)}, ${pricePerKg})'>💬 Pošalji na Viber</button>
+          <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="loadWindow6()">← Nazad na grupe</button>
+        </div>
+      </div>
+
+      <div class="section-card" style="background:#fdfefe;">
+        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:14px; color:#333;">
+          <div>👥 Broj berača: <b>${groupPickers.length}</b></div>
+          <div>⚖️ Ukupno ubrano: <b style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</b></div>
+          <div>💰 Ukupno za isplatu: <b style="color:#2980b9;">${totalGroupPay.toFixed(2)} RSD</b></div>
+          <div>📊 Prosek: <b>${avgCrates} gajbica</b> (${avgKg} kg / berač)</div>
+        </div>
+      </div>
+
+      <div style="margin-top:15px;">${pickerDetailsHtml}</div>`;
+
+      document.getElementById('modalBodyContent').innerHTML = html;
+      document.getElementById('modalBodyContent').scrollTop = 0;
+    }
+
+    function sendViberReport(groupNum, leaderName, groupPickers, groupMeasurements, pricePerKg) {
+      let totalGroupKg = 0;
+      let totalGroupPay = 0;
+      let totalCrates = groupMeasurements.length;
+
+      let text = `📦 *ISPLATA - GRUPA ${groupNum}* (%0AVođa: ${leaderName})%0A-----------------------------------%0A`;
+
+      groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
+
+      groupPickers.forEach(picker => {
+        let pNum = String(picker.pickerNum);
+        let pCrates = groupMeasurements.filter(m => String(m.pickerNum) === pNum);
+        let pKg = pCrates.reduce((sum, c) => sum + (parseFloat(c.weight) || 0) + (parseFloat(c.kalo) || 0), 0);
+        let pPay = pKg * pricePerKg;
+
+        totalGroupKg += pKg;
+        totalGroupPay += pPay;
+
+        text += `• Berač ${pNum}: ${pCrates.length} gajb. | *${pKg.toFixed(2)} kg* | *${pPay.toFixed(2)} RSD*%0A`;
+      });
+
+      let avgKg = groupPickers.length > 0 ? (totalGroupKg / groupPickers.length).toFixed(2) : "0.00";
+
+      text += `-----------------------------------%0A`;
+      text += `👥 Ukupno berača: ${groupPickers.length}%0A`;
+      text += `⚖️ Ukupno ubrano: *${totalGroupKg.toFixed(2)} kg*%0A`;
+      text += `📊 Prosečno po beraču: *${avgKg} kg*%0A`;
+      text += `💰 UKUPNO ZA ISPLATU: *${totalGroupPay.toFixed(2)} RSD*`;
+
+      let viberUrl = `viber://forward?text=${text}`;
+      window.open(viberUrl, '_blank');
     }
 
     // ==========================================
