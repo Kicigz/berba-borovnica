@@ -561,6 +561,7 @@
       if (num === '3') { loadWindow3(); return; }
       if (num === '4') { loadWindow4SubMenu(); return; }
       if (num === '5') { loadWindow5(); return; }
+      if (num === '6') { loadWindow6(); return; }
 
       let backAction = (loggedUser.role === 'grupovoda') ? `closeModal()` : `openMenuModal()`;
       let backText = (loggedUser.role === 'grupovoda') ? `← Zatvori / Nazad` : `← Nazad na Meni`;
@@ -571,7 +572,156 @@
     }
 
     // ==========================================
-    // OPCIJA 5: IZMENE MERENJA NA VAGI (POVEZANO SA RADNICIMA IZ OPCIJE 2)
+    // OPCIJA 6: OBRAČUN DANA (FINANSIJE I PLASMAN PO UBRANOJ KOLIČINI)
+    // ==========================================
+    function loadWindow6() {
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje podataka za obračun dana...</p>`;
+      document.getElementById('menuModal').style.display = 'flex';
+
+      Promise.all([
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
+      ])
+      .then(([resPickers, resMeas]) => {
+        let pickers = resPickers.success ? resPickers.pickers : [];
+        let measurements = resMeas.success ? resMeas.measurements : [
+          // Demo podaci za testiranje ukoliko baza nema merenja
+          { pickerNum: "01", weight: 35.5, kalo: 1.2 },
+          { pickerNum: "02", weight: 42.0, kalo: 0.8 },
+          { pickerNum: "03", weight: 28.3, kalo: 1.5 }
+        ];
+
+        renderWindow6View(pickers, measurements);
+      })
+      .catch(err => {
+        alert("Greška pri učitavanju obračuna: " + err.message);
+      });
+    }
+
+    function renderWindow6View(pickers, measurements) {
+      let defaultPricePerKg = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0; // podrazumevana cena po kg
+
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0;">💰 6. Obračun dana - Finansije i Plasman berača</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="openMenuModal()">← Nazad na Meni</button>
+      </div>
+      
+      <div class="section-card" style="background:#eaf2f8; border-color:#2980b9;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h4 style="margin:0; color:#2980b9; border:none;">💵 Cena rada po ubranom kilogramu</h4>
+            <p style="margin:4px 0 0 0; font-size:13px; color:#555;">Unesite cenu u dinarima/evrima po kg ubrane borovnice:</p>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="number" id="inputPricePerKg" value="${defaultPricePerKg}" step="0.5" style="width:100px; padding:8px; font-size:16px; font-weight:bold; text-align:center;">
+            <button class="btn" style="background:#27ae60; width:auto; padding:8px 16px;" onclick="calculatePayroll()">Izračunaj Obračun</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="payrollResultsContainer">`;
+
+      html += generatePayrollTableHtml(pickers, measurements, defaultPricePerKg);
+      html += `</div>`;
+
+      document.getElementById('modalBodyContent').innerHTML = html;
+    }
+
+    function calculatePayroll() {
+      let priceInput = document.getElementById('inputPricePerKg').value;
+      let pricePerKg = parseFloat(priceInput) || 0;
+      localStorage.setItem('savedPricePerKg', pricePerKg);
+
+      Promise.all([
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
+      ])
+      .then(([resPickers, resMeas]) => {
+        let pickers = resPickers.success ? resPickers.pickers : [];
+        let measurements = resMeas.success ? resMeas.measurements : [];
+        document.getElementById('payrollResultsContainer').innerHTML = generatePayrollTableHtml(pickers, measurements, pricePerKg);
+        alert("Obračun uspešno osvežen!");
+      });
+    }
+
+    function generatePayrollTableHtml(pickers, measurements, pricePerKg) {
+      // Izračunavanje ukupno ubranih kilograma i ostalih parametara po beraču
+      let pickerStats = {};
+
+      measurements.forEach(m => {
+        let pNum = String(m.pickerNum || "-");
+        if (!pickerStats[pNum]) {
+          pickerStats[pNum] = { totalPickedKg: 0, totalKaloKg: 0, crateCount: 0 };
+        }
+        let w = parseFloat(m.weight) || 0;
+        let k = parseFloat(m.kalo) || 0;
+        pickerStats[pNum].totalPickedKg += (w + k); // ubrano = prebrano + kalo
+        pickerStats[pNum].totalKaloKg += k;
+        pickerStats[pNum].crateCount += 1;
+      });
+
+      // Dodavanje berača koji imaju upis u Opciji 1 ali nemaju merenja još
+      pickers.forEach(p => {
+        let pNum = String(p.pickerNum);
+        if (!pickerStats[pNum]) {
+          pickerStats[pNum] = { totalPickedKg: 0, totalKaloKg: 0, crateCount: 0 };
+        }
+        pickerStats[pNum].groupNum = p.groupNum;
+        pickerStats[pNum].leaderName = p.leaderName;
+      });
+
+      // Pretvaranje u niz i sortiranje po ubranoj količini silazno (za plasman)
+      let sortedPickers = Object.keys(pickerStats).map(pNum => {
+        return {
+          pickerNum: pNum,
+          ...pickerStats[pNum]
+        };
+      });
+
+      sortedPickers.sort((a, b) => b.totalPickedKg - a.totalPickedKg);
+
+      let totalActivePickers = sortedPickers.length;
+
+      let html = `<table class="data-table">
+        <thead>
+          <tr>
+            <th>Plasman</th>
+            <th>Berač br.</th>
+            <th>Gajbica</th>
+            <th>Prosek po gajbici</th>
+            <th>Kalo</th>
+            <th>Ukupno ubrano</th>
+            <th>Za isplatu (${pricePerKg} po kg)</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      if (sortedPickers.length === 0) {
+        html += `<tr><td colspan="7" style="text-align:center; color:#7f8c8d;">Nema podataka o beračima i branju.</td></tr>`;
+      } else {
+        sortedPickers.forEach((p, index) => {
+          let rank = `${index + 1} od ${totalActivePickers}`;
+          let avgPerCrate = p.crateCount > 0 ? (p.totalPickedKg / p.crateCount).toFixed(2) : "0.00";
+          let payAmount = (p.totalPickedKg * pricePerKg).toFixed(2);
+
+          html += `<tr>
+            <td><span class="rank-badge">${rank}</span></td>
+            <td><b>Berač br. ${p.pickerNum}</b></td>
+            <td>${p.crateCount} kom</td>
+            <td>${avgPerCrate} kg</td>
+            <td style="color:#e74c3c;">${p.totalKaloKg.toFixed(2)} kg</td>
+            <td style="color:#27ae60; font-weight:bold; font-size:15px;">${p.totalPickedKg.toFixed(2)} kg</td>
+            <td style="color:#2980b9; font-weight:bold; font-size:15px;">${payAmount} RSD</td>
+          </tr>`;
+        });
+      }
+
+      html += `</tbody></table>`;
+      return html;
+    }
+
+    // ==========================================
+    // OPCIJA 5: IZMENE MERENJA NA VAGI
     // ==========================================
     function loadWindow5() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje radnika na vagi i merenja...</p>`;
@@ -600,14 +750,12 @@
       <p style="color:#555; font-size:14px; margin-bottom:15px;">Pregled merenja grupisan po radnicima na vagi (Opcija 2) i sortiran po vremenu. Svaka izmena ili brisanje zahteva odobrenje (PIN) administratora.</p>
       <div>`;
 
-      // Mapiranje imena radnika prema broju vage (extra)
       let scaleWorkersMap = {};
       workers.forEach(w => {
         scaleWorkersMap[String(w.extra)] = w.name;
       });
 
       if (measurements.length === 0) {
-        // Fallback demo podaci ako nema merenja u bazi
         measurements = [
           { id: "m1", scaleNum: "1", time: "08:15", pickerNum: "01", crateNum: "01", weight: 3.4 },
           { id: "m2", scaleNum: "1", time: "09:30", pickerNum: "02", crateNum: "01", weight: 3.2 },
@@ -615,7 +763,6 @@
         ];
       }
 
-      // Grupisanje merenja po broju vage (scaleNum)
       let groupedByScale = {};
       measurements.forEach(m => {
         let sNum = String(m.scaleNum || "1");
@@ -628,7 +775,6 @@
 
       for (let sNum in groupedByScale) {
         let scaleData = groupedByScale[sNum];
-        // Sortiranje hronološki po vremenu (od najranijeg ka kasnijem)
         scaleData.list.sort((a, b) => (a.time || "").localeCompare(b.time || ""));
 
         html += `<div class="group-section" style="border-left: 5px solid #e67e22;">
