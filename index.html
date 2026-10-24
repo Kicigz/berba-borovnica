@@ -571,85 +571,94 @@
     }
 
     // ==========================================
-    // OPCIJA 5: IZMENE MERENJA NA VAGI (SORTIRANO PO VAGAMA I VREMENIMA, ZAHTEVA ADMIN PIN)
+    // OPCIJA 5: IZMENE MERENJA NA VAGI (POVEZANO SA RADNICIMA IZ OPCIJE 2)
     // ==========================================
     function loadWindow5() {
-      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje merenja sa vaga...</p>`;
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje radnika na vagi i merenja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
 
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "getAllMeasurements" })
-      })
-      .then(res => res.json())
-      .then(res => {
-        let measurements = (res.success && res.measurements) ? res.measurements : [
-          // Demo podaci za testiranje ukoliko baza još nema merenja
-          { id: "m1", scaleNum: "1", scaleName: "Marko", time: "08:15", pickerNum: "01", crateNum: "01", weight: 3.4 },
-          { id: "m2", scaleNum: "1", scaleName: "Marko", time: "09:30", pickerNum: "02", crateNum: "01", weight: 3.2 },
-          { id: "m3", scaleNum: "2", scaleName: "Ana", time: "08:45", pickerNum: "05", crateNum: "01", weight: 3.5 }
-        ];
+      Promise.all([
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
+      ])
+      .then(([resWorkers, resMeas]) => {
+        let workers = (resWorkers.success && resWorkers.workers) ? resWorkers.workers : [];
+        let measurements = (resMeas.success && resMeas.measurements) ? resMeas.measurements : [];
 
-        renderWindow5View(measurements);
+        renderWindow5View(workers, measurements);
       })
       .catch(err => {
         alert("Greška: " + err.message);
       });
     }
 
-    function renderWindow5View(measurements) {
+    function renderWindow5View(workers, measurements) {
       let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <h3 style="margin:0;">⚙️ 5. Izmene merenja na vagi (Ispravka grešaka)</h3>
         <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="openMenuModal()">← Nazad na Meni</button>
       </div>
-      <p style="color:#555; font-size:14px; margin-bottom:15px;">Pregled merenja grupisan po vagama i sortiran po vremenu. Svaka izmena ili brisanje zahteva odobrenje (PIN) administratora.</p>
+      <p style="color:#555; font-size:14px; margin-bottom:15px;">Pregled merenja grupisan po radnicima na vagi (Opcija 2) i sortiran po vremenu. Svaka izmena ili brisanje zahteva odobrenje (PIN) administratora.</p>
       <div>`;
 
+      // Mapiranje imena radnika prema broju vage (extra)
+      let scaleWorkersMap = {};
+      workers.forEach(w => {
+        scaleWorkersMap[String(w.extra)] = w.name;
+      });
+
       if (measurements.length === 0) {
-        html += `<p style="text-align:center; color:#7f8c8d;">Nema unetih merenja za današnji dan.</p>`;
-      } else {
-        // Grupisanje merenja po broju vage (scaleNum)
-        let groupedByScale = {};
-        measurements.forEach(m => {
-          let sNum = m.scaleNum || "1";
-          if (!groupedByScale[sNum]) groupedByScale[sNum] = { scaleName: m.scaleName || "Vaga " + sNum, list: [] };
-          groupedByScale[sNum].list.push(m);
+        // Fallback demo podaci ako nema merenja u bazi
+        measurements = [
+          { id: "m1", scaleNum: "1", time: "08:15", pickerNum: "01", crateNum: "01", weight: 3.4 },
+          { id: "m2", scaleNum: "1", time: "09:30", pickerNum: "02", crateNum: "01", weight: 3.2 },
+          { id: "m3", scaleNum: "2", time: "08:45", pickerNum: "05", crateNum: "01", weight: 3.5 }
+        ];
+      }
+
+      // Grupisanje merenja po broju vage (scaleNum)
+      let groupedByScale = {};
+      measurements.forEach(m => {
+        let sNum = String(m.scaleNum || "1");
+        if (!groupedByScale[sNum]) {
+          let workerName = scaleWorkersMap[sNum] || m.scaleName || "Nepoznat radnik";
+          groupedByScale[sNum] = { scaleName: workerName, list: [] };
+        }
+        groupedByScale[sNum].list.push(m);
+      });
+
+      for (let sNum in groupedByScale) {
+        let scaleData = groupedByScale[sNum];
+        // Sortiranje hronološki po vremenu (od najranijeg ka kasnijem)
+        scaleData.list.sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+
+        html += `<div class="group-section" style="border-left: 5px solid #e67e22;">
+          <h5>⚖️ Vaga br. ${sNum} — Radnik: <b>${scaleData.scaleName}</b> (${scaleData.list.length} merenja)</h5>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Vreme</th>
+                <th>Berač</th>
+                <th>Gajbica</th>
+                <th>Težina</th>
+                <th style="text-align:right;">Akcija (Zahteva Admin PIN)</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+        scaleData.list.forEach(item => {
+          html += `<tr>
+            <td><b>⏰ ${item.time || '-'}</b></td>
+            <td>Berač br. ${item.pickerNum || '-'}</td>
+            <td>Gajbica ${item.crateNum || '-'}</td>
+            <td style="color:#27ae60; font-weight:bold;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</td>
+            <td style="text-align:right;">
+              <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')" style="margin-right:6px;">Izmeni</button>
+              <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši</button>
+            </td>
+          </tr>`;
         });
 
-        for (let sNum in groupedByScale) {
-          let scaleData = groupedByScale[sNum];
-          // Sortiranje merenja unutar vage po vremenu (od najranijeg ka kasnijem)
-          scaleData.list.sort((a, b) => (a.time || "").localeCompare(b.time || ""));
-
-          html += `<div class="group-section" style="border-left: 5px solid #e67e22;">
-            <h5>⚖️ Vaga br. ${sNum} — Radnik: <b>${scaleData.scaleName}</b> (${scaleData.list.length} merenja)</h5>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Vreme</th>
-                  <th>Berač</th>
-                  <th>Gajbica</th>
-                  <th>Težina</th>
-                  <th style="text-align:right;">Akcija (Zahteva Admin PIN)</th>
-                </tr>
-              </thead>
-              <tbody>`;
-
-          scaleData.list.forEach(item => {
-            html += `<tr>
-              <td><b>⏰ ${item.time || '-'}</b></td>
-              <td>Berač br. ${item.pickerNum || '-'}</td>
-              <td>Gajbica ${item.crateNum || '-'}</td>
-              <td style="color:#27ae60; font-weight:bold;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</td>
-              <td style="text-align:right;">
-                <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')" style="margin-right:6px;">Izmeni</button>
-                <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši</button>
-              </td>
-            </tr>`;
-          });
-
-          html += `</tbody></table></div>`;
-        }
+        html += `</tbody></table></div>`;
       }
 
       html += `</div>`;
@@ -660,14 +669,13 @@
       let actionTitle = (actionType === 'delete') ? `Brisanje merenja za berača br. ${pickerNum}` : `Izmena težine (${currentWeight} kg) za berača br. ${pickerNum}`;
       
       let adminPin = prompt(`${actionTitle}\n\nUnesite ADMINISTRATIVNI PIN za odobrenje izmene:`, "");
-      if (adminPin === null) return; // Korisnik otkazao
+      if (adminPin === null) return;
 
       if (!adminPin.trim()) {
         alert("Morate uneti administratorski PIN!");
         return;
       }
 
-      // Provera PIN-a preko servera
       fetch(WEB_APP_URL, {
         method: "POST",
         body: JSON.stringify({ 
@@ -682,7 +690,7 @@
       .then(res => {
         if (res.success) {
           alert("Izmena uspešno odobrena i sačuvana!");
-          loadWindow5(); // Osveži tabelu
+          loadWindow5();
         } else {
           alert(res.error || "Pogrešan administratorski PIN ili greška pri izmeni!");
         }
@@ -1332,7 +1340,7 @@
           html += `</tbody></table></div>`;
         } else {
           html += `<div class="section-card">
-            <h4 id="gFormTitle">👥 Novi Grupovođa (Trocifreni PIN)</h4>
+            <h4 id="gFormTitle">👥 Grupovođa (Trocifreni PIN)</h4>
             <div class="form-row">
               <div class="form-group-col"><label>Broj grupe</label><input type="text" id="gGroupNum" value="${nextGroupNum}" maxlength="3"></div>
               <div class="form-group-col" style="flex:2;"><label>Ime grupovođe</label><input type="text" id="gName" placeholder="Ime"></div>
