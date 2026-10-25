@@ -296,15 +296,34 @@
     let workflowState = 0;
     const scannerInput = document.getElementById('scannerInput');
 
-    let plantationMap = JSON.parse(localStorage.getItem('savedPlantationMap')) || [];
+    let plantationMap = [];
     let activeSelectedRow = null;
 
-    function saveMapToLocalStorage() {
-      localStorage.setItem('savedPlantationMap', JSON.stringify(plantationMap));
+    // Sinhronizacija mape sa Google Cloud-om
+    function fetchMapFromServer(callback) {
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "getMapFromCloud" })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          plantationMap = res.mapData || [];
+          if (callback) callback();
+        }
+      }).catch(() => { if (callback) callback(); });
+    }
+
+    function saveMapToServer() {
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "saveMapToCloud", mapData: plantationMap })
+      }).catch(err => console.error("Greška pri čuvanju mape: " + err));
     }
 
     window.onload = function() {
       autoConnectUSB();
+      fetchMapFromServer();
     };
 
     function toggleFullScreen() {
@@ -1275,7 +1294,7 @@
     }
 
     // ==========================================
-    // OPCIJA 4: MAPA ZASADA (PODMENI I PRIKAZ)
+    // OPCIJA 4: MAPA ZASADA (SINHRONIZOVANA NA CLOUD)
     // ==========================================
     function loadWindow4SubMenu() {
       let isAdmin = (loggedUser.role === 'admin');
@@ -1296,13 +1315,13 @@
 
       if (canMark || canView) {
         let btnText = canMark ? "🌱 Pregled i vođenje berbe" : "🌱 Pregled mape";
-        html += `<button class="btn" style="background:#2980b9; text-align:left; padding:12px;" onclick="loadHarvestMap('${canMark ? 'preview' : 'view_only'}')">
+        html += `<button class="btn" style="background:#2980b9; text-align:left; padding:12px;" onclick="fetchMapFromServer(() => loadHarvestMap('${canMark ? 'preview' : 'view_only'}'))">
           ${btnText}
         </button>`;
       }
 
       if (canRedefine) {
-        html += `<button class="btn" style="background:#8e44ad; text-align:left; padding:12px;" onclick="loadHarvestMap('admin')">
+        html += `<button class="btn" style="background:#8e44ad; text-align:left; padding:12px;" onclick="fetchMapFromServer(() => loadHarvestMap('admin'))">
           ⚙️ Predefinisanje mape zasada
         </button>`;
       }
@@ -1346,7 +1365,7 @@
     function renderMapHtml(isAdminMode, isViewOnly = false) {
       let html = "";
       if (plantationMap.length === 0) {
-        return `<p style="text-align:center; color:#7f8c8d;">Nema unetih njiva.</p>`;
+        return `<p style="text-align:center; color:#7f8c8d;">Nema unetih njiva u bazi.</p>`;
       }
 
       plantationMap.forEach((field, fIdx) => {
@@ -1419,7 +1438,8 @@
       } else {
         activeSelectedRow = { fIdx, rIdx };
       }
-      document.getElementById('mapListContainer').innerHTML = renderMapHtml(isAdminMode, isViewOnly);
+      let isAdmin = document.querySelector('h3').innerText.includes("Predefinisanje");
+      document.getElementById('mapListContainer').innerHTML = renderMapHtml(isAdmin, isViewOnly);
     }
 
     function toggleFieldStatus(fIdx, rIdx, fiIdx, isAdminMode, isViewOnly) {
@@ -1428,8 +1448,10 @@
       let fieldItem = row.fields[fiIdx];
       fieldItem.status = (fieldItem.status === 'green') ? 'purple' : 'green';
       row.status = row.fields.every(f => f.status === 'green') ? 'green' : 'purple';
-      saveMapToLocalStorage();
-      document.getElementById('mapListContainer').innerHTML = renderMapHtml(isAdminMode, isViewOnly);
+      
+      saveMapToServer();
+      let isAdmin = document.querySelector('h3').innerText.includes("Predefinisanje");
+      document.getElementById('mapListContainer').innerHTML = renderMapHtml(isAdmin, isViewOnly);
     }
 
     function addNewFieldToMap() {
@@ -1446,7 +1468,7 @@
       }
 
       plantationMap.push({ fieldId: fieldName, rows: newRows });
-      saveMapToLocalStorage();
+      saveMapToServer();
       loadHarvestMap('admin');
     }
 
@@ -1474,7 +1496,7 @@
       if (activeSelectedRow && activeSelectedRow.fIdx === fIdx && activeSelectedRow.rIdx >= newCount) {
         activeSelectedRow = null;
       }
-      saveMapToLocalStorage();
+      saveMapToServer();
       loadHarvestMap('admin');
     }
 
@@ -1482,7 +1504,7 @@
       let newName = prompt("Novi naziv njive:", plantationMap[fIdx].fieldId);
       if (newName && newName.trim()) {
         plantationMap[fIdx].fieldId = newName.trim();
-        saveMapToLocalStorage();
+        saveMapToServer();
         loadHarvestMap('admin');
       }
     }
@@ -1502,7 +1524,7 @@
 
       row.fields = updatedFields;
       row.status = row.fields.every(f => f.status === 'green') ? 'green' : 'purple';
-      saveMapToLocalStorage();
+      saveMapToServer();
       let isAdminMode = document.querySelector('h3').innerText.includes("Predefinisanje");
       document.getElementById('mapListContainer').innerHTML = renderMapHtml(isAdminMode, false);
     }
@@ -1511,7 +1533,7 @@
       if (!confirm("Obriši ovaj red?")) return;
       plantationMap[fIdx].rows.splice(rIdx, 1);
       activeSelectedRow = null;
-      saveMapToLocalStorage();
+      saveMapToServer();
       loadHarvestMap('admin');
     }
 
@@ -1519,7 +1541,7 @@
       if (!confirm("Obrisati njivu?")) return;
       plantationMap.splice(fIdx, 1);
       activeSelectedRow = null;
-      saveMapToLocalStorage();
+      saveMapToServer();
       loadHarvestMap('admin');
     }
   </script>
