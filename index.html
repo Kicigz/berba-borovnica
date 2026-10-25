@@ -299,7 +299,6 @@
     let plantationMap = [];
     let activeSelectedRow = null;
 
-    // Sinhronizacija mape sa Google Cloud-om
     function fetchMapFromServer(callback) {
       fetch(WEB_APP_URL, {
         method: "POST",
@@ -1438,8 +1437,7 @@
       } else {
         activeSelectedRow = { fIdx, rIdx };
       }
-      let isAdmin = document.querySelector('h3').innerText.includes("Predefinisanje");
-      document.getElementById('mapListContainer').innerHTML = renderMapHtml(isAdmin, isViewOnly);
+      document.getElementById('mapListContainer').innerHTML = renderMapHtml(isAdminMode, isViewOnly);
     }
 
     function toggleFieldStatus(fIdx, rIdx, fiIdx, isAdminMode, isViewOnly) {
@@ -1450,8 +1448,7 @@
       row.status = row.fields.every(f => f.status === 'green') ? 'green' : 'purple';
       
       saveMapToServer();
-      let isAdmin = document.querySelector('h3').innerText.includes("Predefinisanje");
-      document.getElementById('mapListContainer').innerHTML = renderMapHtml(isAdmin, isViewOnly);
+      document.getElementById('mapListContainer').innerHTML = renderMapHtml(isAdminMode, isViewOnly);
     }
 
     function addNewFieldToMap() {
