@@ -1021,7 +1021,7 @@
     }
 
     // ==========================================
-    // OPCIJA 4: MAPA ZASADA (ISPRAVLJENO)
+    // OPCIJA 4: MAPA ZASADA (ONEMOGUĆENO OZNAČAVANJE U ADMIN REŽIMU)
     // ==========================================
     function loadWindow4SubMenu() {
       let isAdmin = (loggedUser.role === 'admin');
@@ -1134,8 +1134,11 @@
             
             activeRow.fields.forEach((fieldItem, fiIdx) => {
               let fBgClass = fieldItem.status === 'green' ? 'sq-green' : 'sq-purple';
-              let clickAction = isViewOnly ? `` : `toggleFieldStatus(${fIdx}, ${activeSelectedRow.rIdx}, ${fiIdx}, ${isAdminMode}, ${isViewOnly})`;
-              html += `<div class="map-square ${fBgClass}" style="width:38px; height:38px; font-size:11px;" onclick="${clickAction}">${fieldItem.fNum}</div>`;
+              // OVDE JE KLJUČNA IZMENA: Ako je isAdminMode, klik na polja ne radi ništa (prazna akcija)
+              let clickAction = (isAdminMode || isViewOnly) ? `` : `toggleFieldStatus(${fIdx}, ${activeSelectedRow.rIdx}, ${fiIdx}, ${isAdminMode}, ${isViewOnly})`;
+              let cursorStyle = (isAdminMode || isViewOnly) ? `cursor: default;` : `cursor: pointer;`;
+              
+              html += `<div class="map-square ${fBgClass}" style="width:38px; height:38px; font-size:11px; ${cursorStyle}" onclick="${clickAction}">${fieldItem.fNum}</div>`;
             });
 
             html += `</div></div>`;
@@ -1156,7 +1159,7 @@
     }
 
     function toggleFieldStatus(fIdx, rIdx, fiIdx, isAdminMode, isViewOnly) {
-      if (isViewOnly) return;
+      if (isAdminMode || isViewOnly) return;
       let row = plantationMap[fIdx].rows[rIdx];
       let fieldItem = row.fields[fiIdx];
       fieldItem.status = (fieldItem.status === 'green') ? 'purple' : 'green';
