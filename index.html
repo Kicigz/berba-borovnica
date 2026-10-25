@@ -946,6 +946,9 @@
       document.getElementById('modalBodyContent').innerHTML = html;
     }
 
+    // ==========================================
+    // OPCIJA 1: DODAVANJE BERAČA U GRUPU (AŽURIRANO)
+    // ==========================================
     function loadWindow1() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje berača...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -972,6 +975,7 @@
           <h3 style="margin:0; font-size:16px;">➕ Dodavanje berača</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
         </div>
+        
         <div class="section-card">
           <h4>Unesi broj berača</h4>
           <div class="form-row">
@@ -979,8 +983,40 @@
             <div class="form-group-col" style="flex:2;"><label>Grupa</label>${groupSelectHtml}</div>
           </div>
           <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="savePicker()">Dodaj berača</button>
-        </div>`;
+        </div>
 
+        <div class="section-card">
+          <h4>Raspored berača (${pickers.length})</h4>`;
+
+        let groupedPickers = {};
+        groups.forEach(g => { groupedPickers[g.extra] = { leader: g.name, list: [] }; });
+        pickers.forEach(p => {
+          let gNum = String(p.groupNum);
+          if (!groupedPickers[gNum]) {
+            groupedPickers[gNum] = { leader: p.leaderName || 'Grupa', list: [] };
+          }
+          groupedPickers[gNum].list.push(p.pickerNum);
+        });
+
+        for (let gNum in groupedPickers) {
+          let groupData = groupedPickers[gNum];
+          groupData.list.sort((a, b) => parseInt(a) - parseInt(b));
+
+          html += `<div class="group-section">
+            <h5>Grupa ${gNum} (${groupData.leader}) - ${groupData.list.length} berača</h5>
+            <div class="picker-grid">`;
+
+          if (groupData.list.length === 0) {
+            html += `<span style="font-size:12px; color:#95a5a6;">Nema berača.</span>`;
+          } else {
+            groupData.list.forEach(num => {
+              html += `<div class="picker-chip" onclick="deletePicker('${num}')">${num}</div>`;
+            });
+          }
+          html += `</div></div>`;
+        }
+
+        html += `</div>`;
         document.getElementById('modalBodyContent').innerHTML = html;
       });
     }
@@ -997,7 +1033,24 @@
         body: JSON.stringify({ action: "savePickerToGroup", data: { pickerNum, groupNum, leaderName } })
       })
       .then(res => res.json())
-      .then(res => { if (res.success) loadWindow1(); else alert(res.error || "Greška"); });
+      .then(res => { 
+        if (res.success) {
+          loadWindow1(); 
+        } else { 
+          alert(res.error || "Greška pri čuvanju berača"); 
+        } 
+      })
+      .catch(err => alert("Serverska greška: " + err.message));
+    }
+
+    function deletePicker(pickerNumber) {
+      if (!confirm("Ukloniti berača broj " + pickerNumber + "?")) return;
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "deletePicker", pickerNumber: pickerNumber })
+      })
+      .then(res => res.json())
+      .then(res => { if (res.success) loadWindow1(); });
     }
 
     function loadWindow2(activeTab = 'vaga') {
@@ -1134,7 +1187,6 @@
             
             activeRow.fields.forEach((fieldItem, fiIdx) => {
               let fBgClass = fieldItem.status === 'green' ? 'sq-green' : 'sq-purple';
-              // OVDE JE KLJUČNA IZMENA: Ako je isAdminMode, klik na polja ne radi ništa (prazna akcija)
               let clickAction = (isAdminMode || isViewOnly) ? `` : `toggleFieldStatus(${fIdx}, ${activeSelectedRow.rIdx}, ${fiIdx}, ${isAdminMode}, ${isViewOnly})`;
               let cursorStyle = (isAdminMode || isViewOnly) ? `cursor: default;` : `cursor: pointer;`;
               
