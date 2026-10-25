@@ -3,31 +3,32 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistem Kontrole Berbe Borovnica</title>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 15px; font-size: 16px; }
+    body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 10px; font-size: 16px; box-sizing: border-box; }
     
     #loginScreen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: #2c3e50; z-index: 9999; display: flex;
-      justify-content: center; align-items: center;
+      justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;
     }
     .login-box {
-      background: white; padding: 30px; border-radius: 14px;
-      width: 360px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      background: white; padding: 20px; border-radius: 14px;
+      width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
-    .login-box h2 { margin-top: 0; color: #2c3e50; font-size: 22px; }
+    .login-box h2 { margin-top: 0; color: #2c3e50; font-size: 20px; }
     #pinDisplay {
-      font-size: 32px; font-weight: bold; letter-spacing: 8px;
-      background: #f1f2f6; padding: 12px; border-radius: 8px; margin-bottom: 20px;
-      border: 2px solid #bdc3c7; height: 40px; line-height: 40px; color: #333;
+      font-size: 28px; font-weight: bold; letter-spacing: 6px;
+      background: #f1f2f6; padding: 10px; border-radius: 8px; margin-bottom: 15px;
+      border: 2px solid #bdc3c7; height: 36px; line-height: 36px; color: #333;
     }
     .numpad-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;
     }
     .num-btn {
-      background: #34495e; color: white; border: none; font-size: 24px; font-weight: bold;
-      padding: 16px; border-radius: 8px; cursor: pointer; transition: background 0.1s;
+      background: #34495e; color: white; border: none; font-size: 22px; font-weight: bold;
+      padding: 14px; border-radius: 8px; cursor: pointer; transition: background 0.1s;
     }
     .num-btn:hover { background: #415b76; }
     .num-btn.enter { background: #27ae60; grid-column: span 3; }
@@ -36,114 +37,126 @@
 
     #setupModal {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;
+      background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;
     }
-    .setup-card { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 12px; text-align: left; }
+    .setup-card { background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 12px; text-align: left; }
     .setup-card h3 { margin-top: 0; color: #2c3e50; }
-    .setup-card label { display: block; margin-top: 12px; font-size: 15px; font-weight: bold; color: #333; }
+    .setup-card label { display: block; margin-top: 10px; font-size: 14px; font-weight: bold; color: #333; }
     .setup-card input { width: 100%; padding: 10px; font-size: 16px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
 
     #mainApp { display: none; }
     
     .top-bar {
-      background: #2c3e50; color: white; border-radius: 10px; padding: 12px 18px;
-      margin: 0 auto 15px auto; max-width: 960px; display: flex;
-      justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.15); flex-wrap: wrap; gap: 12px;
+      background: #2c3e50; color: white; border-radius: 10px; padding: 10px 14px;
+      margin: 0 auto 12px auto; max-width: 960px; display: flex;
+      justify-content: space-between; align-items: center; font-size: 14px; font-weight: bold;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15); flex-wrap: wrap; gap: 8px;
     }
     .top-bar span { color: #f39c12; }
 
-    .main-container { display: flex; gap: 15px; max-width: 960px; margin: 0 auto; }
+    .main-container { display: flex; flex-direction: column; gap: 12px; max-width: 960px; margin: 0 auto; }
+    @media (min-width: 768px) {
+      .main-container { flex-direction: row; }
+    }
     .panel {
-      flex: 1; background: white; padding: 16px; border-radius: 12px;
+      flex: 1; background: white; padding: 14px; border-radius: 12px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; position: relative;
     }
     .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 12px; }
-    h3 { margin: 0; color: #333; font-size: 20px; }
+    h3 { margin: 0; color: #333; font-size: 18px; }
 
     .scanner-input { position: absolute; opacity: 0; pointer-events: none; }
-    .info-content { font-size: 16px; line-height: 1.6; text-align: left; background: #f8f9fa; padding: 12px; border-radius: 10px; border: 1px solid #e9ecef; }
-    .highlight-picker { font-size: 24px; color: #c0392b; font-weight: bold; }
-    .highlight-total { font-size: 18px; color: #27ae60; font-weight: bold; }
-    .rank-badge { font-size: 15px; color: #2980b9; font-weight: bold; background: #eaf2f8; padding: 4px 10px; border-radius: 6px; display: inline-block; }
+    .info-content { font-size: 15px; line-height: 1.6; text-align: left; background: #f8f9fa; padding: 12px; border-radius: 10px; border: 1px solid #e9ecef; }
+    .highlight-picker { font-size: 22px; color: #c0392b; font-weight: bold; }
+    .highlight-total { font-size: 17px; color: #27ae60; font-weight: bold; }
+    .rank-badge { font-size: 14px; color: #2980b9; font-weight: bold; background: #eaf2f8; padding: 4px 8px; border-radius: 6px; display: inline-block; }
 
-    .weight-box { background: #34495e; color: white; padding: 14px; border-radius: 10px; margin-bottom: 12px; text-align: center; }
-    .weight-box .label { font-size: 14px; text-transform: uppercase; color: #bdc3c7; letter-spacing: 1px; }
-    .weight-box .value { font-size: 48px; font-weight: bold; margin-top: 4px; }
+    .weight-box { background: #34495e; color: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
+    .weight-box .label { font-size: 13px; text-transform: uppercase; color: #bdc3c7; letter-spacing: 1px; }
+    .weight-box .value { font-size: 42px; font-weight: bold; margin-top: 4px; }
 
-    .split-bottom-boxes { display: flex; gap: 10px; margin-bottom: 10px; }
+    .split-bottom-boxes { display: flex; gap: 8px; margin-bottom: 8px; }
     .sub-box { flex: 1; padding: 10px; border-radius: 10px; text-align: center; color: white; }
     .box-input-weight { background: #2980b9; }
     .box-kalo { background: #e74c3c; }
-    .sub-box .label { font-size: 12px; text-transform: uppercase; opacity: 0.9; }
-    .sub-box .value { font-size: 24px; font-weight: bold; margin-top: 4px; }
+    .sub-box .label { font-size: 11px; text-transform: uppercase; opacity: 0.9; }
+    .sub-box .value { font-size: 22px; font-weight: bold; margin-top: 4px; }
 
-    .btn { display: block; width: 100%; padding: 12px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; text-align: center; }
-    .btn-tare { background-color: #e67e22; padding: 8px 12px; font-size: 14px; width: auto; margin: 0; }
+    .btn { display: block; width: 100%; padding: 12px; font-size: 15px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; text-align: center; box-sizing: border-box; }
+    .btn-tare { background-color: #e67e22; padding: 8px 12px; font-size: 13px; width: auto; margin: 0; }
     
-    .bottom-status-container { display: flex; gap: 15px; max-width: 960px; margin: 15px auto 0 auto; }
+    .bottom-status-container { display: flex; flex-direction: column; gap: 10px; max-width: 960px; margin: 12px auto 0 auto; }
+    @media (min-width: 600px) {
+      .bottom-status-container { flex-direction: row; }
+    }
     #status { flex: 1; font-size: 13px; font-weight: bold; background: #fadbd8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; display: flex; align-items: center; justify-content: center; cursor: pointer; }
     .debug-box { flex: 1; font-family: monospace; font-size: 11px; background: #1e1e1e; color: #00ff00; padding: 10px; border-radius: 8px; display: flex; align-items: center; overflow: hidden; white-space: nowrap; }
-    .btn-menu-nav { flex: 1; background-color: #8e44ad; color: white; border: none; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; }
+    .btn-menu-nav { flex: 1; background-color: #8e44ad; color: white; border: none; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; padding: 12px; }
 
-    .leader-dashboard { max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
-    .leader-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border-top: 5px solid #2980b9; }
+    .leader-dashboard { max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+    .leader-card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border-top: 5px solid #2980b9; }
     .leader-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
-    .leader-card h3 { color: #2c3e50; margin-top: 0; font-size: 18px; }
-    .leader-card p { color: #7f8c8d; font-size: 14px; }
+    .leader-card h3 { color: #2c3e50; margin-top: 0; font-size: 17px; }
+    .leader-card p { color: #7f8c8d; font-size: 13px; margin-bottom: 0; }
 
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; }
-    .modal-card { background: white; width: 100%; max-width: 950px; max-height: 90vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-    .modal-header { background: #2c3e50; color: white; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; }
-    .modal-body { padding: 15px; overflow-y: auto; flex: 1; background: #f8f9fa; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box; }
+    .modal-card { background: white; width: 100%; max-width: 900px; height: 92vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .modal-header { background: #2c3e50; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 12px; overflow-y: auto; flex: 1; background: #f8f9fa; }
     
-    .section-card { background: white; padding: 14px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-    .section-card h4 { margin-top: 0; color: #2c3e50; font-size: 16px; border-bottom: 2px solid #f1f2f6; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .section-card { background: white; padding: 12px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .section-card h4 { margin-top: 0; color: #2c3e50; font-size: 15px; border-bottom: 2px solid #f1f2f6; padding-bottom: 6px; display: flex; align-items: center; gap: 6px; }
     
-    .form-group-col { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
-    .form-group-col label { font-size: 12px; font-weight: bold; color: #34495e; text-transform: uppercase; }
-    .form-group-col input { padding: 8px 10px; font-size: 15px; border: 1px solid #bdc3c7; border-radius: 6px; }
+    .form-group-col { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 100px; }
+    .form-group-col label { font-size: 11px; font-weight: bold; color: #34495e; text-transform: uppercase; }
+    .form-group-col input, .form-group-col select { padding: 10px; font-size: 15px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; width: 100%; }
 
-    .form-row { display: flex; gap: 10px; margin-top: 10px; align-items: flex-end; flex-wrap: wrap; }
+    .form-row { display: flex; gap: 8px; margin-top: 8px; align-items: flex-end; flex-wrap: wrap; }
     
-    .checkbox-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; background: #fdfefe; padding: 10px; border-radius: 8px; border: 1px solid #e1e8ed; }
-    .checkbox-group label { font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; color: #34495e; }
+    .checkbox-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; background: #fdfefe; padding: 8px; border-radius: 8px; border: 1px solid #e1e8ed; }
+    @media (min-width: 500px) {
+      .checkbox-group { grid-template-columns: repeat(3, 1fr); }
+    }
+    .checkbox-group label { font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; color: #34495e; }
     .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
 
-    .tab-header { display: flex; gap: 8px; margin-bottom: 12px; border-bottom: 2px solid #e1e8ed; padding-bottom: 8px; }
-    .tab-btn { background: #bdc3c7; color: #2c3e50; border: none; padding: 10px 16px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+    .tab-header { display: flex; gap: 6px; margin-bottom: 10px; border-bottom: 2px solid #e1e8ed; padding-bottom: 6px; overflow-x: auto; }
+    .tab-btn { background: #bdc3c7; color: #2c3e50; border: none; padding: 8px 12px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; white-space: nowrap; }
     .tab-btn.active { background: #2980b9; color: white; }
 
-    table.data-table { width: 100%; border-collapse: collapse; margin-top: 12px; background: white; font-size: 14px; border-radius: 6px; overflow: hidden; border: 1px solid #e1e8ed; }
-    table.data-table th, table.data-table td { padding: 8px 12px; border-bottom: 1px solid #e1e8ed; text-align: left; }
-    table.data-table th { background: #eaeded; color: #2c3e50; font-weight: bold; }
-    table.data-table tr.clickable-row { cursor: pointer; transition: background 0.15s; }
-    table.data-table tr.clickable-row:hover { background: #ebf5fb; }
-    
-    .btn-action { padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; color: white; transition: opacity 0.1s; }
+    /* Mobilno-optimizovane kartične liste umesto krutih tabela */
+    .mobile-card-item {
+      background: white; border: 1px solid #dcdde1; border-radius: 8px; padding: 12px; margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 6px;
+    }
+    .mobile-card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #2c3e50; font-size: 15px; }
+    .mobile-card-body { font-size: 14px; color: #555; display: flex; flex-direction: column; gap: 3px; }
+    .mobile-card-actions { display: flex; gap: 8px; margin-top: 6px; justify-content: flex-end; border-top: 1px solid #f1f2f6; padding-top: 8px; }
+
+    .btn-action { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; color: white; transition: opacity 0.1s; }
     .btn-action:hover { opacity: 0.85; }
     .btn-del { background: #e74c3c; }
     .btn-edit { background: #f39c12; }
 
-    .group-section { background: white; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #ddd; }
-    .group-section h5 { margin: 0 0 8px 0; color: #2c3e50; font-size: 15px; border-bottom: 1px dashed #eee; padding-bottom: 4px; }
+    .group-section { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd; }
+    .group-section h5 { margin: 0 0 6px 0; color: #2c3e50; font-size: 14px; border-bottom: 1px dashed #eee; padding-bottom: 4px; }
     .picker-grid { display: flex; flex-wrap: wrap; gap: 6px; }
     .picker-chip {
       background: #eaf2f8; color: #2980b9; border: 1px solid #b9d7ea; padding: 6px 10px;
-      border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.1s;
+      border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; transition: all 0.1s;
       display: inline-flex; align-items: center; gap: 6px;
     }
     .picker-chip:hover { background: #fadbd8; color: #c0392b; border-color: #f5b7b1; }
-    .picker-chip:hover::after { content: " ✕"; font-size: 12px; }
+    .picker-chip:hover::after { content: " ✕"; font-size: 11px; }
 
-    .map-container { display: flex; flex-direction: column; gap: 12px; }
-    .field-box-card { background: white; padding: 12px; border-radius: 8px; border: 1px solid #dcdde1; position: relative; }
-    .rows-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .map-container { display: flex; flex-direction: column; gap: 10px; }
+    .field-box-card { background: white; padding: 10px; border-radius: 8px; border: 1px solid #dcdde1; position: relative; }
+    .rows-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
     
     .map-square {
-      width: 50px; height: 50px; border-radius: 8px; display: flex;
-      flex-direction: column; justify-content: center; align-items: center; font-weight: bold; font-size: 14px;
-      cursor: pointer; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      width: 46px; height: 46px; border-radius: 8px; display: flex;
+      flex-direction: column; justify-content: center; align-items: center; font-weight: bold; font-size: 13px;
+      cursor: pointer; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
       transition: transform 0.1s, opacity 0.1s;
     }
     .map-square:hover { transform: scale(1.05); }
@@ -151,15 +164,15 @@
     .sq-green { background-color: #27ae60; border: 2px solid #1e8449; }
     
     .fields-container {
-      background: #f1f2f6; padding: 10px; border-radius: 8px; margin-top: 8px; border: 1px dashed #bdc3c7;
+      background: #f1f2f6; padding: 8px; border-radius: 8px; margin-top: 6px; border: 1px dashed #bdc3c7;
       display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
     }
 
-    .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
-    .report-group-card { background: white; border-radius: 10px; padding: 16px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; border-left: 6px solid #2980b9; }
+    .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+    .report-group-card { background: white; border-radius: 10px; padding: 14px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; border-left: 6px solid #2980b9; }
     .report-group-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-    .picker-detail-row { background: white; border: 1px solid #e1e8ed; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-    .crate-pill { background: #eaf2f8; color: #2980b9; border: 1px solid #b9d7ea; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px; }
+    .picker-detail-row { background: white; border: 1px solid #e1e8ed; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+    .crate-pill { background: #eaf2f8; color: #2980b9; border: 1px solid #b9d7ea; padding: 5px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; }
   </style>
 </head>
 <body>
@@ -183,19 +196,19 @@
         <button class="num-btn" onclick="backspacePin()">⌫</button>
         <button class="num-btn enter" onclick="submitLogin()">OK / ENTER</button>
       </div>
-      <div style="font-size: 13px; color: #7f8c8d;">Prvo pokretanje: unesite <b>1234</b></div>
+      <div style="font-size: 12px; color: #7f8c8d;">Prvo pokretanje: unesite <b>1234</b></div>
     </div>
   </div>
 
   <div id="setupModal">
     <div class="setup-card">
       <h3>Inicijalno podešavanje Admina</h3>
-      <p style="font-size: 14px; color: #666;">Unesite svoje podatke i novu četvorocifrenu (ili dužu) šifru.</p>
+      <p style="font-size: 13px; color: #666;">Unesite svoje podatke i novu četvorocifrenu šifru.</p>
       <label>Vaše Ime:</label>
       <input type="text" id="setupAdminName" placeholder="npr. Aleksandar">
       <label>Nova administrativna šifra (PIN):</label>
       <input type="password" id="setupAdminPin" placeholder="npr. 5678" maxlength="10">
-      <button class="btn" style="background:#27ae60; margin-top:20px;" onclick="saveFirstAdmin()">SAČUVAJ I NASTAVI</button>
+      <button class="btn" style="background:#27ae60; margin-top:15px;" onclick="saveFirstAdmin()">SAČUVAJ I NASTAVI</button>
     </div>
   </div>
 
@@ -205,9 +218,9 @@
       <div>👤 <span id="hdrUser" style="color: #2ecc71;">-</span></div>
       <div>👥 Berača: <span id="hdrTotalPickers" style="color: #3498db;">0</span></div>
       <div>⚖️ Dan: <span id="hdrTotalKg">0.00</span> kg</div>
-      <div style="display: flex; gap: 8px;">
-        <button class="btn" style="background:#2980b9; padding:5px 10px; font-size:13px;" onclick="toggleFullScreen()">🖥️ Fullscreen</button>
-        <button class="btn" style="background:#e74c3c; padding:5px 10px; font-size:13px;" onclick="logout()">Odjava</button>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn" style="background:#2980b9; padding:4px 8px; font-size:12px;" onclick="toggleFullScreen()">🖥️ Full</button>
+        <button class="btn" style="background:#e74c3c; padding:4px 8px; font-size:12px;" onclick="logout()">Izlaz</button>
       </div>
     </div>
 
@@ -243,22 +256,22 @@
           <div><b>Broj gajbice:</b> <span id="valCrate" style="color: #d35400;">-</span></div>
           <div><b>Vođa grupe:</b> <span id="valLeader">-</span></div>
           <div><b>Deo zasada:</b> <span id="valSector">-</span></div>
-          <hr style="border: 0; border-top: 1px solid #ddd; margin: 10px 0;">
+          <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
           <div><b>Danas ubrao:</b> <span id="valPickerTotalKg" class="highlight-total">0.00 kg</span></div>
           <div><b>Plasman:</b><br><div id="valPickerRank" class="rank-badge">-</div></div>
         </div>
-        <div id="noPickerMsg" style="color: #7f8c8d; text-align: center; margin-top: 15px;">Skenirajte QR kod gajbice/berača.</div>
+        <div id="noPickerMsg" style="color: #7f8c8d; text-align: center; margin-top: 12px; font-size: 14px;">Skenirajte QR kod gajbice/berača.</div>
       </div>
     </div>
 
     <div id="leaderDashboardSection" style="display: none; padding: 10px 0;">
-      <h2 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">Kontrolna Tabla Grupovođe</h2>
+      <h2 style="text-align: center; color: #2c3e50; margin-bottom: 15px; font-size: 20px;">Kontrolna Tabla Grupovođe</h2>
       <div class="leader-dashboard" id="leaderCardsContainer"></div>
     </div>
 
     <div class="bottom-status-container" id="bottomNavContainer">
-      <div id="status" onclick="requestSerialPort()" title="Kliknite da povežete USB vagu">Kliknite ovde za povezivanje ESP32 Vage...</div>
-      <div class="debug-box" id="debugLog">ESP32 Status: Čeka se port...</div>
+      <div id="status" onclick="requestSerialPort()" title="Kliknite da povežete USB vagu">Poveži ESP32 Vagu...</div>
+      <div class="debug-box" id="debugLog">ESP32: Čeka se port...</div>
       <button class="btn-menu-nav" onclick="openMenuModal()">📂 Administracija</button>
     </div>
   </div>
@@ -266,8 +279,8 @@
   <div id="menuModal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
-        <h2 id="modalTitle">Administracija</h2>
-        <button class="btn" style="background:#e74c3c; width:auto; padding:5px 10px;" onclick="closeModal()">Zatvori ✕</button>
+        <h2 id="modalTitle" style="font-size: 18px; margin: 0;">Administracija</h2>
+        <button class="btn" style="background:#e74c3c; width:auto; padding:4px 10px; font-size: 14px;" onclick="closeModal()">Zatvori ✕</button>
       </div>
       <div class="modal-body" id="modalBodyContent"></div>
     </div>
@@ -370,11 +383,11 @@
     function renderLeaderDashboard() {
       const menuItems = [
         { id: "1", label: "1. Dodaj berača u grupu", desc: "Dodeljivanje brojeva beračima" },
-        { id: "2", label: "2. Dodaj radnika na vagi i grupovođu", desc: "Pregled i dodavanje lica" },
+        { id: "2", label: "2. Radnici na vagi i Grupovođe", desc: "Pregled i dodavanje lica" },
         { id: "3", label: "3. Izveštaj o branju", desc: "Pregled količina i učinka" },
-        { id: "4", label: "4. Koji se zasad bere", desc: "Pregled, vođenje berbe i predefinisanje mape" },
+        { id: "4", label: "4. Koji se zasad bere", desc: "Pregled, vođenje berbe i mape" },
         { id: "5", label: "5. Izmene merenja na vagi", desc: "Korekcija eventualnih grešaka" },
-        { id: "6", label: "6. Obračun dana", desc: "Završni obračun dnevnica i radnika" }
+        { id: "6", label: "6. Obračun dana", desc: "Završni obračun dnevnica i isplata" }
       ];
 
       let html = "";
@@ -429,7 +442,7 @@
           keepReading = true;
           readSerialLoop();
         } else {
-          document.getElementById('status').innerText = "Kliknite ovde za povezivanje ESP32 Vage";
+          document.getElementById('status').innerText = "Poveži ESP32 Vagu";
         }
       } catch (err) {}
     }
@@ -447,7 +460,7 @@
 
     function setConnectedStatus() {
       let stat = document.getElementById('status');
-      stat.innerText = "Vaga uspešno povezana na USB!";
+      stat.innerText = "Vaga uspešno povezana!";
       stat.style.backgroundColor = "#e8f8f5";
       stat.style.color = "#27ae60";
     }
@@ -517,8 +530,8 @@
     }
 
     function openMenuModal() {
-      let html = `<h3>Izaberite opciju:</h3>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px;">`;
+      let html = `<h3 style="margin-bottom:12px; font-size:16px;">Izaberite opciju administracije:</h3>
+        <div style="display: flex; flex-direction: column; gap: 8px;">`;
 
       const menuItems = [
         { id: "1", label: "1. Dodaj berača u grupu" },
@@ -533,7 +546,7 @@
         let hasAccess = (loggedUser.role === 'admin' || loggedUser.permissions.includes(item.id) || (loggedUser.role === 'grupovoda' && item.id === '4'));
         let bgStyle = hasAccess ? "#2980b9" : "#bdc3c7";
         let clickAction = hasAccess ? `openWindow('${item.id}')` : `alert('Nemate dozvolu!')`;
-        html += `<button class="btn" style="background:${bgStyle}; padding: 14px;" onclick="${clickAction}">${item.label}</button>`;
+        html += `<button class="btn" style="background:${bgStyle}; padding: 12px; text-align:left;" onclick="${clickAction}">${item.label}</button>`;
       });
 
       html += `</div>`;
@@ -563,20 +576,13 @@
       if (num === '4') { loadWindow4SubMenu(); return; }
       if (num === '5') { loadWindow5(); return; }
       if (num === '6') { loadWindow6(); return; }
-
-      let backAction = (loggedUser.role === 'grupovoda') ? `closeModal()` : `openMenuModal()`;
-      let backText = (loggedUser.role === 'grupovoda') ? `← Zatvori / Nazad` : `← Nazad na Meni`;
-
-      let content = `<h3>Prozor ${num}</h3><p>Sadržaj u izradi.</p>`;
-      document.getElementById('modalBodyContent').innerHTML = content + `<br><button class="btn" style="background:#34495e;" onclick="${backAction}">${backText}</button>`;
-      document.getElementById('menuModal').style.display = 'flex';
     }
 
     // ==========================================
-    // OPCIJA 6: OBRAČUN DANA PO GRUPAMA (ZA ISPLATU GRUPOVOĐA)
+    // OPCIJA 6: OBRAČUN DANA (KARTICE ZA MOBILNI)
     // ==========================================
     function loadWindow6() {
-      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna dana po grupama...</p>`;
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna dana...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
 
       Promise.all([
@@ -599,30 +605,28 @@
     function renderPayrollGroupsView(groups, pickers, measurements) {
       let defaultPricePerKg = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
 
-      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="margin:0;">💰 6. Obračun dana - Kartice grupa za isplatu</h3>
-        <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="openMenuModal()">← Nazad na Meni</button>
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0; font-size:16px;">💰 Obračun dana - Grupe</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
       </div>
 
       <div class="section-card" style="background:#eaf2f8; border-color:#2980b9;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; flex-direction:column; gap:8px;">
           <div>
-            <h4 style="margin:0; color:#2980b9; border:none;">💵 Cena rada po ubranom kilogramu</h4>
-            <p style="margin:4px 0 0 0; font-size:13px; color:#555;">Unesite cenu u dinarima po kg ubrane borovnice:</p>
+            <h4 style="margin:0; color:#2980b9; border:none; font-size:14px;">💵 Cena po ubranom kg</h4>
           </div>
           <div style="display:flex; gap:8px; align-items:center;">
-            <input type="number" id="inputPricePerKg" value="${defaultPricePerKg}" step="0.5" style="width:100px; padding:8px; font-size:16px; font-weight:bold; text-align:center;">
-            <button class="btn" style="background:#27ae60; width:auto; padding:8px 16px;" onclick="recalculatePayrollGroups()">Ažuriraj Cenu</button>
+            <input type="number" id="inputPricePerKg" value="${defaultPricePerKg}" step="0.5" style="padding:8px; font-size:15px; font-weight:bold; text-align:center; flex:1;">
+            <button class="btn" style="background:#27ae60; width:auto; padding:8px 12px; font-size:13px;" onclick="recalculatePayrollGroups()">Primeni</button>
           </div>
         </div>
       </div>
-      <p style="color:#555; font-size:14px; margin-bottom:15px;">Kliknite na karticu grupe da vidite detaljan obračun po beračima za isplatu i pošaljete ga na Viber:</p>
+      <p style="color:#555; font-size:13px; margin-bottom:10px;">Kliknite na karticu grupe za detalje i Viber slanje:</p>
       <div class="report-card-grid" id="payrollGroupsContainer">`;
 
       if (groups.length === 0) {
-        html += `<p style="text-align:center; color:#7f8c8d; grid-column: 1/-1;">Nema unetih grupa u sistemu (Opcija 2).</p>`;
+        html += `<p style="text-align:center; color:#7f8c8d; grid-column: 1/-1;">Nema unetih grupa.</p>`;
       } else {
-        // Računanje globalnog poretka berača za plasman
         let allPickerStats = {};
         measurements.forEach(m => {
           let pNum = String(m.pickerNum || "-");
@@ -634,7 +638,6 @@
         });
 
         let sortedAllPickers = Object.keys(allPickerStats).sort((a, b) => allPickerStats[b] - allPickerStats[a]);
-        let totalActivePickers = sortedAllPickers.length;
 
         groups.forEach(g => {
           let groupNum = g.extra;
@@ -642,7 +645,6 @@
 
           let groupPickers = pickers.filter(p => String(p.groupNum) === String(groupNum));
           let pickerNums = groupPickers.map(p => p.pickerNum);
-
           let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
           
           let totalGroupKg = 0;
@@ -665,17 +667,17 @@
           let globalRanksObj = JSON.stringify(sortedAllPickers).replace(/"/g, '&quot;');
 
           html += `<div class="report-group-card" onclick='loadGroupPayrollDetail("${groupNum}", "${leaderName}", ${groupPickersObj}, ${groupMeasurementsObj}, ${globalRanksObj}, ${defaultPricePerKg})'>
-            <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Grupa ${groupNum}</div>
-            <div style="font-size:14px; color:#555; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
-            <div style="font-size:13px; color:#666; margin-bottom:10px;">
-              Prosek po beraču: <b>${avgCratesPerPicker} gajbica</b> (${avgKgPerPicker} kg)
+            <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
+            <div style="font-size:13px; color:#555; margin-bottom:6px;">Vođa: <b>${leaderName}</b></div>
+            <div style="font-size:12px; color:#666; margin-bottom:8px;">
+              Prosek: <b>${avgCratesPerPicker} gajbica</b> (${avgKgPerPicker} kg)
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:14px; border-top:1px solid #eee; padding-top:8px;">
+            <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #eee; padding-top:6px;">
               <span>👥 Berača: <b>${groupPickers.length}</b></span>
               <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:15px; margin-top:6px; color:#2980b9; font-weight:bold;">
-              <span>Za isplatu grupi:</span>
+            <div style="display:flex; justify-content:space-between; font-size:14px; margin-top:4px; color:#2980b9; font-weight:bold;">
+              <span>Isplata:</span>
               <span>${totalGroupPay.toFixed(2)} RSD</span>
             </div>
           </div>`;
@@ -705,11 +707,10 @@
       let totalGroupKg = 0;
       let totalGroupPay = 0;
       let totalGroupCrates = groupMeasurements.length;
-
       let pickerDetailsHtml = "";
 
       if (groupPickers.length === 0) {
-        pickerDetailsHtml = `<p style="text-align:center; color:#7f8c8d;">Nema dodeljenih berača u ovoj grupi.</p>`;
+        pickerDetailsHtml = `<p style="text-align:center; color:#7f8c8d;">Nema berača u grupi.</p>`;
       } else {
         groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
 
@@ -727,18 +728,20 @@
           let rankStr = rankIndex !== -1 ? `${rankIndex + 1} od ${globalRanks.length}` : "-";
 
           pickerDetailsHtml += `<div class="picker-detail-row">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; gap:6px;">
               <div>
-                <span style="font-size:17px; color:#c0392b; font-weight:bold;">Berač br. ${pNum}</span>
-                <span style="margin-left:8px;" class="rank-badge">Plasman: ${rankStr}</span>
+                <span style="font-size:15px; color:#c0392b; font-weight:bold;">Berač br. ${pNum}</span><br>
+                <span class="rank-badge" style="font-size:11px; margin-top:2px;">Plasman: ${rankStr}</span>
               </div>
               <div style="text-align:right;">
-                <span style="font-size:13px; color:#666;">Gajbica: <b>${pCrates.length}</b></span> | 
-                <span style="font-size:15px; color:#27ae60; font-weight:bold;">${pKg.toFixed(2)} kg</span> | 
-                <span style="font-size:15px; color:#2980b9; font-weight:bold;">${pPay.toFixed(2)} RSD</span>
+                <span style="font-size:14px; color:#27ae60; font-weight:bold;">${pKg.toFixed(2)} kg</span><br>
+                <span style="font-size:14px; color:#2980b9; font-weight:bold;">${pPay.toFixed(2)} RSD</span>
               </div>
             </div>
-            <div style="font-size:13px; color:#7f8c8d;">Kalo: ${pKalo.toFixed(2)} kg</div>
+            <div style="font-size:12px; color:#666; display:flex; justify-content:space-between; border-top:1px dashed #eee; padding-top:4px; margin-top:4px;">
+              <span>Gajbica: <b>${pCrates.length}</b></span>
+              <span>Kalo: <b>${pKalo.toFixed(2)} kg</b></span>
+            </div>
           </div>`;
         });
       }
@@ -746,24 +749,24 @@
       let avgKg = groupPickers.length > 0 ? (totalGroupKg / groupPickers.length).toFixed(2) : "0.00";
       let avgCrates = groupPickers.length > 0 ? (totalGroupCrates / groupPickers.length).toFixed(1) : "0.0";
 
-      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
-        <h3 style="margin:0;">👥 Isplata Grupa ${groupNum} — Vođa: ${leaderName}</h3>
-        <div style="display:flex; gap:8px;">
-          <button class="btn" style="background:#27ae60; width:auto; padding:6px 12px; font-size:13px;" onclick='sendViberReport("${groupNum}", "${leaderName}", ${JSON.stringify(groupPickers)}, ${JSON.stringify(groupMeasurements)}, ${pricePerKg})'>💬 Pošalji na Viber</button>
-          <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="loadWindow6()">← Nazad na grupe</button>
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:6px;">
+        <h3 style="margin:0; font-size:15px;">👥 Grupa ${groupNum}: ${leaderName}</h3>
+        <div style="display:flex; gap:4px;">
+          <button class="btn" style="background:#27ae60; width:auto; padding:5px 8px; font-size:12px;" onclick='sendViberReport("${groupNum}", "${leaderName}", ${JSON.stringify(groupPickers)}, ${JSON.stringify(groupMeasurements)}, ${pricePerKg})'>💬 Viber</button>
+          <button class="btn" style="background:#34495e; width:auto; padding:5px 8px; font-size:12px;" onclick="loadWindow6()">← Nazad</button>
         </div>
       </div>
 
-      <div class="section-card" style="background:#fdfefe;">
-        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:14px; color:#333;">
-          <div>👥 Broj berača: <b>${groupPickers.length}</b></div>
-          <div>⚖️ Ukupno ubrano: <b style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</b></div>
-          <div>💰 Ukupno za isplatu: <b style="color:#2980b9;">${totalGroupPay.toFixed(2)} RSD</b></div>
-          <div>📊 Prosek: <b>${avgCrates} gajbica</b> (${avgKg} kg / berač)</div>
+      <div class="section-card" style="background:#fdfefe; padding:10px;">
+        <div style="display:flex; flex-direction:column; gap:4px; font-size:13px; color:#333;">
+          <div style="display:flex; justify-content:space-between;"><span>Berača:</span> <b>${groupPickers.length}</b></div>
+          <div style="display:flex; justify-content:space-between;"><span>Ubrano:</span> <b style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</b></div>
+          <div style="display:flex; justify-content:space-between;"><span>Za isplatu:</span> <b style="color:#2980b9;">${totalGroupPay.toFixed(2)} RSD</b></div>
+          <div style="display:flex; justify-content:space-between;"><span>Prosek:</span> <b>${avgCrates} gajb. (${avgKg} kg)</b></div>
         </div>
       </div>
 
-      <div style="margin-top:15px;">${pickerDetailsHtml}</div>`;
+      <div style="margin-top:10px;">${pickerDetailsHtml}</div>`;
 
       document.getElementById('modalBodyContent').innerHTML = html;
       document.getElementById('modalBodyContent').scrollTop = 0;
@@ -772,7 +775,6 @@
     function sendViberReport(groupNum, leaderName, groupPickers, groupMeasurements, pricePerKg) {
       let totalGroupKg = 0;
       let totalGroupPay = 0;
-      let totalCrates = groupMeasurements.length;
 
       let text = `📦 *ISPLATA - GRUPA ${groupNum}* (%0AVođa: ${leaderName})%0A-----------------------------------%0A`;
 
@@ -793,20 +795,20 @@
       let avgKg = groupPickers.length > 0 ? (totalGroupKg / groupPickers.length).toFixed(2) : "0.00";
 
       text += `-----------------------------------%0A`;
-      text += `👥 Ukupno berača: ${groupPickers.length}%0A`;
-      text += `⚖️ Ukupno ubrano: *${totalGroupKg.toFixed(2)} kg*%0A`;
-      text += `📊 Prosečno po beraču: *${avgKg} kg*%0A`;
-      text += `💰 UKUPNO ZA ISPLATU: *${totalGroupPay.toFixed(2)} RSD*`;
+      text += `👥 Berača: ${groupPickers.length}%0A`;
+      text += `⚖️ Ukupno: *${totalGroupKg.toFixed(2)} kg*%0A`;
+      text += `📊 Prosek: *${avgKg} kg*%0A`;
+      text += `💰 ZA ISPLATU: *${totalGroupPay.toFixed(2)} RSD*`;
 
       let viberUrl = `viber://forward?text=${text}`;
       window.open(viberUrl, '_blank');
     }
 
     // ==========================================
-    // OPCIJA 5: IZMENE MERENJA NA VAGI
+    // OPCIJA 5: IZMENE MERENJA (KARTICE ZA MOBILNI)
     // ==========================================
     function loadWindow5() {
-      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje radnika na vagi i merenja...</p>`;
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje merenja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
 
       Promise.all([
@@ -816,32 +818,25 @@
       .then(([resWorkers, resMeas]) => {
         let workers = (resWorkers.success && resWorkers.workers) ? resWorkers.workers : [];
         let measurements = (resMeas.success && resMeas.measurements) ? resMeas.measurements : [];
-
         renderWindow5View(workers, measurements);
-      })
-      .catch(err => {
-        alert("Greška: " + err.message);
       });
     }
 
     function renderWindow5View(workers, measurements) {
-      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="margin:0;">⚙️ 5. Izmene merenja na vagi (Ispravka grešaka)</h3>
-        <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="openMenuModal()">← Nazad na Meni</button>
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0; font-size:16px;">⚙️ Izmene merenja</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
       </div>
-      <p style="color:#555; font-size:14px; margin-bottom:15px;">Pregled merenja grupisan po radnicima na vagi (Opcija 2) i sortiran po vremenu. Svaka izmena ili brisanje zahteva odobrenje (PIN) administratora.</p>
+      <p style="color:#555; font-size:13px; margin-bottom:10px;">Pregled i ispravka merenja (Zahteva Admin PIN):</p>
       <div>`;
 
       let scaleWorkersMap = {};
-      workers.forEach(w => {
-        scaleWorkersMap[String(w.extra)] = w.name;
-      });
+      workers.forEach(w => { scaleWorkersMap[String(w.extra)] = w.name; });
 
       if (measurements.length === 0) {
         measurements = [
           { id: "m1", scaleNum: "1", time: "08:15", pickerNum: "01", crateNum: "01", weight: 3.4 },
-          { id: "m2", scaleNum: "1", time: "09:30", pickerNum: "02", crateNum: "01", weight: 3.2 },
-          { id: "m3", scaleNum: "2", time: "08:45", pickerNum: "05", crateNum: "01", weight: 3.5 }
+          { id: "m2", scaleNum: "1", time: "09:30", pickerNum: "02", crateNum: "01", weight: 3.2 }
         ];
       }
 
@@ -849,7 +844,7 @@
       measurements.forEach(m => {
         let sNum = String(m.scaleNum || "1");
         if (!groupedByScale[sNum]) {
-          let workerName = scaleWorkersMap[sNum] || m.scaleName || "Nepoznat radnik";
+          let workerName = scaleWorkersMap[sNum] || m.scaleName || "Radnik";
           groupedByScale[sNum] = { scaleName: workerName, list: [] };
         }
         groupedByScale[sNum].list.push(m);
@@ -859,34 +854,26 @@
         let scaleData = groupedByScale[sNum];
         scaleData.list.sort((a, b) => (a.time || "").localeCompare(b.time || ""));
 
-        html += `<div class="group-section" style="border-left: 5px solid #e67e22;">
-          <h5>⚖️ Vaga br. ${sNum} — Radnik: <b>${scaleData.scaleName}</b> (${scaleData.list.length} merenja)</h5>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Vreme</th>
-                <th>Berač</th>
-                <th>Gajbica</th>
-                <th>Težina</th>
-                <th style="text-align:right;">Akcija (Zahteva Admin PIN)</th>
-              </tr>
-            </thead>
-            <tbody>`;
+        html += `<div class="group-section" style="border-left: 4px solid #e67e22;">
+          <h5>⚖️ Vaga br. ${sNum} — <b>${scaleData.scaleName}</b></h5>`;
 
         scaleData.list.forEach(item => {
-          html += `<tr>
-            <td><b>⏰ ${item.time || '-'}</b></td>
-            <td>Berač br. ${item.pickerNum || '-'}</td>
-            <td>Gajbica ${item.crateNum || '-'}</td>
-            <td style="color:#27ae60; font-weight:bold;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</td>
-            <td style="text-align:right;">
-              <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')" style="margin-right:6px;">Izmeni</button>
+          html += `<div class="mobile-card-item">
+            <div class="mobile-card-header">
+              <span>⏰ ${item.time || '-'} | Berač ${item.pickerNum || '-'}</span>
+              <span style="color:#27ae60;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</span>
+            </div>
+            <div class="mobile-card-body">
+              <span>Gajbica: ${item.crateNum || '-'}</span>
+            </div>
+            <div class="mobile-card-actions">
+              <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')">Izmeni</button>
               <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši</button>
-            </td>
-          </tr>`;
+            </div>
+          </div>`;
         });
 
-        html += `</tbody></table></div>`;
+        html += `</div>`;
       }
 
       html += `</div>`;
@@ -894,15 +881,10 @@
     }
 
     function promptAdminAction(actionType, measurementId, pickerNum, currentWeight) {
-      let actionTitle = (actionType === 'delete') ? `Brisanje merenja za berača br. ${pickerNum}` : `Izmena težine (${currentWeight} kg) za berača br. ${pickerNum}`;
-      
-      let adminPin = prompt(`${actionTitle}\n\nUnesite ADMINISTRATIVNI PIN za odobrenje izmene:`, "");
+      let actionTitle = (actionType === 'delete') ? `Brisanje merenja berača ${pickerNum}` : `Izmena težine (${currentWeight} kg) berača ${pickerNum}`;
+      let adminPin = prompt(`${actionTitle}\n\nUnesite ADMINISTRATIVNI PIN:`, "");
       if (adminPin === null) return;
-
-      if (!adminPin.trim()) {
-        alert("Morate uneti administratorski PIN!");
-        return;
-      }
+      if (!adminPin.trim()) { alert("Unesite PIN!"); return; }
 
       fetch(WEB_APP_URL, {
         method: "POST",
@@ -911,20 +893,17 @@
           adminPin: adminPin.trim(),
           measurementId: measurementId,
           actionType: actionType,
-          newWeight: (actionType === 'edit') ? prompt("Unesite novu tačnu težinu u kg:", currentWeight) : null
+          newWeight: (actionType === 'edit') ? prompt("Nova težina u kg:", currentWeight) : null
         })
       })
       .then(res => res.json())
       .then(res => {
         if (res.success) {
-          alert("Izmena uspešno odobrena i sačuvana!");
+          alert("Uspešno izmenjeno!");
           loadWindow5();
         } else {
-          alert(res.error || "Pogrešan administratorski PIN ili greška pri izmeni!");
+          alert(res.error || "Pogrešan PIN!");
         }
-      })
-      .catch(err => {
-        alert("Serverska greška: " + err.message);
       });
     }
 
@@ -932,7 +911,7 @@
     // OPCIJA 3: IZVEŠTAJ O BRANJU
     // ==========================================
     function loadWindow3() {
-      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja o branju...</p>`;
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
 
       Promise.all([
@@ -941,45 +920,33 @@
         fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
       ])
       .then(([resWorkers, resPickers, resMeas]) => {
-        let groups = resWorkers.success ? resWorkers.groups : [];
-        let pickers = resPickers.success ? resPickers.pickers : [];
-        let measurements = resMeas.success ? resMeas.measurements : [];
-
-        renderHarvestReportMainView(groups, pickers, measurements);
-      })
-      .catch(err => {
-        alert("Greška pri učitavanju izveštaja: " + err.message);
+        renderHarvestReportMainView(resWorkers.groups || [], resPickers.pickers || [], resMeas.measurements || []);
       });
     }
 
     function renderHarvestReportMainView(groups, pickers, measurements) {
-      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="margin:0;">📊 3. Izveštaj o branju - Pregled po grupama</h3>
-        <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="openMenuModal()">← Nazad na Meni</button>
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0; font-size:16px;">📊 Izveštaj po grupama</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
       </div>
-      <p style="color:#555; font-size:14px; margin-bottom:15px;">Kliknite na karticu grupe da vidite detaljan učinak berača i gajbica:</p>
+      <p style="color:#555; font-size:13px; margin-bottom:10px;">Kliknite na grupu za detalje berača:</p>
       <div class="report-card-grid" id="reportGroupsContainer">`;
 
       if (groups.length === 0) {
-        html += `<p style="text-align:center; color:#7f8c8d; grid-column: 1/-1;">Nema unetih grupovođa i grupa u sistemu (Opcija 2).</p>`;
+        html += `<p style="text-align:center; color:#7f8c8d; grid-column: 1/-1;">Nema grupa.</p>`;
       } else {
         groups.forEach(g => {
           let groupNum = g.extra;
           let leaderName = g.name;
-          
           let groupPickers = pickers.filter(p => String(p.groupNum) === String(groupNum));
           let pickerNums = groupPickers.map(p => p.pickerNum);
-          
           let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
           let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
 
-          let pickersDataObj = JSON.stringify(groupPickers).replace(/"/g, '&quot;');
-          let measurementsDataObj = JSON.stringify(groupMeasurements).replace(/"/g, '&quot;');
-
-          html += `<div class="report-group-card" onclick='loadGroupPickersDetail("${groupNum}", "${leaderName}", ${pickersDataObj}, ${measurementsDataObj})'>
-            <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">Grupa ${groupNum}</div>
-            <div style="font-size:14px; color:#555; margin-bottom:10px;">Vođa: <b>${leaderName}</b></div>
-            <div style="display:flex; justify-content:space-between; font-size:14px; border-top:1px solid #eee; padding-top:8px;">
+          html += `<div class="report-group-card" onclick='loadGroupPickersDetail("${groupNum}", "${leaderName}", ${JSON.stringify(groupPickers)}, ${JSON.stringify(groupMeasurements)})'>
+            <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
+            <div style="font-size:13px; color:#555; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #eee; padding-top:6px;">
               <span>👥 Berača: <b>${groupPickers.length}</b></span>
               <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
             </div>
@@ -992,15 +959,15 @@
     }
 
     function loadGroupPickersDetail(groupNum, leaderName, groupPickers, groupMeasurements) {
-      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="margin:0;">👥 Grupa ${groupNum} — Vođa: ${leaderName}</h3>
-        <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="loadWindow3()">← Nazad na grupe</button>
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:6px;">
+        <h3 style="margin:0; font-size:15px;">👥 Grupa ${groupNum} (${leaderName})</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:5px 8px; font-size:12px;" onclick="loadWindow3()">← Nazad</button>
       </div>
-      <p style="color:#555; font-size:14px; margin-bottom:15px;">Učinak berača i pojedinačne gajbice:</p>
+      <p style="color:#555; font-size:13px; margin-bottom:10px;">Učinak berača:</p>
       <div>`;
 
       if (groupPickers.length === 0) {
-        html += `<p style="text-align:center; color:#7f8c8d;">Nema dodeljenih berača u ovoj grupi (Opcija 1).</p>`;
+        html += `<p style="text-align:center; color:#7f8c8d;">Nema berača u grupi.</p>`;
       } else {
         groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
 
@@ -1010,30 +977,18 @@
           let totalPickerKg = pickerCrates.reduce((sum, c) => sum + (parseFloat(c.weight) || 0), 0);
 
           html += `<div class="picker-detail-row">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <div>
-                <span style="font-size:18px; color:#c0392b; font-weight:bold;">Berač br. ${pNum}</span>
-              </div>
-              <div style="text-align:right;">
-                <span style="font-size:13px; color:#666;">Ukupno gajbica: <b>${pickerCrates.length}</b></span> | 
-                <span style="font-size:15px; color:#27ae60; font-weight:bold;">${totalPickerKg.toFixed(2)} kg</span>
-              </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:15px; color:#c0392b; font-weight:bold;">Berač br. ${pNum}</span>
+              <span style="font-size:14px; color:#27ae60; font-weight:bold;">${totalPickerKg.toFixed(2)} kg (${pickerCrates.length} gajb.)</span>
             </div>`;
 
-          if (pickerCrates.length === 0) {
-            html += `<div style="font-size:13px; color:#95a5a6; font-style:italic;">Nema unetih merenja za ovog berača danas.</div>`;
-          } else {
-            html += `<div style="display:flex; flex-wrap:wrap; gap:8px;">`;
+          if (pickerCrates.length > 0) {
+            html += `<div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">`;
             pickerCrates.forEach(c => {
-              html += `<div class="crate-pill">
-                <span>⏰ ${c.time || '-'}</span>
-                <span style="background:white; padding:2px 6px; border-radius:4px; color:#333;">Gajbica ${c.crateNum || '-'}</span>
-                <span style="color:#27ae60;">${(parseFloat(c.weight) || 0).toFixed(2)}kg</span>
-              </div>`;
+              html += `<div class="crate-pill">⏰ ${c.time || '-'} : ${c.weight}kg</div>`;
             });
             html += `</div>`;
           }
-
           html += `</div>`;
         });
       }
@@ -1043,7 +998,285 @@
     }
 
     // ==========================================
-    // OPCIJA 4: PODMENI (PROVERA DOZVOLA ZA MAPU)
+    // OPCIJA 1: DODAVANJE BERAČA U GRUPU
+    // ==========================================
+    function loadWindow1() {
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje berača...</p>`;
+      document.getElementById('menuModal').style.display = 'flex';
+
+      Promise.all([
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json())
+      ])
+      .then(([resGroups, resPickers]) => {
+        let groups = resGroups.success ? resGroups.groups : [];
+        let pickers = resPickers.success ? resPickers.pickers : [];
+
+        let groupSelectHtml = "";
+        if (loggedUser.role === 'grupovoda') {
+          let myGroupNum = loggedUser.extraInfo || "1";
+          groupSelectHtml = `<input type="hidden" id="pickerGroupSelect" value="${myGroupNum}">
+                             <input type="text" value="Moja grupa (${myGroupNum})" disabled style="background:#eaeded; font-weight:bold; flex:1;">`;
+        } else {
+          let options = `<option value="">-- Izaberi grupu --</option>`;
+          groups.forEach(g => { options += `<option value="${g.extra}" data-name="${g.name}">Grupa ${g.extra} (${g.name})</option>`; });
+          groupSelectHtml = `<select id="pickerGroupSelect" style="flex:1; padding:8px; border-radius:6px; border:1px solid #bdc3c7;">${options}</select>`;
+        }
+
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:16px;">➕ Dodavanje berača</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+        </div>
+          
+          <div class="section-card">
+            <h4>Unesi broj berača</h4>
+            <div class="form-row">
+              <div class="form-group-col"><label>Broj</label><input type="text" id="pickerNumInput" placeholder="npr. 01" maxlength="4"></div>
+              <div class="form-group-col" style="flex:2;"><label>Grupa</label>${groupSelectHtml}</div>
+            </div>
+            <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="savePicker()">Dodaj berača</button>
+          </div>
+
+          <div class="section-card">
+            <h4>Raspored berača (${pickers.length})</h4>`;
+
+        let groupedPickers = {};
+        groups.forEach(g => { groupedPickers[g.extra] = { leader: g.name, list: [] }; });
+        pickers.forEach(p => {
+          if (!groupedPickers[p.groupNum]) {
+            groupedPickers[p.groupNum] = { leader: p.leaderName || 'Grupa', list: [] };
+          }
+          groupedPickers[p.groupNum].list.push(p.pickerNum);
+        });
+
+        for (let gNum in groupedPickers) {
+          let groupData = groupedPickers[gNum];
+          groupData.list.sort((a, b) => parseInt(a) - parseInt(b));
+
+          html += `<div class="group-section">
+            <h5>Grupa ${gNum} (${groupData.leader}) - ${groupData.list.length} berača</h5>
+            <div class="picker-grid">`;
+
+          if (groupData.list.length === 0) {
+            html += `<span style="font-size:12px; color:#95a5a6;">Nema berača.</span>`;
+          } else {
+            groupData.list.forEach(num => {
+              html += `<div class="picker-chip" onclick="deletePicker('${num}')">${num}</div>`;
+            });
+          }
+          html += `</div></div>`;
+        }
+
+        html += `</div>`;
+        document.getElementById('modalBodyContent').innerHTML = html;
+      });
+    }
+
+    function savePicker() {
+      let pickerNum = document.getElementById('pickerNumInput').value.trim();
+      let groupNum, leaderName;
+
+      if (loggedUser.role === 'grupovoda') {
+        groupNum = document.getElementById('pickerGroupSelect').value;
+        leaderName = loggedUser.name;
+      } else {
+        let selectEl = document.getElementById('pickerGroupSelect');
+        groupNum = selectEl.value;
+        leaderName = selectEl.selectedIndex > 0 ? selectEl.options[selectEl.selectedIndex].getAttribute('data-name') : "Vođa";
+      }
+
+      if (!pickerNum || !groupNum) { alert("Unesite broj berača i grupu!"); return; }
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "savePickerToGroup", data: { pickerNum, groupNum, leaderName } })
+      })
+      .then(res => res.json())
+      .then(res => { if (res.success) loadWindow1(); else alert(res.error || "Greška"); });
+    }
+
+    function deletePicker(pickerNumber) {
+      if (!confirm("Ukloniti berača broj " + pickerNumber + "?")) return;
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "deletePicker", pickerNumber: pickerNumber })
+      })
+      .then(res => res.json())
+      .then(res => { if (res.success) loadWindow1(); });
+    }
+
+    // ==========================================
+    // OPCIJA 2: RADNICI NA VAGI I GRUPOVOĐE
+    // ==========================================
+    function loadWindow2(activeTab = 'vaga') {
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje...</p>`;
+      document.getElementById('menuModal').style.display = 'flex';
+      
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "getWorkersAndGroups" })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (!res.success) return;
+
+        let nextVagaNum = res.workers.length > 0 ? String(Math.max(...res.workers.map(w => parseInt(w.extra) || 0)) + 1) : "1";
+        let nextGroupNum = res.groups.length > 0 ? String(Math.max(...res.groups.map(g => parseInt(g.extra) || 0)) + 1) : "1";
+
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:16px;">👥 Osoblje i Dozvole</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+        </div>
+          
+          <div class="tab-header">
+            <button class="tab-btn ${activeTab === 'vaga' ? 'active' : ''}" onclick="loadWindow2('vaga')">⚖️ Radnici na vagi</button>
+            <button class="tab-btn ${activeTab === 'grupa' ? 'active' : ''}" onclick="loadWindow2('grupa')">👥 Grupovođe</button>
+          </div>`;
+
+        if (activeTab === 'vaga') {
+          html += `<div class="section-card">
+            <h4 id="wFormTitle">Novi radnik na vagi</h4>
+            <div class="form-row">
+              <div class="form-group-col"><label>Br. vage</label><input type="text" id="wVagaNum" value="${nextVagaNum}" maxlength="3"></div>
+              <div class="form-group-col" style="flex:2;"><label>Ime</label><input type="text" id="wName" placeholder="Ime"></div>
+              <div class="form-group-col"><label>PIN (2 cifre)</label><input type="text" id="wPin" placeholder="PIN" maxlength="2"></div>
+            </div>
+            <div style="font-weight:bold; font-size:12px; margin-top:8px;">Dozvole:</div>
+            <div class="checkbox-group" id="newWagaChecks">
+              <label><input type="checkbox" value="1"> 1. Berači</label>
+              <label><input type="checkbox" value="2"> 2. Vaga</label>
+              <label><input type="checkbox" value="3"> 3. Izveštaj</label>
+              <label><input type="checkbox" value="4"> 4. Zasad</label>
+              <label><input type="checkbox" value="5"> 5. Izmene</label>
+              <label><input type="checkbox" value="6"> 6. Obračun</label>
+              <label><input type="checkbox" value="map_view"> 🗺️ Pregled mape</label>
+              <label><input type="checkbox" value="map_mark"> 🗺️ Obeležavanje</label>
+              <label><input type="checkbox" value="map_redefine"> ⚙️ Predefinisanje</label>
+            </div>
+            <div style="display:flex; gap:6px; margin-top:10px;">
+              <button class="btn" style="background:#27ae60; flex:2;" onclick="saveWorker('vaga')">Sačuvaj</button>
+              <button class="btn" style="background:#7f8c8d; flex:1; display:none;" id="wCancelBtn" onclick="loadWindow2('vaga')">Otkaži</button>
+            </div>`;
+
+          res.workers.forEach(w => {
+            let permsStr = JSON.stringify(w.permissions).replace(/"/g, '&quot;');
+            html += `<div class="mobile-card-item" onclick="fillFormToEdit('${w.pin}', '${w.name}', '${w.extra}', 'vaga', ${permsStr})">
+              <div class="mobile-card-header">
+                <span>Vaga br. ${w.extra || '-'} : ${w.name}</span>
+                <span style="font-size:13px; color:#666;">PIN: ${w.pin}</span>
+              </div>
+              <div class="mobile-card-actions">
+                <button class="btn-action btn-del" onclick="event.stopPropagation(); deleteEntry('${w.pin}')">Obriši</button>
+              </div>
+            </div>`;
+          });
+          html += `</div>`;
+        } else {
+          html += `<div class="section-card">
+            <h4 id="gFormTitle">Novi grupovođa</h4>
+            <div class="form-row">
+              <div class="form-group-col"><label>Br. grupe</label><input type="text" id="gGroupNum" value="${nextGroupNum}" maxlength="3"></div>
+              <div class="form-group-col" style="flex:2;"><label>Ime</label><input type="text" id="gName" placeholder="Ime"></div>
+              <div class="form-group-col"><label>PIN (3 cifre)</label><input type="text" id="gPin" placeholder="PIN" maxlength="3"></div>
+            </div>
+            <div style="font-weight:bold; font-size:12px; margin-top:8px;">Dozvole:</div>
+            <div class="checkbox-group" id="newGrupChecks">
+              <label><input type="checkbox" value="1"> 1. Berači</label>
+              <label><input type="checkbox" value="2"> 2. Vaga</label>
+              <label><input type="checkbox" value="3"> 3. Izveštaj</label>
+              <label><input type="checkbox" value="4"> 4. Zasad</label>
+              <label><input type="checkbox" value="5"> 5. Izmene</label>
+              <label><input type="checkbox" value="6"> 6. Obračun</label>
+              <label><input type="checkbox" value="map_view"> 🗺️ Pregled mape</label>
+              <label><input type="checkbox" value="map_mark" checked> 🗺️ Obeležavanje</label>
+              <label><input type="checkbox" value="map_redefine"> ⚙️ Predefinisanje</label>
+            </div>
+            <div style="display:flex; gap:6px; margin-top:10px;">
+              <button class="btn" style="background:#27ae60; flex:2;" onclick="saveWorker('grupovoda')">Sačuvaj</button>
+              <button class="btn" style="background:#7f8c8d; flex:1; display:none;" id="gCancelBtn" onclick="loadWindow2('grupa')">Otkaži</button>
+            </div>`;
+
+          res.groups.forEach(g => {
+            let permsStr = JSON.stringify(g.permissions).replace(/"/g, '&quot;');
+            html += `<div class="mobile-card-item" onclick="fillFormToEdit('${g.pin}', '${g.name}', '${g.extra}', 'grupovoda', ${permsStr})">
+              <div class="mobile-card-header">
+                <span>Grupa br. ${g.extra || '-'} : ${g.name}</span>
+                <span style="font-size:13px; color:#666;">PIN: ${g.pin}</span>
+              </div>
+              <div class="mobile-card-actions">
+                <button class="btn-action btn-del" onclick="event.stopPropagation(); deleteEntry('${g.pin}')">Obriši</button>
+              </div>
+            </div>`;
+          });
+          html += `</div>`;
+        }
+
+        document.getElementById('modalBodyContent').innerHTML = html;
+      });
+    }
+
+    function fillFormToEdit(pin, name, extra, role, perms) {
+      if (role === 'vaga') {
+        document.getElementById('wVagaNum').value = extra;
+        document.getElementById('wName').value = name;
+        document.getElementById('wPin').value = pin;
+        document.getElementById('wPin').disabled = true;
+        document.getElementById('wFormTitle').innerText = "Izmena radnika (PIN: " + pin + ")";
+        document.getElementById('wCancelBtn').style.display = 'block';
+        document.querySelectorAll('#newWagaChecks input').forEach(chk => { chk.checked = perms.includes(chk.value); });
+      } else {
+        document.getElementById('gGroupNum').value = extra;
+        document.getElementById('gName').value = name;
+        document.getElementById('gPin').value = pin;
+        document.getElementById('gPin').disabled = true;
+        document.getElementById('gFormTitle').innerText = "Izmena grupovođe (PIN: " + pin + ")";
+        document.getElementById('gCancelBtn').style.display = 'block';
+        document.querySelectorAll('#newGrupChecks input').forEach(chk => { chk.checked = perms.includes(chk.value); });
+      }
+    }
+
+    function saveWorker(role) {
+      let name, pin, extra, perms;
+      if (role === 'vaga') {
+        extra = document.getElementById('wVagaNum').value.trim();
+        name = document.getElementById('wName').value.trim();
+        pin = document.getElementById('wPin').value.trim();
+        perms = Array.from(document.querySelectorAll('#newWagaChecks input:checked')).map(el => el.value);
+        if (pin.length !== 2) { alert("PIN radnika na vagi mora imati 2 cifre!"); return; }
+      } else {
+        extra = document.getElementById('gGroupNum').value.trim();
+        name = document.getElementById('gName').value.trim();
+        pin = document.getElementById('gPin').value.trim();
+        perms = Array.from(document.querySelectorAll('#newGrupChecks input:checked')).map(el => el.value);
+        if (pin.length !== 3) { alert("PIN grupovođe mora imati 3 cifre!"); return; }
+      }
+
+      if (!name || !pin) { alert("Popunite sva polja!"); return; }
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "saveWorkerOrGroup", data: { name, pin, role, extra, permissions: perms } })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          loadWindow2(role === 'vaga' ? 'vaga' : 'grupa');
+        } else { alert("Greška: " + res.error); }
+      });
+    }
+
+    function deleteEntry(pin) {
+      if (!confirm("Obrisati ovog korisnika?")) return;
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "deleteWorkerOrGroup", pin: pin })
+      })
+      .then(res => res.json())
+      .then(res => { if (res.success) loadWindow2(); });
+    }
+
+    // ==========================================
+    // OPCIJA 4: MAPA ZASADA (PODMENI I PRIKAZ)
     // ==========================================
     function loadWindow4SubMenu() {
       let isAdmin = (loggedUser.role === 'admin');
@@ -1052,68 +1285,54 @@
       let canView = isAdmin || canMark || canRedefine || (loggedUser.permissions && loggedUser.permissions.includes('map_view'));
 
       if (!canView && !canMark && !canRedefine) {
-        alert("Nemate dozvolu za pristup mapi zasada!");
+        alert("Nemate dozvolu!");
         return;
       }
       
-      let html = `<h3>4. Koji se zasad bere</h3>
-        <p style="color:#555; font-size:14px; margin-bottom:15px;">Izaberite željeni režim rada sa mapom zasada:</p>
-        <div style="display: flex; flex-direction: column; gap: 12px;">`;
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0; font-size:16px;">🌱 Zasad i Mapa</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top:10px;">`;
 
       if (canMark || canView) {
-        let btnText = canMark ? "🌱 1. Pregled i vođenje berbe" : "🌱 1. Pregled mape (Samo čitanje)";
-        let descText = canMark ? "Praćenje stanja i potvrđivanje branja polja" : "Pregled stanja zauzetosti polja i redova";
-        html += `<button class="btn" style="background:#2980b9; text-align:left; padding:15px;" onclick="loadHarvestMap('${canMark ? 'preview' : 'view_only'}')">
+        let btnText = canMark ? "🌱 Pregled i vođenje berbe" : "🌱 Pregled mape";
+        html += `<button class="btn" style="background:#2980b9; text-align:left; padding:12px;" onclick="loadHarvestMap('${canMark ? 'preview' : 'view_only'}')">
           ${btnText}
-          <div style="font-size:12px; font-weight:normal; opacity:0.9; margin-top:4px;">${descText}</div>
         </button>`;
       }
 
       if (canRedefine) {
-        html += `<button class="btn" style="background:#8e44ad; text-align:left; padding:15px;" onclick="loadHarvestMap('admin')">
-          ⚙️ 2. Predefinisanje mape zasada
-          <div style="font-size:12px; font-weight:normal; opacity:0.9; margin-top:4px;">Dodavanje njiva, redova, preimenovanje i definisanje broja polja</div>
+        html += `<button class="btn" style="background:#8e44ad; text-align:left; padding:12px;" onclick="loadHarvestMap('admin')">
+          ⚙️ Predefinisanje mape zasada
         </button>`;
       }
 
       html += `</div>`;
-
-      let backAction = (loggedUser.role === 'grupovoda') ? `closeModal()` : `openMenuModal()`;
-      let backText = (loggedUser.role === 'grupovoda') ? `← Zatvori / Nazad` : `← Nazad na Meni`;
-
-      html += `<br><button class="btn" style="background:#34495e; margin-top:15px;" onclick="${backAction}">${backText}</button>`;
-      
       document.getElementById('modalBodyContent').innerHTML = html;
       document.getElementById('menuModal').style.display = 'flex';
     }
 
-    // ==========================================
-    // MAPA ZASADA
-    // ==========================================
     function loadHarvestMap(mode) {
       let isAdminMode = (mode === 'admin');
       let isViewOnly = (mode === 'view_only');
-      let titleText = isAdminMode ? "Predefinisanje mape zasada" : (isViewOnly ? "Pregled mape zasada" : "Pregled i vođenje berbe");
+      let titleText = isAdminMode ? "Predefinisanje mape" : "Vođenje berbe";
 
-      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="margin:0;">🌱 ${titleText}</h3>
-        <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:13px;" onclick="loadWindow4SubMenu()">← Nazad na izboru</button>
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0; font-size:16px;">🌱 ${titleText}</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="loadWindow4SubMenu()">← Nazad</button>
       </div>`;
 
       if (isAdminMode) {
         html += `<div class="section-card">
-          <h4>➕ Dodaj novu njivu</h4>
+          <h4>Dodaj njivu</h4>
           <div class="form-row">
-            <div class="form-group-col"><label>Naziv njive</label><input type="text" id="newFieldName" placeholder="npr. Njiva 3"></div>
-            <div class="form-group-col"><label>Broj redova</label><input type="number" id="newRowCount" min="1" value="3"></div>
-            <div class="form-group-col"><label>Polja po redu</label><input type="number" id="newFieldsCount" min="1" value="4"></div>
-            <button class="btn" style="background:#27ae60; width:auto; padding:8px 16px;" onclick="addNewFieldToMap()">Kreiraj Njivu</button>
+            <div class="form-group-col"><label>Naziv</label><input type="text" id="newFieldName" placeholder="npr. Njiva 3"></div>
+            <div class="form-group-col"><label>Redova</label><input type="number" id="newRowCount" min="1" value="3"></div>
+            <div class="form-group-col"><label>Polja</label><input type="number" id="newFieldsCount" min="1" value="4"></div>
           </div>
+          <button class="btn" style="background:#27ae60; margin-top:8px;" onclick="addNewFieldToMap()">Kreiraj</button>
         </div>`;
-      } else if (isViewOnly) {
-        html += `<p style="color:#555; font-size:14px;">Pregled trenutnog stanja zasada (samo čitanje).</p>`;
-      } else {
-        html += `<p style="color:#555; font-size:14px;">Kliknite na red da prikažete polja, a zatim klikom na polje potvrdite branje.</p>`;
       }
 
       html += `<div class="map-container" id="mapListContainer">`;
@@ -1126,26 +1345,18 @@
     function renderMapHtml(isAdminMode, isViewOnly = false) {
       let html = "";
       if (plantationMap.length === 0) {
-        return `<p style="text-align:center; color:#7f8c8d;">Nema unetih njiva u sistemu. Kreirajte novu njivu iznad.</p>`;
+        return `<p style="text-align:center; color:#7f8c8d;">Nema unetih njiva.</p>`;
       }
 
       plantationMap.forEach((field, fIdx) => {
         html += `<div class="field-box-card">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:10px;">
-            <h4 style="margin:0; color:#2c3e50; display:flex; align-items:center; gap:8px;">
-              🌱 ${field.fieldId}`;
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+            <h4 style="margin:0; color:#2c3e50; font-size:15px;">🌱 ${field.fieldId}</h4>`;
         
         if (isAdminMode) {
-          html += `<button class="btn-action btn-edit" style="padding:3px 6px; font-size:11px;" onclick="renameField(${fIdx})" title="Promeni naziv njive">✏️ Preimenuj</button>`;
-        }
-
-        html += `</h4>`;
-        
-        if (isAdminMode) {
-          html += `<div style="display:flex; gap:6px; align-items:center;">
-            <input type="number" id="editRowsCount_${fIdx}" min="1" value="${field.rows.length}" style="width:60px; padding:4px; font-size:13px;" title="Broj redova">
-            <button class="btn-action" style="background:#2980b9;" onclick="updateFieldRowsCount(${fIdx})" title="Ažuriraj broj redova">Ažuriraj redove</button>
-            <button class="btn-action btn-del" onclick="deleteField(${fIdx})">🗑️ Obriši njivu</button>
+          html += `<div style="display:flex; gap:4px;">
+            <button class="btn-action btn-edit" onclick="renameField(${fIdx})">Preimenuj</button>
+            <button class="btn-action btn-del" onclick="deleteField(${fIdx})">Obriši</button>
           </div>`;
         }
 
@@ -1155,11 +1366,10 @@
           let rowBgClass = row.status === 'green' ? 'sq-green' : 'sq-purple';
           
           html += `<div>
-            <div class="map-square ${rowBgClass}" onclick="selectRowToViewFields(${fIdx}, ${rIdx}, ${isAdminMode}, ${isViewOnly})" title="Klikni za polja">
+            <div class="map-square ${rowBgClass}" onclick="selectRowToViewFields(${fIdx}, ${rIdx}, ${isAdminMode}, ${isViewOnly})">
               <span>${row.rowNum.replace('Red ', 'R')}</span>
-              <span style="font-size:9px; opacity:0.8;">${row.status === 'green' ? 'Obrano' : row.fields.length + ' polja'}</span>
+              <span style="font-size:9px; opacity:0.8;">${row.fields.length}p</span>
             </div>
-            <div style="font-size:11px; color:#666; font-weight:bold; text-align:center; margin-top:3px;">${row.rowNum}</div>
           </div>`;
         });
 
@@ -1169,25 +1379,14 @@
           let activeRow = field.rows[activeSelectedRow.rIdx];
           if (activeRow) {
             html += `<div class="fields-container">
-              <div style="display:flex; justify-content:space-between; width:100%; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
-                <div style="font-weight:bold; color:#2c3e50; font-size:14px;">Polja za ${activeRow.rowNum} (${field.fieldId}):</div>`;
-            
-            if (isAdminMode) {
-              html += `<div style="display:flex; gap:6px; align-items:center;">
-                <input type="number" id="editFieldsCount_${fIdx}_${activeSelectedRow.rIdx}" min="1" value="${activeRow.fields.length}" style="width:60px; padding:3px; font-size:13px;">
-                <button class="btn-action" style="background:#2980b9;" onclick="updateRowFieldsCount(${fIdx}, ${activeSelectedRow.rIdx})">Ažuriraj broj polja</button>
-                <button class="btn-action btn-del" onclick="deleteRowFromMap(${fIdx}, ${activeSelectedRow.rIdx})" title="Obriši ovaj red">🗑️ Obriši red</button>
-              </div>`;
-            }
-
-            html += `</div><div style="display:flex; flex-wrap:wrap; gap:6px; width:100%;">`;
+              <div style="font-weight:bold; color:#2c3e50; font-size:13px; margin-bottom:4px;">Polja za ${activeRow.rowNum}:</div>
+              <div style="display:flex; flex-wrap:wrap; gap:4px; width:100%;">`;
             
             activeRow.fields.forEach((fieldItem, fiIdx) => {
               let fBgClass = fieldItem.status === 'green' ? 'sq-green' : 'sq-purple';
               let clickAction = isViewOnly ? `` : `toggleFieldStatus(${fIdx}, ${activeSelectedRow.rIdx}, ${fiIdx}, ${isAdminMode}, ${isViewOnly})`;
-              let cursorStyle = isViewOnly ? `cursor:default;` : `cursor:pointer;`;
               
-              html += `<div class="map-square ${fBgClass}" style="width:40px; height:40px; font-size:12px; ${cursorStyle}" onclick="${clickAction}" title="Polje ${fieldItem.fNum}">
+              html += `<div class="map-square ${fBgClass}" style="width:38px; height:38px; font-size:11px;" onclick="${clickAction}">
                 ${fieldItem.fNum}
               </div>`;
             });
@@ -1214,12 +1413,8 @@
       if (isViewOnly) return;
       let row = plantationMap[fIdx].rows[rIdx];
       let fieldItem = row.fields[fiIdx];
-
       fieldItem.status = (fieldItem.status === 'green') ? 'purple' : 'green';
-
-      let allGreen = row.fields.every(f => f.status === 'green');
-      row.status = allGreen ? 'green' : 'purple';
-
+      row.status = row.fields.every(f => f.status === 'green') ? 'green' : 'purple';
       saveMapToLocalStorage();
       document.getElementById('mapListContainer').innerHTML = renderMapHtml(isAdminMode, isViewOnly);
     }
@@ -1228,458 +1423,35 @@
       let fieldName = document.getElementById('newFieldName').value.trim();
       let rowCount = parseInt(document.getElementById('newRowCount').value) || 3;
       let fieldsPerCol = parseInt(document.getElementById('newFieldsCount').value) || 4;
-
-      if (!fieldName) {
-        alert("Unesite naziv njive!");
-        return;
-      }
+      if (!fieldName) { alert("Unesite naziv njive!"); return; }
 
       let newRows = [];
       for (let r = 1; r <= rowCount; r++) {
         let newFields = [];
-        for (let f = 1; f <= fieldsPerCol; f++) {
-          newFields.push({ fNum: "P" + f, status: "purple" });
-        }
+        for (let f = 1; f <= fieldsPerCol; f++) { newFields.push({ fNum: "P" + f, status: "purple" }); }
         newRows.push({ rowNum: "Red " + r, status: "purple", fields: newFields });
       }
 
       plantationMap.push({ fieldId: fieldName, rows: newRows });
       saveMapToLocalStorage();
-      alert("Njiva " + fieldName + " je uspešno kreirana!");
-      
-      document.getElementById('mapListContainer').innerHTML = renderMapHtml(true, false);
-      document.getElementById('newFieldName').value = "";
-    }
-
-    function updateFieldRowsCount(fIdx) {
-      let inputEl = document.getElementById(`editRowsCount_${fIdx}`);
-      let newCount = parseInt(inputEl.value) || 1;
-      let field = plantationMap[fIdx];
-      let currentRows = field.rows;
-
-      let defaultFieldsCount = 4;
-      if (currentRows.length > 0) {
-        defaultFieldsCount = currentRows[0].fields.length;
-      }
-
-      let updatedRows = [];
-      for (let i = 1; i <= newCount; i++) {
-        let rName = "Red " + i;
-        let existing = currentRows.find(r => r.rowNum === rName);
-        if (existing) {
-          updatedRows.push(existing);
-        } else {
-          let newFields = [];
-          for (let f = 1; f <= defaultFieldsCount; f++) {
-            newFields.push({ fNum: "P" + f, status: "purple" });
-          }
-          updatedRows.push({ rowNum: rName, status: "purple", fields: newFields });
-        }
-      }
-
-      field.rows = updatedRows;
-      if (activeSelectedRow && activeSelectedRow.fIdx === fIdx && activeSelectedRow.rIdx >= newCount) {
-        activeSelectedRow = null;
-      }
-
-      saveMapToLocalStorage();
-      alert("Broj redova za " + field.fieldId + " je uspešno ažuriran na " + newCount + "!");
-      document.getElementById('mapListContainer').innerHTML = renderMapHtml(true, false);
+      loadHarvestMap('admin');
     }
 
     function renameField(fIdx) {
-      let currentName = plantationMap[fIdx].fieldId;
-      let newName = prompt("Unesite novi naziv za njivu:", currentName);
-      if (newName && newName.trim() !== "") {
+      let newName = prompt("Novi naziv njive:", plantationMap[fIdx].fieldId);
+      if (newName && newName.trim()) {
         plantationMap[fIdx].fieldId = newName.trim();
         saveMapToLocalStorage();
-        document.getElementById('mapListContainer').innerHTML = renderMapHtml(true, false);
+        loadHarvestMap('admin');
       }
-    }
-
-    function updateRowFieldsCount(fIdx, rIdx) {
-      let inputEl = document.getElementById(`editFieldsCount_${fIdx}_${rIdx}`);
-      let newCount = parseInt(inputEl.value) || 1;
-      
-      let row = plantationMap[fIdx].rows[rIdx];
-      let currentFields = row.fields;
-      
-      let updatedFields = [];
-      for (let i = 1; i <= newCount; i++) {
-        let fName = "P" + i;
-        let existing = currentFields.find(f => f.fNum === fName);
-        updatedFields.push({
-          fNum: fName,
-          status: existing ? existing.status : "purple"
-        });
-      }
-
-      row.fields = updatedFields;
-      let allGreen = row.fields.every(f => f.status === 'green');
-      row.status = allGreen ? 'green' : 'purple';
-
-      saveMapToLocalStorage();
-      alert("Broj polja za " + row.rowNum + " je uspešno ažuriran na " + newCount + "!");
-      document.getElementById('mapListContainer').innerHTML = renderMapHtml(true, false);
-    }
-
-    function deleteRowFromMap(fIdx, rIdx) {
-      let rowName = plantationMap[fIdx].rows[rIdx].rowNum;
-      let fieldName = plantationMap[fIdx].fieldId;
-      if (!confirm("Da li ste sigurni da želite da obrišete '" + rowName + "' iz njive '" + fieldName + "'?")) return;
-
-      plantationMap[fIdx].rows.splice(rIdx, 1);
-      activeSelectedRow = null;
-      saveMapToLocalStorage();
-      alert("Red je uspešno obrisan.");
-      document.getElementById('mapListContainer').innerHTML = renderMapHtml(true, false);
     }
 
     function deleteField(fIdx) {
-      let fieldName = plantationMap[fIdx].fieldId;
-      if (!confirm("Da li ste sigurni da želite da obrišete njivu '" + fieldName + "'?")) return;
-      
+      if (!confirm("Obrisati njivu?")) return;
       plantationMap.splice(fIdx, 1);
       activeSelectedRow = null;
       saveMapToLocalStorage();
-      alert("Njiva obrisana.");
-      document.getElementById('mapListContainer').innerHTML = renderMapHtml(true, false);
-    }
-
-    // Standardne funkcije za Prozor 1 i Prozor 2
-    function loadWindow1() {
-      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje berača i grupa...</p>`;
-      document.getElementById('menuModal').style.display = 'flex';
-
-      Promise.all([
-        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) }).then(r => r.json()),
-        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json())
-      ])
-      .then(([resGroups, resPickers]) => {
-        let groups = resGroups.success ? resGroups.groups : [];
-        let pickers = resPickers.success ? resPickers.pickers : [];
-
-        let groupSelectHtml = "";
-        if (loggedUser.role === 'grupovoda') {
-          let myGroupNum = loggedUser.extraInfo || "1";
-          let myGroupName = loggedUser.name;
-          groupSelectHtml = `<input type="hidden" id="pickerGroupSelect" value="${myGroupNum}">
-                             <input type="text" value="Grupa ${myGroupNum} (${myGroupName})" disabled style="background:#eaeded; font-weight:bold; flex:2;">`;
-        } else {
-          let options = `<option value="">-- Izaberite grupu / grupovođu --</option>`;
-          groups.forEach(g => {
-            options += `<option value="${g.extra}" data-name="${g.name}">Grupa ${g.extra} (${g.name})</option>`;
-          });
-          groupSelectHtml = `<select id="pickerGroupSelect" style="flex: 2; padding: 8px; border-radius: 6px; border: 1px solid #bdc3c7;">${options}</select>`;
-        }
-
-        let html = `<h3>1. Dodavanje berača u grupu</h3>
-          
-          <div class="section-card">
-            <h4>➕ Unesi broj berača</h4>
-            <div class="form-row">
-              <div class="form-group-col">
-                <label>Broj berača</label>
-                <input type="text" id="pickerNumInput" placeholder="npr. 01" maxlength="4">
-              </div>
-              <div class="form-group-col" style="flex:2;">
-                <label>Grupovođa</label>
-                ${groupSelectHtml}
-              </div>
-              <button class="btn" style="background:#27ae60; width:auto; padding:8px 16px;" onclick="savePicker()">Dodaj</button>
-            </div>
-          </div>
-
-          <div class="section-card">
-            <h4>📋 Raspored berača po grupama (${pickers.length} ukupno)</h4>`;
-
-        if (groups.length === 0 && pickers.length === 0) {
-          html += `<p style="text-align:center; color:#7f8c8d;">Nema unetih grupa ni berača.</p>`;
-        } else {
-          let groupedPickers = {};
-          groups.forEach(g => { groupedPickers[g.extra] = { leader: g.name, list: [] }; });
-          
-          pickers.forEach(p => {
-            if (!groupedPickers[p.groupNum]) {
-              groupedPickers[p.groupNum] = { leader: p.leaderName || 'Nepoznato', list: [] };
-            }
-            groupedPickers[p.groupNum].list.push(p.pickerNum);
-          });
-
-          for (let gNum in groupedPickers) {
-            let groupData = groupedPickers[gNum];
-            groupData.list.sort((a, b) => parseInt(a) - parseInt(b));
-
-            let isHisGroup = (loggedUser.role === 'grupovoda' && loggedUser.extraInfo === gNum);
-            let borderStyle = isHisGroup ? "border: 2px solid #27ae60;" : "";
-
-            html += `<div class="group-section" style="${borderStyle}">
-              <h5>Grupa ${gNum} — Vođa: <b>${groupData.leader}</b> (${groupData.list.length} berača)</h5>
-              <div class="picker-grid">`;
-
-            if (groupData.list.length === 0) {
-              html += `<span style="font-size:13px; color:#95a5a6; font-style:italic;">Nema berača u ovoj grupi.</span>`;
-            } else {
-              groupData.list.forEach(num => {
-                html += `<div class="picker-chip" onclick="deletePicker('${num}')" title="Klikni da obrišeš berača">${num}</div>`;
-              });
-            }
-
-            html += `</div></div>`;
-          }
-        }
-
-        html += `</div>`;
-
-        let backAction = (loggedUser.role === 'grupovoda') ? `closeModal()` : `openMenuModal()`;
-        let backText = (loggedUser.role === 'grupovoda') ? `← Zatvori / Nazad` : `← Nazad na Meni`;
-
-        html += `<br><button class="btn" style="background:#34495e;" onclick="${backAction}">${backText}</button>`;
-        document.getElementById('modalBodyContent').innerHTML = html;
-      })
-      .catch(err => alert("Greška: " + err.message));
-    }
-
-    function savePicker() {
-      let pickerNum = document.getElementById('pickerNumInput').value.trim();
-      let groupNum, leaderName;
-
-      if (loggedUser.role === 'grupovoda') {
-        groupNum = document.getElementById('pickerGroupSelect').value;
-        leaderName = loggedUser.name;
-      } else {
-        let selectEl = document.getElementById('pickerGroupSelect');
-        groupNum = selectEl.value;
-        leaderName = selectEl.selectedIndex > 0 ? selectEl.options[selectEl.selectedIndex].getAttribute('data-name') : "Grupovođa";
-      }
-
-      if (!pickerNum || !groupNum) {
-        alert("Unesite broj berača!");
-        return;
-      }
-
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ 
-          action: "savePickerToGroup", 
-          data: { pickerNum, groupNum, leaderName } 
-        })
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (res.success) {
-          loadWindow1();
-        } else {
-          alert(res.error || "Greška pri dodavanju berača!");
-        }
-      })
-      .catch(err => alert("Greška: " + err.message));
-    }
-
-    function deletePicker(pickerNumber) {
-      if (!confirm("Da li ste sigurni da želite da uklonite berača broj " + pickerNumber + "?")) return;
-
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "deletePicker", pickerNumber: pickerNumber })
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (res.success) {
-          loadWindow1();
-        } else {
-          alert("Greška: " + res.error);
-        }
-      })
-      .catch(err => alert("Greška: " + err.message));
-    }
-
-    // PROZOR 2 SA DVE ODVOJENE KARTICE I 3 KOLONE DOZVOLA
-    function loadWindow2(activeTab = 'vaga') {
-      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje podataka...</p>`;
-      document.getElementById('menuModal').style.display = 'flex';
-      
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "getWorkersAndGroups" })
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (!res.success) { alert("Greška: " + res.error); return; }
-
-        let nextVagaNum = "1";
-        if (res.workers.length > 0) {
-          let maxV = Math.max(...res.workers.map(w => parseInt(w.extra) || 0));
-          nextVagaNum = String(maxV + 1);
-        }
-
-        let nextGroupNum = "1";
-        if (res.groups.length > 0) {
-          let maxG = Math.max(...res.groups.map(g => parseInt(g.extra) || 0));
-          nextGroupNum = String(maxG + 1);
-        }
-
-        let html = `<h3>2. Radnici na vagi i Grupovođe</h3>
-          
-          <div class="tab-header">
-            <button class="tab-btn ${activeTab === 'vaga' ? 'active' : ''}" onclick="loadWindow2('vaga')">⚖️ Dodavanje radnika na vagi</button>
-            <button class="tab-btn ${activeTab === 'grupa' ? 'active' : ''}" onclick="loadWindow2('grupa')">👥 Dodavanje grupovođa</button>
-          </div>`;
-
-        if (activeTab === 'vaga') {
-          html += `<div class="section-card">
-            <h4 id="wFormTitle">⚖️ Novi Radnik na vagi (Dvocifreni PIN)</h4>
-            <div class="form-row">
-              <div class="form-group-col"><label>Broj vage</label><input type="text" id="wVagaNum" value="${nextVagaNum}" maxlength="3"></div>
-              <div class="form-group-col" style="flex:2;"><label>Ime radnika</label><input type="text" id="wName" placeholder="Ime"></div>
-              <div class="form-group-col"><label>Šifra (2 cifre)</label><input type="text" id="wPin" placeholder="PIN" maxlength="2"></div>
-            </div>
-            <div style="margin-top: 10px; font-weight: bold; font-size: 14px; color: #2c3e50;">Dozvole:</div>
-            <div class="checkbox-group" id="newWagaChecks">
-              <label><input type="checkbox" value="1"> 1. Dodaj berača</label>
-              <label><input type="checkbox" value="2"> 2. Radnici na vagi</label>
-              <label><input type="checkbox" value="3"> 3. Izveštaj o branju</label>
-              <label><input type="checkbox" value="4"> 4. Koji se zasad bere</label>
-              <label><input type="checkbox" value="5"> 5. Izmene merenja</label>
-              <label><input type="checkbox" value="6"> 6. Obračun dana</label>
-              <label><input type="checkbox" value="map_view"> 🗺️ Pregled mape</label>
-              <label><input type="checkbox" value="map_mark"> 🗺️ Obeležavanje polja</label>
-              <label><input type="checkbox" value="map_redefine"> ⚙️ Predefinisanje mape</label>
-            </div>
-            <div style="display:flex; gap:10px; margin-top:12px;">
-              <button class="btn" style="background:#27ae60; flex:2; padding:10px;" onclick="saveWorker('vaga')">SAČUVAJ RADNIKA NA VAGI</button>
-              <button class="btn" style="background:#7f8c8d; flex:1; padding:10px; display:none;" id="wCancelBtn" onclick="resetForm('vaga', '${nextVagaNum}')">Otkaži</button>
-            </div>
-            
-            <table class="data-table">
-              <thead><tr><th>Broj Vage</th><th>Ime Radnika</th><th>Šifra</th><th>Akcija</th></tr></thead>
-              <tbody>`;
-              
-          if (res.workers.length === 0) {
-            html += `<tr><td colspan="4" style="text-align:center; color:#7f8c8d;">Nema unetih radnika.</td></tr>`;
-          } else {
-            res.workers.forEach(w => {
-              let permsStr = JSON.stringify(w.permissions).replace(/"/g, '&quot;');
-              html += `<tr class="clickable-row" onclick="fillFormToEdit('${w.pin}', '${w.name}', '${w.extra}', 'vaga', ${permsStr})">
-                <td><b>${w.extra || '-'}</b></td><td>${w.name}</td><td>${w.pin}</td>
-                <td onclick="event.stopPropagation();"><button class="btn-action btn-del" onclick="deleteEntry('${w.pin}')">Obriši</button></td></tr>`;
-            });
-          }
-          html += `</tbody></table></div>`;
-        } else {
-          html += `<div class="section-card">
-            <h4 id="gFormTitle">👥 Grupovođa (Trocifreni PIN)</h4>
-            <div class="form-row">
-              <div class="form-group-col"><label>Broj grupe</label><input type="text" id="gGroupNum" value="${nextGroupNum}" maxlength="3"></div>
-              <div class="form-group-col" style="flex:2;"><label>Ime grupovođe</label><input type="text" id="gName" placeholder="Ime"></div>
-              <div class="form-group-col"><label>Šifra (3 cifre)</label><input type="text" id="gPin" placeholder="PIN" maxlength="3"></div>
-            </div>
-            <div style="margin-top: 10px; font-weight: bold; font-size: 14px; color: #2c3e50;">Dozvole:</div>
-            <div class="checkbox-group" id="newGrupChecks">
-              <label><input type="checkbox" value="1"> 1. Dodaj berača</label>
-              <label><input type="checkbox" value="2"> 2. Radnici na vagi</label>
-              <label><input type="checkbox" value="3"> 3. Izveštaj o branju</label>
-              <label><input type="checkbox" value="4"> 4. Koji se zasad bere</label>
-              <label><input type="checkbox" value="5"> 5. Izmene merenja</label>
-              <label><input type="checkbox" value="6"> 6. Obračun dana</label>
-              <label><input type="checkbox" value="map_view"> 🗺️ Pregled mape</label>
-              <label><input type="checkbox" value="map_mark" checked> 🗺️ Obeležavanje polja</label>
-              <label><input type="checkbox" value="map_redefine"> ⚙️ Predefinisanje mape</label>
-            </div>
-            <div style="display:flex; gap:10px; margin-top:12px;">
-              <button class="btn" style="background:#27ae60; flex:2; padding:10px;" onclick="saveWorker('grupovoda')">SAČUVAJ GRUPOVOĐU</button>
-              <button class="btn" style="background:#7f8c8d; flex:1; padding:10px; display:none;" id="gCancelBtn" onclick="resetForm('grupovoda', '${nextGroupNum}')">Otkaži</button>
-            </div>
-
-            <table class="data-table">
-              <thead><tr><th>Broj Grupe</th><th>Ime Grupovođe</th><th>Šifra</th><th>Akcija</th></tr></thead>
-              <tbody>`;
-
-          if (res.groups.length === 0) {
-            html += `<tr><td colspan="4" style="text-align:center; color:#7f8c8d;">Nema unetih grupovođa.</td></tr>`;
-          } else {
-            res.groups.forEach(g => {
-              let permsStr = JSON.stringify(g.permissions).replace(/"/g, '&quot;');
-              html += `<tr class="clickable-row" onclick="fillFormToEdit('${g.pin}', '${g.name}', '${g.extra}', 'grupovoda', ${permsStr})">
-                <td><b>${g.extra || '-'}</b></td><td>${g.name}</td><td>${g.pin}</td>
-                <td onclick="event.stopPropagation();"><button class="btn-action btn-del" onclick="deleteEntry('${g.pin}')">Obriši</button></td></tr>`;
-            });
-          }
-          html += `</tbody></table></div>`;
-        }
-
-        let backAction2 = (loggedUser.role === 'grupovoda') ? `closeModal()` : `openMenuModal()`;
-        let backText2 = (loggedUser.role === 'grupovoda') ? `← Zatvori / Nazad` : `← Nazad na Meni`;
-
-        html += `<br><button class="btn" style="background:#34495e;" onclick="${backAction2}">${backText2}</button>`;
-        document.getElementById('modalBodyContent').innerHTML = html;
-      })
-      .catch(err => alert("Greška: " + err.message));
-    }
-
-    function fillFormToEdit(pin, name, extra, role, perms) {
-      if (role === 'vaga') {
-        document.getElementById('wVagaNum').value = extra;
-        document.getElementById('wName').value = name;
-        document.getElementById('wPin').value = pin;
-        document.getElementById('wPin').disabled = true;
-        document.getElementById('wFormTitle').innerText = "⚖️ Izmena radnika na vagi (PIN: " + pin + ")";
-        document.getElementById('wCancelBtn').style.display = 'block';
-        document.querySelectorAll('#newWagaChecks input').forEach(chk => { chk.checked = perms.includes(chk.value); });
-      } else {
-        document.getElementById('gGroupNum').value = extra;
-        document.getElementById('gName').value = name;
-        document.getElementById('gPin').value = pin;
-        document.getElementById('gPin').disabled = true;
-        document.getElementById('gFormTitle').innerText = "👥 Izmena grupovođe (PIN: " + pin + ")";
-        document.getElementById('gCancelBtn').style.display = 'block';
-        document.querySelectorAll('#newGrupChecks input').forEach(chk => { chk.checked = perms.includes(chk.value); });
-      }
-    }
-
-    function resetForm(role, nextVal) {
-      loadWindow2(role === 'vaga' ? 'vaga' : 'grupa');
-    }
-
-    function saveWorker(role) {
-      let name, pin, extra, perms;
-      if (role === 'vaga') {
-        extra = document.getElementById('wVagaNum').value.trim();
-        name = document.getElementById('wName').value.trim();
-        pin = document.getElementById('wPin').value.trim();
-        perms = Array.from(document.querySelectorAll('#newWagaChecks input:checked')).map(el => el.value);
-        if (pin.length !== 2) { alert("Šifra radnika na vagi mora imati tačno 2 cifre!"); return; }
-      } else {
-        extra = document.getElementById('gGroupNum').value.trim();
-        name = document.getElementById('gName').value.trim();
-        pin = document.getElementById('gPin').value.trim();
-        perms = Array.from(document.querySelectorAll('#newGrupChecks input:checked')).map(el => el.value);
-        if (pin.length !== 3) { alert("Šifra grupovođe mora imati tačno 3 cifre!"); return; }
-      }
-
-      if (!name || !pin) { alert("Popunite sva polja!"); return; }
-
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "saveWorkerOrGroup", data: { name, pin, role, extra, permissions: perms } })
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (res.success) {
-          alert("Uspešno sačuvano!");
-          loadWindow2(role === 'vaga' ? 'vaga' : 'grupa');
-        } else { alert("Greška: " + res.error); }
-      });
-    }
-
-    function deleteEntry(pin) {
-      if (!confirm("Da li ste sigurni da želite da obrišete ovog korisnika?")) return;
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "deleteWorkerOrGroup", pin: pin })
-      })
-      .then(res => res.json())
-      .then(res => { if (res.success) loadWindow2(); else alert("Greška: " + res.error); });
+      loadHarvestMap('admin');
     }
   </script>
 </body>
