@@ -804,6 +804,9 @@
       window.open(`viber://forward?text=${text}`, '_blank');
     }
 
+    // ==========================================
+    // OPCIJA 5: IZMENE MERENJA NA VAGI
+    // ==========================================
     function loadWindow5() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje merenja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -837,24 +840,28 @@
         groupedByScale[sNum].list.push(m);
       });
 
-      for (let sNum in groupedByScale) {
-        let scaleData = groupedByScale[sNum];
-        html += `<div class="group-section" style="border-left: 4px solid #e67e22;">
-          <h5>⚖️ Vaga br. ${sNum} — <b>${scaleData.scaleName}</b></h5>`;
+      if (Object.keys(groupedByScale).length === 0) {
+        html += `<p style="text-align:center; color:#7f8c8d; margin-top:20px;">Nema zabeleženih merenja.</p>`;
+      } else {
+        for (let sNum in groupedByScale) {
+          let scaleData = groupedByScale[sNum];
+          html += `<div class="group-section" style="border-left: 4px solid #e67e22;">
+            <h5>⚖️ Vaga br. ${sNum} — <b>${scaleData.scaleName}</b></h5>`;
 
-        scaleData.list.forEach(item => {
-          html += `<div class="mobile-card-item">
-            <div class="mobile-card-header">
-              <span>⏰ ${item.time || '-'} | Berač ${item.pickerNum || '-'}</span>
-              <span style="color:#27ae60;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</span>
-            </div>
-            <div class="mobile-card-actions">
-              <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')">Izmeni</button>
-              <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši</button>
-            </div>
-          </div>`;
-        });
-        html += `</div>`;
+          scaleData.list.forEach(item => {
+            html += `<div class="mobile-card-item">
+              <div class="mobile-card-header">
+                <span>⏰ ${item.time || '-'} | Berač ${item.pickerNum || '-'}</span>
+                <span style="color:#27ae60;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</span>
+              </div>
+              <div class="mobile-card-actions">
+                <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')">Izmeni</button>
+                <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši</button>
+              </div>
+            </div>`;
+          });
+          html += `</div>`;
+        }
       }
 
       document.getElementById('modalBodyContent').innerHTML = html;
@@ -947,7 +954,7 @@
     }
 
     // ==========================================
-    // OPCIJA 1: DODAVANJE BERAČA U GRUPU (AŽURIRANO)
+    // OPCIJA 1: DODAVANJE BERAČA U GRUPU
     // ==========================================
     function loadWindow1() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje berača...</p>`;
@@ -1053,14 +1060,21 @@
       .then(res => { if (res.success) loadWindow1(); });
     }
 
+    // ==========================================
+    // OPCIJA 2: RADNICI NA VAGI I GRUPOVOĐE (AŽURIRANO)
+    // ==========================================
     function loadWindow2(activeTab = 'vaga') {
-      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje...</p>`;
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje osoblja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
       
       fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) })
       .then(res => res.json())
       .then(res => {
-        if (!res.success) return;
+        if (!res.success) { alert("Greška pri učitavanju osoblja"); return; }
+
+        let workers = res.workers || [];
+        let groups = res.groups || [];
+
         let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <h3 style="margin:0; font-size:16px;">👥 Osoblje i Dozvole</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
@@ -1069,7 +1083,123 @@
           <button class="tab-btn ${activeTab === 'vaga' ? 'active' : ''}" onclick="loadWindow2('vaga')">⚖️ Radnici na vagi</button>
           <button class="tab-btn ${activeTab === 'grupa' ? 'active' : ''}" onclick="loadWindow2('grupa')">👥 Grupovođe</button>
         </div>`;
+
+        if (activeTab === 'vaga') {
+          html += `<div class="section-card">
+            <h4>Dodaj radnika na vagi</h4>
+            <div class="form-row">
+              <div class="form-group-col"><label>Ime i Prezime</label><input type="text" id="workerNameInput" placeholder="npr. Marko Marković"></div>
+              <div class="form-group-col"><label>Broj vage</label><input type="number" id="workerScaleInput" min="1" value="1"></div>
+              <div class="form-group-col"><label>PIN</label><input type="password" id="workerPinInput" placeholder="4 cifre" maxlength="6"></div>
+            </div>
+            <div style="margin-top:8px;">
+              <label style="font-size:11px; font-weight:bold; color:#34495e; text-transform:uppercase;">Dozvole za prozore:</label>
+              <div class="checkbox-group" id="workerPermsBox">
+                <label><input type="checkbox" value="1"> 1. Berači</label>
+                <label><input type="checkbox" value="2"> 2. Osoblje</label>
+                <label><input type="checkbox" value="3"> 3. Izveštaji</label>
+                <label><input type="checkbox" value="4"> 4. Mape</label>
+                <label><input type="checkbox" value="5"> 5. Izmene</label>
+                <label><input type="checkbox" value="6"> 6. Obračun</label>
+              </div>
+            </div>
+            <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="saveWorker('vaga')">Sačuvaj radnika</button>
+          </div>
+          <div class="section-card">
+            <h4>Postojeći radnici (${workers.length})</h4>`;
+
+          if (workers.length === 0) {
+            html += `<p style="font-size:13px; color:#7f8c8d;">Nema unetih radnika.</p>`;
+          } else {
+            workers.forEach(w => {
+              html += `<div class="mobile-card-item">
+                <div class="mobile-card-header">
+                  <span>👤 ${w.name} (Vaga ${w.extra})</span>
+                  <button class="btn-action btn-del" onclick="deleteWorkerRecord('${w.pin}')">Obriši</button>
+                </div>
+                <div class="mobile-card-body">
+                  <span>Dozvole: <b>${w.permissions ? w.permissions.join(', ') : 'Nema'}</b></span>
+                </div>
+              </div>`;
+            });
+          }
+          html += `</div>`;
+        } else {
+          html += `<div class="section-card">
+            <h4>Dodaj grupovođu</h4>
+            <div class="form-row">
+              <div class="form-group-col"><label>Ime i Prezime</label><input type="text" id="groupLeaderNameInput" placeholder="npr. Petar Petrović"></div>
+              <div class="form-group-col"><label>Broj grupe</label><input type="number" id="groupNumberInput" min="1" value="1"></div>
+              <div class="form-group-col"><label>PIN</label><input type="password" id="groupLeaderPinInput" placeholder="4 cifre" maxlength="6"></div>
+            </div>
+            <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="saveWorker('grupovoda')">Sačuvaj grupovođu</button>
+          </div>
+          <div class="section-card">
+            <h4>Postojeće grupe (${groups.length})</h4>`;
+
+          if (groups.length === 0) {
+            html += `<p style="font-size:13px; color:#7f8c8d;">Nema unetih grupa.</p>`;
+          } else {
+            groups.forEach(g => {
+              html += `<div class="mobile-card-item">
+                <div class="mobile-card-header">
+                  <span>👥 Grupa ${g.extra} — ${g.name}</span>
+                  <button class="btn-action btn-del" onclick="deleteWorkerRecord('${g.pin}')">Obriši</button>
+                </div>
+              </div>`;
+            });
+          }
+          html += `</div>`;
+        }
+
         document.getElementById('modalBodyContent').innerHTML = html;
+      });
+    }
+
+    function saveWorker(roleType) {
+      let name, pin, extra, perms = [];
+      if (roleType === 'vaga') {
+        name = document.getElementById('workerNameInput').value.trim();
+        pin = document.getElementById('workerPinInput').value.trim();
+        extra = document.getElementById('workerScaleInput').value.trim();
+        let checkboxes = document.querySelectorAll('#workerPermsBox input[type="checkbox"]:checked');
+        checkboxes.forEach(cb => perms.push(cb.value));
+      } else {
+        name = document.getElementById('groupLeaderNameInput').value.trim();
+        pin = document.getElementById('groupLeaderPinInput').value.trim();
+        extra = document.getElementById('groupNumberInput').value.trim();
+        perms = ['4']; // Grupovođa automatski dobija pristup mapi/berbi
+      }
+
+      if (!name || !pin || !extra) { alert("Popunite sva polja!"); return; }
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "saveWorkerOrGroup", data: { name, pin, role: roleType, extra, permissions: perms } })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          loadWindow2(roleType === 'vaga' ? 'vaga' : 'grupa');
+        } else {
+          alert(res.error || "Greška pri čuvanju");
+        }
+      });
+    }
+
+    function deleteWorkerRecord(pin) {
+      if (!confirm("Obrisati ovo lice?")) return;
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "deleteWorkerOrGroup", pin: pin })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          loadWindow2('vaga');
+        } else {
+          alert(res.error || "Greška");
+        }
       });
     }
 
