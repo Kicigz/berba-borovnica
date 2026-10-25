@@ -595,9 +595,6 @@
       if (num === '6') { loadWindow6(); return; }
     }
 
-    // ==========================================
-    // OPCIJA 6: OBRAČUN DANA (KARTICE ZA MOBILNI)
-    // ==========================================
     function loadWindow6() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna dana...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -611,11 +608,7 @@
         let groups = resGroups.success ? resGroups.groups : [];
         let pickers = resPickers.success ? resPickers.pickers : [];
         let measurements = resMeas.success ? resMeas.measurements : [];
-
         renderPayrollGroupsView(groups, pickers, measurements);
-      })
-      .catch(err => {
-        alert("Greška pri učitavanju obračuna: " + err.message);
       });
     }
 
@@ -629,16 +622,13 @@
 
       <div class="section-card" style="background:#eaf2f8; border-color:#2980b9;">
         <div style="display:flex; flex-direction:column; gap:8px;">
-          <div>
-            <h4 style="margin:0; color:#2980b9; border:none; font-size:14px;">💵 Cena po ubranom kg</h4>
-          </div>
+          <div><h4 style="margin:0; color:#2980b9; border:none; font-size:14px;">💵 Cena po ubranom kg</h4></div>
           <div style="display:flex; gap:8px; align-items:center;">
             <input type="number" id="inputPricePerKg" value="${defaultPricePerKg}" step="0.5" style="padding:8px; font-size:15px; font-weight:bold; text-align:center; flex:1;">
             <button class="btn" style="background:#27ae60; width:auto; padding:8px 12px; font-size:13px;" onclick="recalculatePayrollGroups()">Primeni</button>
           </div>
         </div>
       </div>
-      <p style="color:#555; font-size:13px; margin-bottom:10px;">Kliknite na karticu grupe za detalje i Viber slanje:</p>
       <div class="report-card-grid" id="payrollGroupsContainer">`;
 
       if (groups.length === 0) {
@@ -686,16 +676,13 @@
           html += `<div class="report-group-card" onclick='loadGroupPayrollDetail("${groupNum}", "${leaderName}", ${groupPickersObj}, ${groupMeasurementsObj}, ${globalRanksObj}, ${defaultPricePerKg})'>
             <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
             <div style="font-size:13px; color:#555; margin-bottom:6px;">Vođa: <b>${leaderName}</b></div>
-            <div style="font-size:12px; color:#666; margin-bottom:8px;">
-              Prosek: <b>${avgCratesPerPicker} gajbica</b> (${avgKgPerPicker} kg)
-            </div>
+            <div style="font-size:12px; color:#666; margin-bottom:8px;">Prosek: <b>${avgCratesPerPicker} gajbica</b> (${avgKgPerPicker} kg)</div>
             <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #eee; padding-top:6px;">
               <span>👥 Berača: <b>${groupPickers.length}</b></span>
               <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
             </div>
             <div style="display:flex; justify-content:space-between; font-size:14px; margin-top:4px; color:#2980b9; font-weight:bold;">
-              <span>Isplata:</span>
-              <span>${totalGroupPay.toFixed(2)} RSD</span>
+              <span>Isplata:</span><span>${totalGroupPay.toFixed(2)} RSD</span>
             </div>
           </div>`;
         });
@@ -773,7 +760,6 @@
           <button class="btn" style="background:#34495e; width:auto; padding:5px 8px; font-size:12px;" onclick="loadWindow6()">← Nazad</button>
         </div>
       </div>
-
       <div class="section-card" style="background:#fdfefe; padding:10px;">
         <div style="display:flex; flex-direction:column; gap:4px; font-size:13px; color:#333;">
           <div style="display:flex; justify-content:space-between;"><span>Berača:</span> <b>${groupPickers.length}</b></div>
@@ -782,7 +768,6 @@
           <div style="display:flex; justify-content:space-between;"><span>Prosek:</span> <b>${avgCrates} gajb. (${avgKg} kg)</b></div>
         </div>
       </div>
-
       <div style="margin-top:10px;">${pickerDetailsHtml}</div>`;
 
       document.getElementById('modalBodyContent').innerHTML = html;
@@ -792,7 +777,6 @@
     function sendViberReport(groupNum, leaderName, groupPickers, groupMeasurements, pricePerKg) {
       let totalGroupKg = 0;
       let totalGroupPay = 0;
-
       let text = `📦 *ISPLATA - GRUPA ${groupNum}* (%0AVođa: ${leaderName})%0A-----------------------------------%0A`;
 
       groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
@@ -817,13 +801,9 @@
       text += `📊 Prosek: *${avgKg} kg*%0A`;
       text += `💰 ZA ISPLATU: *${totalGroupPay.toFixed(2)} RSD*`;
 
-      let viberUrl = `viber://forward?text=${text}`;
-      window.open(viberUrl, '_blank');
+      window.open(`viber://forward?text=${text}`, '_blank');
     }
 
-    // ==========================================
-    // OPCIJA 5: IZMENE MERENJA (KARTICE ZA MOBILNI)
-    // ==========================================
     function loadWindow5() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje merenja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -843,34 +823,22 @@
       let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h3 style="margin:0; font-size:16px;">⚙️ Izmene merenja</h3>
         <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
-      </div>
-      <p style="color:#555; font-size:13px; margin-bottom:10px;">Pregled i ispravka merenja (Zahteva Admin PIN):</p>
-      <div>`;
+      </div>`;
 
       let scaleWorkersMap = {};
       workers.forEach(w => { scaleWorkersMap[String(w.extra)] = w.name; });
-
-      if (measurements.length === 0) {
-        measurements = [
-          { id: "m1", scaleNum: "1", time: "08:15", pickerNum: "01", crateNum: "01", weight: 3.4 },
-          { id: "m2", scaleNum: "1", time: "09:30", pickerNum: "02", crateNum: "01", weight: 3.2 }
-        ];
-      }
 
       let groupedByScale = {};
       measurements.forEach(m => {
         let sNum = String(m.scaleNum || "1");
         if (!groupedByScale[sNum]) {
-          let workerName = scaleWorkersMap[sNum] || m.scaleName || "Radnik";
-          groupedByScale[sNum] = { scaleName: workerName, list: [] };
+          groupedByScale[sNum] = { scaleName: scaleWorkersMap[sNum] || m.scaleName || "Radnik", list: [] };
         }
         groupedByScale[sNum].list.push(m);
       });
 
       for (let sNum in groupedByScale) {
         let scaleData = groupedByScale[sNum];
-        scaleData.list.sort((a, b) => (a.time || "").localeCompare(b.time || ""));
-
         html += `<div class="group-section" style="border-left: 4px solid #e67e22;">
           <h5>⚖️ Vaga br. ${sNum} — <b>${scaleData.scaleName}</b></h5>`;
 
@@ -880,28 +848,21 @@
               <span>⏰ ${item.time || '-'} | Berač ${item.pickerNum || '-'}</span>
               <span style="color:#27ae60;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</span>
             </div>
-            <div class="mobile-card-body">
-              <span>Gajbica: ${item.crateNum || '-'}</span>
-            </div>
             <div class="mobile-card-actions">
               <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')">Izmeni</button>
               <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši</button>
             </div>
           </div>`;
         });
-
         html += `</div>`;
       }
 
-      html += `</div>`;
       document.getElementById('modalBodyContent').innerHTML = html;
     }
 
     function promptAdminAction(actionType, measurementId, pickerNum, currentWeight) {
-      let actionTitle = (actionType === 'delete') ? `Brisanje merenja berača ${pickerNum}` : `Izmena težine (${currentWeight} kg) berača ${pickerNum}`;
-      let adminPin = prompt(`${actionTitle}\n\nUnesite ADMINISTRATIVNI PIN:`, "");
-      if (adminPin === null) return;
-      if (!adminPin.trim()) { alert("Unesite PIN!"); return; }
+      let adminPin = prompt(`Unesite ADMINISTRATIVNI PIN:`, "");
+      if (adminPin === null || !adminPin.trim()) return;
 
       fetch(WEB_APP_URL, {
         method: "POST",
@@ -915,18 +876,11 @@
       })
       .then(res => res.json())
       .then(res => {
-        if (res.success) {
-          alert("Uspešno izmenjeno!");
-          loadWindow5();
-        } else {
-          alert(res.error || "Pogrešan PIN!");
-        }
+        if (res.success) { alert("Uspešno izmenjeno!"); loadWindow5(); }
+        else { alert(res.error || "Pogrešan PIN!"); }
       });
     }
 
-    // ==========================================
-    // OPCIJA 3: IZVEŠTAJ O BRANJU
-    // ==========================================
     function loadWindow3() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -946,30 +900,25 @@
         <h3 style="margin:0; font-size:16px;">📊 Izveštaj po grupama</h3>
         <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
       </div>
-      <p style="color:#555; font-size:13px; margin-bottom:10px;">Kliknite na grupu za detalje berača:</p>
-      <div class="report-card-grid" id="reportGroupsContainer">`;
+      <div class="report-card-grid">`;
 
-      if (groups.length === 0) {
-        html += `<p style="text-align:center; color:#7f8c8d; grid-column: 1/-1;">Nema grupa.</p>`;
-      } else {
-        groups.forEach(g => {
-          let groupNum = g.extra;
-          let leaderName = g.name;
-          let groupPickers = pickers.filter(p => String(p.groupNum) === String(groupNum));
-          let pickerNums = groupPickers.map(p => p.pickerNum);
-          let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
-          let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+      groups.forEach(g => {
+        let groupNum = g.extra;
+        let leaderName = g.name;
+        let groupPickers = pickers.filter(p => String(p.groupNum) === String(groupNum));
+        let pickerNums = groupPickers.map(p => p.pickerNum);
+        let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
+        let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
 
-          html += `<div class="report-group-card" onclick='loadGroupPickersDetail("${groupNum}", "${leaderName}", ${JSON.stringify(groupPickers)}, ${JSON.stringify(groupMeasurements)})'>
-            <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
-            <div style="font-size:13px; color:#555; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
-            <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #eee; padding-top:6px;">
-              <span>👥 Berača: <b>${groupPickers.length}</b></span>
-              <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
-            </div>
-          </div>`;
-        });
-      }
+        html += `<div class="report-group-card" onclick='loadGroupPickersDetail("${groupNum}", "${leaderName}", ${JSON.stringify(groupPickers)}, ${JSON.stringify(groupMeasurements)})'>
+          <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
+          <div style="font-size:13px; color:#555; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
+          <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #eee; padding-top:6px;">
+            <span>👥 Berača: <b>${groupPickers.length}</b></span>
+            <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+          </div>
+        </div>`;
+      });
 
       html += `</div>`;
       document.getElementById('modalBodyContent').innerHTML = html;
@@ -979,44 +928,24 @@
       let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:6px;">
         <h3 style="margin:0; font-size:15px;">👥 Grupa ${groupNum} (${leaderName})</h3>
         <button class="btn" style="background:#34495e; width:auto; padding:5px 8px; font-size:12px;" onclick="loadWindow3()">← Nazad</button>
-      </div>
-      <p style="color:#555; font-size:13px; margin-bottom:10px;">Učinak berača:</p>
-      <div>`;
+      </div><div>`;
 
-      if (groupPickers.length === 0) {
-        html += `<p style="text-align:center; color:#7f8c8d;">Nema berača u grupi.</p>`;
-      } else {
-        groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
+      groupPickers.forEach(picker => {
+        let pNum = picker.pickerNum;
+        let pickerCrates = groupMeasurements.filter(m => String(m.pickerNum) === String(pNum));
+        let totalPickerKg = pickerCrates.reduce((sum, c) => sum + (parseFloat(c.weight) || 0), 0);
 
-        groupPickers.forEach(picker => {
-          let pNum = picker.pickerNum;
-          let pickerCrates = groupMeasurements.filter(m => String(m.pickerNum) === String(pNum));
-          let totalPickerKg = pickerCrates.reduce((sum, c) => sum + (parseFloat(c.weight) || 0), 0);
-
-          html += `<div class="picker-detail-row">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <span style="font-size:15px; color:#c0392b; font-weight:bold;">Berač br. ${pNum}</span>
-              <span style="font-size:14px; color:#27ae60; font-weight:bold;">${totalPickerKg.toFixed(2)} kg (${pickerCrates.length} gajb.)</span>
-            </div>`;
-
-          if (pickerCrates.length > 0) {
-            html += `<div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">`;
-            pickerCrates.forEach(c => {
-              html += `<div class="crate-pill">⏰ ${c.time || '-'} : ${c.weight}kg</div>`;
-            });
-            html += `</div>`;
-          }
-          html += `</div>`;
-        });
-      }
+        html += `<div class="picker-detail-row">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:15px; color:#c0392b; font-weight:bold;">Berač br. ${pNum}</span>
+            <span style="font-size:14px; color:#27ae60; font-weight:bold;">${totalPickerKg.toFixed(2)} kg (${pickerCrates.length} gajb.)</span>
+          </div></div>`;
+      });
 
       html += `</div>`;
       document.getElementById('modalBodyContent').innerHTML = html;
     }
 
-    // ==========================================
-    // OPCIJA 1: DODAVANJE BERAČA U GRUPU
-    // ==========================================
     function loadWindow1() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje berača...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -1032,8 +961,7 @@
         let groupSelectHtml = "";
         if (loggedUser.role === 'grupovoda') {
           let myGroupNum = loggedUser.extraInfo || "1";
-          groupSelectHtml = `<input type="hidden" id="pickerGroupSelect" value="${myGroupNum}">
-                             <input type="text" value="Moja grupa (${myGroupNum})" disabled style="background:#eaeded; font-weight:bold; flex:1;">`;
+          groupSelectHtml = `<input type="hidden" id="pickerGroupSelect" value="${myGroupNum}"><input type="text" value="Moja grupa (${myGroupNum})" disabled style="background:#eaeded; font-weight:bold; flex:1;">`;
         } else {
           let options = `<option value="">-- Izaberi grupu --</option>`;
           groups.forEach(g => { options += `<option value="${g.extra}" data-name="${g.name}">Grupa ${g.extra} (${g.name})</option>`; });
@@ -1044,63 +972,23 @@
           <h3 style="margin:0; font-size:16px;">➕ Dodavanje berača</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
         </div>
-          
-          <div class="section-card">
-            <h4>Unesi broj berača</h4>
-            <div class="form-row">
-              <div class="form-group-col"><label>Broj</label><input type="text" id="pickerNumInput" placeholder="npr. 01" maxlength="4"></div>
-              <div class="form-group-col" style="flex:2;"><label>Grupa</label>${groupSelectHtml}</div>
-            </div>
-            <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="savePicker()">Dodaj berača</button>
+        <div class="section-card">
+          <h4>Unesi broj berača</h4>
+          <div class="form-row">
+            <div class="form-group-col"><label>Broj</label><input type="text" id="pickerNumInput" placeholder="npr. 01" maxlength="4"></div>
+            <div class="form-group-col" style="flex:2;"><label>Grupa</label>${groupSelectHtml}</div>
           </div>
+          <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="savePicker()">Dodaj berača</button>
+        </div>`;
 
-          <div class="section-card">
-            <h4>Raspored berača (${pickers.length})</h4>`;
-
-        let groupedPickers = {};
-        groups.forEach(g => { groupedPickers[g.extra] = { leader: g.name, list: [] }; });
-        pickers.forEach(p => {
-          if (!groupedPickers[p.groupNum]) {
-            groupedPickers[p.groupNum] = { leader: p.leaderName || 'Grupa', list: [] };
-          }
-          groupedPickers[p.groupNum].list.push(p.pickerNum);
-        });
-
-        for (let gNum in groupedPickers) {
-          let groupData = groupedPickers[gNum];
-          groupData.list.sort((a, b) => parseInt(a) - parseInt(b));
-
-          html += `<div class="group-section">
-            <h5>Grupa ${gNum} (${groupData.leader}) - ${groupData.list.length} berača</h5>
-            <div class="picker-grid">`;
-
-          if (groupData.list.length === 0) {
-            html += `<span style="font-size:12px; color:#95a5a6;">Nema berača.</span>`;
-          } else {
-            groupData.list.forEach(num => {
-              html += `<div class="picker-chip" onclick="deletePicker('${num}')">${num}</div>`;
-            });
-          }
-          html += `</div></div>`;
-        }
-
-        html += `</div>`;
         document.getElementById('modalBodyContent').innerHTML = html;
       });
     }
 
     function savePicker() {
       let pickerNum = document.getElementById('pickerNumInput').value.trim();
-      let groupNum, leaderName;
-
-      if (loggedUser.role === 'grupovoda') {
-        groupNum = document.getElementById('pickerGroupSelect').value;
-        leaderName = loggedUser.name;
-      } else {
-        let selectEl = document.getElementById('pickerGroupSelect');
-        groupNum = selectEl.value;
-        leaderName = selectEl.selectedIndex > 0 ? selectEl.options[selectEl.selectedIndex].getAttribute('data-name') : "Vođa";
-      }
+      let groupNum = document.getElementById('pickerGroupSelect').value;
+      let leaderName = (loggedUser.role === 'grupovoda') ? loggedUser.name : document.getElementById('pickerGroupSelect').options[document.getElementById('pickerGroupSelect').selectedIndex].getAttribute('data-name');
 
       if (!pickerNum || !groupNum) { alert("Unesite broj berača i grupu!"); return; }
 
@@ -1112,188 +1000,28 @@
       .then(res => { if (res.success) loadWindow1(); else alert(res.error || "Greška"); });
     }
 
-    function deletePicker(pickerNumber) {
-      if (!confirm("Ukloniti berača broj " + pickerNumber + "?")) return;
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "deletePicker", pickerNumber: pickerNumber })
-      })
-      .then(res => res.json())
-      .then(res => { if (res.success) loadWindow1(); });
-    }
-
-    // ==========================================
-    // OPCIJA 2: RADNICI NA VAGI I GRUPOVOĐE
-    // ==========================================
     function loadWindow2(activeTab = 'vaga') {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
       
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "getWorkersAndGroups" })
-      })
+      fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) })
       .then(res => res.json())
       .then(res => {
         if (!res.success) return;
-
-        let nextVagaNum = res.workers.length > 0 ? String(Math.max(...res.workers.map(w => parseInt(w.extra) || 0)) + 1) : "1";
-        let nextGroupNum = res.groups.length > 0 ? String(Math.max(...res.groups.map(g => parseInt(g.extra) || 0)) + 1) : "1";
-
         let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <h3 style="margin:0; font-size:16px;">👥 Osoblje i Dozvole</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
         </div>
-          
-          <div class="tab-header">
-            <button class="tab-btn ${activeTab === 'vaga' ? 'active' : ''}" onclick="loadWindow2('vaga')">⚖️ Radnici na vagi</button>
-            <button class="tab-btn ${activeTab === 'grupa' ? 'active' : ''}" onclick="loadWindow2('grupa')">👥 Grupovođe</button>
-          </div>`;
-
-        if (activeTab === 'vaga') {
-          html += `<div class="section-card">
-            <h4 id="wFormTitle">Novi radnik na vagi</h4>
-            <div class="form-row">
-              <div class="form-group-col"><label>Br. vage</label><input type="text" id="wVagaNum" value="${nextVagaNum}" maxlength="3"></div>
-              <div class="form-group-col" style="flex:2;"><label>Ime</label><input type="text" id="wName" placeholder="Ime"></div>
-              <div class="form-group-col"><label>PIN (2 cifre)</label><input type="text" id="wPin" placeholder="PIN" maxlength="2"></div>
-            </div>
-            <div style="font-weight:bold; font-size:12px; margin-top:8px;">Dozvole:</div>
-            <div class="checkbox-group" id="newWagaChecks">
-              <label><input type="checkbox" value="1"> 1. Berači</label>
-              <label><input type="checkbox" value="2"> 2. Vaga</label>
-              <label><input type="checkbox" value="3"> 3. Izveštaj</label>
-              <label><input type="checkbox" value="4"> 4. Zasad</label>
-              <label><input type="checkbox" value="5"> 5. Izmene</label>
-              <label><input type="checkbox" value="6"> 6. Obračun</label>
-              <label><input type="checkbox" value="map_view"> 🗺️ Pregled mape</label>
-              <label><input type="checkbox" value="map_mark"> 🗺️ Obeležavanje</label>
-              <label><input type="checkbox" value="map_redefine"> ⚙️ Predefinisanje</label>
-            </div>
-            <div style="display:flex; gap:6px; margin-top:10px;">
-              <button class="btn" style="background:#27ae60; flex:2;" onclick="saveWorker('vaga')">Sačuvaj</button>
-              <button class="btn" style="background:#7f8c8d; flex:1; display:none;" id="wCancelBtn" onclick="loadWindow2('vaga')">Otkaži</button>
-            </div>`;
-
-          res.workers.forEach(w => {
-            let permsStr = JSON.stringify(w.permissions).replace(/"/g, '&quot;');
-            html += `<div class="mobile-card-item" onclick="fillFormToEdit('${w.pin}', '${w.name}', '${w.extra}', 'vaga', ${permsStr})">
-              <div class="mobile-card-header">
-                <span>Vaga br. ${w.extra || '-'} : ${w.name}</span>
-                <span style="font-size:13px; color:#666;">PIN: ${w.pin}</span>
-              </div>
-              <div class="mobile-card-actions">
-                <button class="btn-action btn-del" onclick="event.stopPropagation(); deleteEntry('${w.pin}')">Obriši</button>
-              </div>
-            </div>`;
-          });
-          html += `</div>`;
-        } else {
-          html += `<div class="section-card">
-            <h4 id="gFormTitle">Novi grupovođa</h4>
-            <div class="form-row">
-              <div class="form-group-col"><label>Br. grupe</label><input type="text" id="gGroupNum" value="${nextGroupNum}" maxlength="3"></div>
-              <div class="form-group-col" style="flex:2;"><label>Ime</label><input type="text" id="gName" placeholder="Ime"></div>
-              <div class="form-group-col"><label>PIN (3 cifre)</label><input type="text" id="gPin" placeholder="PIN" maxlength="3"></div>
-            </div>
-            <div style="font-weight:bold; font-size:12px; margin-top:8px;">Dozvole:</div>
-            <div class="checkbox-group" id="newGrupChecks">
-              <label><input type="checkbox" value="1"> 1. Berači</label>
-              <label><input type="checkbox" value="2"> 2. Vaga</label>
-              <label><input type="checkbox" value="3"> 3. Izveštaj</label>
-              <label><input type="checkbox" value="4"> 4. Zasad</label>
-              <label><input type="checkbox" value="5"> 5. Izmene</label>
-              <label><input type="checkbox" value="6"> 6. Obračun</label>
-              <label><input type="checkbox" value="map_view"> 🗺️ Pregled mape</label>
-              <label><input type="checkbox" value="map_mark" checked> 🗺️ Obeležavanje</label>
-              <label><input type="checkbox" value="map_redefine"> ⚙️ Predefinisanje</label>
-            </div>
-            <div style="display:flex; gap:6px; margin-top:10px;">
-              <button class="btn" style="background:#27ae60; flex:2;" onclick="saveWorker('grupovoda')">Sačuvaj</button>
-              <button class="btn" style="background:#7f8c8d; flex:1; display:none;" id="gCancelBtn" onclick="loadWindow2('grupa')">Otkaži</button>
-            </div>`;
-
-          res.groups.forEach(g => {
-            let permsStr = JSON.stringify(g.permissions).replace(/"/g, '&quot;');
-            html += `<div class="mobile-card-item" onclick="fillFormToEdit('${g.pin}', '${g.name}', '${g.extra}', 'grupovoda', ${permsStr})">
-              <div class="mobile-card-header">
-                <span>Grupa br. ${g.extra || '-'} : ${g.name}</span>
-                <span style="font-size:13px; color:#666;">PIN: ${g.pin}</span>
-              </div>
-              <div class="mobile-card-actions">
-                <button class="btn-action btn-del" onclick="event.stopPropagation(); deleteEntry('${g.pin}')">Obriši</button>
-              </div>
-            </div>`;
-          });
-          html += `</div>`;
-        }
-
+        <div class="tab-header">
+          <button class="tab-btn ${activeTab === 'vaga' ? 'active' : ''}" onclick="loadWindow2('vaga')">⚖️ Radnici na vagi</button>
+          <button class="tab-btn ${activeTab === 'grupa' ? 'active' : ''}" onclick="loadWindow2('grupa')">👥 Grupovođe</button>
+        </div>`;
         document.getElementById('modalBodyContent').innerHTML = html;
       });
     }
 
-    function fillFormToEdit(pin, name, extra, role, perms) {
-      if (role === 'vaga') {
-        document.getElementById('wVagaNum').value = extra;
-        document.getElementById('wName').value = name;
-        document.getElementById('wPin').value = pin;
-        document.getElementById('wPin').disabled = true;
-        document.getElementById('wFormTitle').innerText = "Izmena radnika (PIN: " + pin + ")";
-        document.getElementById('wCancelBtn').style.display = 'block';
-        document.querySelectorAll('#newWagaChecks input').forEach(chk => { chk.checked = perms.includes(chk.value); });
-      } else {
-        document.getElementById('gGroupNum').value = extra;
-        document.getElementById('gName').value = name;
-        document.getElementById('gPin').value = pin;
-        document.getElementById('gPin').disabled = true;
-        document.getElementById('gFormTitle').innerText = "Izmena grupovođe (PIN: " + pin + ")";
-        document.getElementById('gCancelBtn').style.display = 'block';
-        document.querySelectorAll('#newGrupChecks input').forEach(chk => { chk.checked = perms.includes(chk.value); });
-      }
-    }
-
-    function saveWorker(role) {
-      let name, pin, extra, perms;
-      if (role === 'vaga') {
-        extra = document.getElementById('wVagaNum').value.trim();
-        name = document.getElementById('wName').value.trim();
-        pin = document.getElementById('wPin').value.trim();
-        perms = Array.from(document.querySelectorAll('#newWagaChecks input:checked')).map(el => el.value);
-        if (pin.length !== 2) { alert("PIN radnika na vagi mora imati 2 cifre!"); return; }
-      } else {
-        extra = document.getElementById('gGroupNum').value.trim();
-        name = document.getElementById('gName').value.trim();
-        pin = document.getElementById('gPin').value.trim();
-        perms = Array.from(document.querySelectorAll('#newGrupChecks input:checked')).map(el => el.value);
-        if (pin.length !== 3) { alert("PIN grupovođe mora imati 3 cifre!"); return; }
-      }
-
-      if (!name || !pin) { alert("Popunite sva polja!"); return; }
-
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "saveWorkerOrGroup", data: { name, pin, role, extra, permissions: perms } })
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (res.success) {
-          loadWindow2(role === 'vaga' ? 'vaga' : 'grupa');
-        } else { alert("Greška: " + res.error); }
-      });
-    }
-
-    function deleteEntry(pin) {
-      if (!confirm("Obrisati ovog korisnika?")) return;
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "deleteWorkerOrGroup", pin: pin })
-      })
-      .then(res => res.json())
-      .then(res => { if (res.success) loadWindow2(); });
-    }
-
     // ==========================================
-    // OPCIJA 4: MAPA ZASADA (SINHRONIZOVANA NA CLOUD)
+    // OPCIJA 4: MAPA ZASADA (ISPRAVLJENO)
     // ==========================================
     function loadWindow4SubMenu() {
       let isAdmin = (loggedUser.role === 'admin');
@@ -1301,10 +1029,7 @@
       let canMark = isAdmin || canRedefine || (loggedUser.permissions && loggedUser.permissions.includes('map_mark'));
       let canView = isAdmin || canMark || canRedefine || (loggedUser.permissions && loggedUser.permissions.includes('map_view'));
 
-      if (!canView && !canMark && !canRedefine) {
-        alert("Nemate dozvolu!");
-        return;
-      }
+      if (!canView && !canMark && !canRedefine) { alert("Nemate dozvolu!"); return; }
       
       let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h3 style="margin:0; font-size:16px;">🌱 Zasad i Mapa</h3>
@@ -1314,15 +1039,10 @@
 
       if (canMark || canView) {
         let btnText = canMark ? "🌱 Pregled i vođenje berbe" : "🌱 Pregled mape";
-        html += `<button class="btn" style="background:#2980b9; text-align:left; padding:12px;" onclick="fetchMapFromServer(() => loadHarvestMap('${canMark ? 'preview' : 'view_only'}'))">
-          ${btnText}
-        </button>`;
+        html += `<button class="btn" style="background:#2980b9; text-align:left; padding:12px;" onclick="fetchMapFromServer(() => loadHarvestMap('${canMark ? 'preview' : 'view_only'}'))">${btnText}</button>`;
       }
-
       if (canRedefine) {
-        html += `<button class="btn" style="background:#8e44ad; text-align:left; padding:12px;" onclick="fetchMapFromServer(() => loadHarvestMap('admin'))">
-          ⚙️ Predefinisanje mape zasada
-        </button>`;
+        html += `<button class="btn" style="background:#8e44ad; text-align:left; padding:12px;" onclick="fetchMapFromServer(() => loadHarvestMap('admin'))">⚙️ Predefinisanje mape zasada</button>`;
       }
 
       html += `</div>`;
@@ -1375,9 +1095,9 @@
         if (isAdminMode) {
           html += `<div style="display:flex; gap:4px; align-items:center;">
             <input type="number" id="editRowsCount_${fIdx}" min="1" value="${field.rows.length}" style="width:50px; padding:3px; font-size:12px;" title="Broj redova">
-            <button class="btn-action" style="background:#2980b9;" onclick="updateFieldRowsCount(${fIdx})" title="Ažuriraj redove">Redovi</button>
-            <button class="btn-action btn-edit" onclick="renameField(${fIdx})">Preimenuj</button>
-            <button class="btn-action btn-del" onclick="deleteField(${fIdx})">Obriši</button>
+            <button class="btn-action" style="background:#2980b9;" onclick="updateFieldRowsCount(${fIdx}, ${isViewOnly})" title="Ažuriraj redove">Redovi</button>
+            <button class="btn-action btn-edit" onclick="renameField(${fIdx}, ${isViewOnly})">Preimenuj</button>
+            <button class="btn-action btn-del" onclick="deleteField(${fIdx}, ${isViewOnly})">Obriši</button>
           </div>`;
         }
 
@@ -1385,7 +1105,6 @@
 
         field.rows.forEach((row, rIdx) => {
           let rowBgClass = row.status === 'green' ? 'sq-green' : 'sq-purple';
-          
           html += `<div>
             <div class="map-square ${rowBgClass}" onclick="selectRowToViewFields(${fIdx}, ${rIdx}, ${isAdminMode}, ${isViewOnly})">
               <span>${row.rowNum.replace('Red ', 'R')}</span>
@@ -1406,8 +1125,8 @@
             if (isAdminMode) {
               html += `<div style="display:flex; gap:4px; align-items:center;">
                 <input type="number" id="editFieldsCount_${fIdx}_${activeSelectedRow.rIdx}" min="1" value="${activeRow.fields.length}" style="width:50px; padding:2px; font-size:12px;">
-                <button class="btn-action" style="background:#2980b9;" onclick="updateRowFieldsCount(${fIdx}, ${activeSelectedRow.rIdx})">Polja</button>
-                <button class="btn-action btn-del" onclick="deleteRowFromMap(${fIdx}, ${activeSelectedRow.rIdx})">Obriši red</button>
+                <button class="btn-action" style="background:#2980b9;" onclick="updateRowFieldsCount(${fIdx}, ${activeSelectedRow.rIdx}, ${isViewOnly})">Polja</button>
+                <button class="btn-action btn-del" onclick="deleteRowFromMap(${fIdx}, ${activeSelectedRow.rIdx}, ${isViewOnly})">Obriši red</button>
               </div>`;
             }
 
@@ -1416,16 +1135,12 @@
             activeRow.fields.forEach((fieldItem, fiIdx) => {
               let fBgClass = fieldItem.status === 'green' ? 'sq-green' : 'sq-purple';
               let clickAction = isViewOnly ? `` : `toggleFieldStatus(${fIdx}, ${activeSelectedRow.rIdx}, ${fiIdx}, ${isAdminMode}, ${isViewOnly})`;
-              
-              html += `<div class="map-square ${fBgClass}" style="width:38px; height:38px; font-size:11px;" onclick="${clickAction}">
-                ${fieldItem.fNum}
-              </div>`;
+              html += `<div class="map-square ${fBgClass}" style="width:38px; height:38px; font-size:11px;" onclick="${clickAction}">${fieldItem.fNum}</div>`;
             });
 
             html += `</div></div>`;
           }
         }
-
         html += `</div>`;
       });
       return html;
@@ -1469,7 +1184,7 @@
       loadHarvestMap('admin');
     }
 
-    function updateFieldRowsCount(fIdx) {
+    function updateFieldRowsCount(fIdx, isViewOnly) {
       let inputEl = document.getElementById(`editRowsCount_${fIdx}`);
       let newCount = parseInt(inputEl.value) || 1;
       let field = plantationMap[fIdx];
@@ -1494,19 +1209,19 @@
         activeSelectedRow = null;
       }
       saveMapToServer();
-      loadHarvestMap('admin');
+      document.getElementById('mapListContainer').innerHTML = renderMapHtml(true, isViewOnly);
     }
 
-    function renameField(fIdx) {
+    function renameField(fIdx, isViewOnly) {
       let newName = prompt("Novi naziv njive:", plantationMap[fIdx].fieldId);
       if (newName && newName.trim()) {
         plantationMap[fIdx].fieldId = newName.trim();
         saveMapToServer();
-        loadHarvestMap('admin');
+        document.getElementById('mapListContainer').innerHTML = renderMapHtml(true, isViewOnly);
       }
     }
 
-    function updateRowFieldsCount(fIdx, rIdx) {
+    function updateRowFieldsCount(fIdx, rIdx, isViewOnly) {
       let inputEl = document.getElementById(`editFieldsCount_${fIdx}_${rIdx}`);
       let newCount = parseInt(inputEl.value) || 1;
       let row = plantationMap[fIdx].rows[rIdx];
@@ -1522,24 +1237,23 @@
       row.fields = updatedFields;
       row.status = row.fields.every(f => f.status === 'green') ? 'green' : 'purple';
       saveMapToServer();
-      let isAdminMode = document.querySelector('h3').innerText.includes("Predefinisanje");
-      document.getElementById('mapListContainer').innerHTML = renderMapHtml(isAdminMode, false);
+      document.getElementById('mapListContainer').innerHTML = renderMapHtml(true, isViewOnly);
     }
 
-    function deleteRowFromMap(fIdx, rIdx) {
+    function deleteRowFromMap(fIdx, rIdx, isViewOnly) {
       if (!confirm("Obriši ovaj red?")) return;
       plantationMap[fIdx].rows.splice(rIdx, 1);
       activeSelectedRow = null;
       saveMapToServer();
-      loadHarvestMap('admin');
+      document.getElementById('mapListContainer').innerHTML = renderMapHtml(true, isViewOnly);
     }
 
-    function deleteField(fIdx) {
+    function deleteField(fIdx, isViewOnly) {
       if (!confirm("Obrisati njivu?")) return;
       plantationMap.splice(fIdx, 1);
       activeSelectedRow = null;
       saveMapToServer();
-      loadHarvestMap('admin');
+      document.getElementById('mapListContainer').innerHTML = renderMapHtml(true, isViewOnly);
     }
   </script>
 </body>
