@@ -124,7 +124,6 @@
     .tab-btn { background: #bdc3c7; color: #2c3e50; border: none; padding: 8px 12px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; white-space: nowrap; }
     .tab-btn.active { background: #2980b9; color: white; }
 
-    /* Mobilno-optimizovane kartične liste umesto krutih tabela */
     .mobile-card-item {
       background: white; border: 1px solid #dcdde1; border-radius: 8px; padding: 12px; margin-bottom: 8px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 6px;
@@ -1310,6 +1309,7 @@
 
       html += `</div>`;
       document.getElementById('modalBodyContent').innerHTML = html;
+      document.getElementById('modalBodyContent').scrollTop = 0;
       document.getElementById('menuModal').style.display = 'flex';
     }
 
@@ -1340,6 +1340,7 @@
       html += `</div>`;
 
       document.getElementById('modalBodyContent').innerHTML = html;
+      document.getElementById('modalBodyContent').scrollTop = 0;
     }
 
     function renderMapHtml(isAdminMode, isViewOnly = false) {
@@ -1354,7 +1355,9 @@
             <h4 style="margin:0; color:#2c3e50; font-size:15px;">🌱 ${field.fieldId}</h4>`;
         
         if (isAdminMode) {
-          html += `<div style="display:flex; gap:4px;">
+          html += `<div style="display:flex; gap:4px; align-items:center;">
+            <input type="number" id="editRowsCount_${fIdx}" min="1" value="${field.rows.length}" style="width:50px; padding:3px; font-size:12px;" title="Broj redova">
+            <button class="btn-action" style="background:#2980b9;" onclick="updateFieldRowsCount(${fIdx})" title="Ažuriraj redove">Redovi</button>
             <button class="btn-action btn-edit" onclick="renameField(${fIdx})">Preimenuj</button>
             <button class="btn-action btn-del" onclick="deleteField(${fIdx})">Obriši</button>
           </div>`;
@@ -1379,8 +1382,18 @@
           let activeRow = field.rows[activeSelectedRow.rIdx];
           if (activeRow) {
             html += `<div class="fields-container">
-              <div style="font-weight:bold; color:#2c3e50; font-size:13px; margin-bottom:4px;">Polja za ${activeRow.rowNum}:</div>
-              <div style="display:flex; flex-wrap:wrap; gap:4px; width:100%;">`;
+              <div style="display:flex; justify-content:space-between; width:100%; align-items:center; margin-bottom:4px; flex-wrap:wrap; gap:4px;">
+                <div style="font-weight:bold; color:#2c3e50; font-size:13px;">Polja za ${activeRow.rowNum}:</div>`;
+            
+            if (isAdminMode) {
+              html += `<div style="display:flex; gap:4px; align-items:center;">
+                <input type="number" id="editFieldsCount_${fIdx}_${activeSelectedRow.rIdx}" min="1" value="${activeRow.fields.length}" style="width:50px; padding:2px; font-size:12px;">
+                <button class="btn-action" style="background:#2980b9;" onclick="updateRowFieldsCount(${fIdx}, ${activeSelectedRow.rIdx})">Polja</button>
+                <button class="btn-action btn-del" onclick="deleteRowFromMap(${fIdx}, ${activeSelectedRow.rIdx})">Obriši red</button>
+              </div>`;
+            }
+
+            html += `</div><div style="display:flex; flex-wrap:wrap; gap:4px; width:100%;">`;
             
             activeRow.fields.forEach((fieldItem, fiIdx) => {
               let fBgClass = fieldItem.status === 'green' ? 'sq-green' : 'sq-purple';
@@ -1437,6 +1450,34 @@
       loadHarvestMap('admin');
     }
 
+    function updateFieldRowsCount(fIdx) {
+      let inputEl = document.getElementById(`editRowsCount_${fIdx}`);
+      let newCount = parseInt(inputEl.value) || 1;
+      let field = plantationMap[fIdx];
+      let currentRows = field.rows;
+      let defaultFieldsCount = currentRows.length > 0 ? currentRows[0].fields.length : 4;
+
+      let updatedRows = [];
+      for (let i = 1; i <= newCount; i++) {
+        let rName = "Red " + i;
+        let existing = currentRows.find(r => r.rowNum === rName);
+        if (existing) {
+          updatedRows.push(existing);
+        } else {
+          let newFields = [];
+          for (let f = 1; f <= defaultFieldsCount; f++) { newFields.push({ fNum: "P" + f, status: "purple" }); }
+          updatedRows.push({ rowNum: rName, status: "purple", fields: newFields });
+        }
+      }
+
+      field.rows = updatedRows;
+      if (activeSelectedRow && activeSelectedRow.fIdx === fIdx && activeSelectedRow.rIdx >= newCount) {
+        activeSelectedRow = null;
+      }
+      saveMapToLocalStorage();
+      loadHarvestMap('admin');
+    }
+
     function renameField(fIdx) {
       let newName = prompt("Novi naziv njive:", plantationMap[fIdx].fieldId);
       if (newName && newName.trim()) {
@@ -1444,6 +1485,34 @@
         saveMapToLocalStorage();
         loadHarvestMap('admin');
       }
+    }
+
+    function updateRowFieldsCount(fIdx, rIdx) {
+      let inputEl = document.getElementById(`editFieldsCount_${fIdx}_${rIdx}`);
+      let newCount = parseInt(inputEl.value) || 1;
+      let row = plantationMap[fIdx].rows[rIdx];
+      let currentFields = row.fields;
+      
+      let updatedFields = [];
+      for (let i = 1; i <= newCount; i++) {
+        let fName = "P" + i;
+        let existing = currentFields.find(f => f.fNum === fName);
+        updatedFields.push({ fNum: fName, status: existing ? existing.status : "purple" });
+      }
+
+      row.fields = updatedFields;
+      row.status = row.fields.every(f => f.status === 'green') ? 'green' : 'purple';
+      saveMapToLocalStorage();
+      let isAdminMode = document.querySelector('h3').innerText.includes("Predefinisanje");
+      document.getElementById('mapListContainer').innerHTML = renderMapHtml(isAdminMode, false);
+    }
+
+    function deleteRowFromMap(fIdx, rIdx) {
+      if (!confirm("Obriši ovaj red?")) return;
+      plantationMap[fIdx].rows.splice(rIdx, 1);
+      activeSelectedRow = null;
+      saveMapToLocalStorage();
+      loadHarvestMap('admin');
     }
 
     function deleteField(fIdx) {
