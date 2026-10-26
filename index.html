@@ -242,9 +242,9 @@
     
     // Workflow stanja:
     // 0 = Čeka se skeniranje QR koda
-    // 1 = Kod skeniran, čeka se stavljanje gajbice na vagu i potvrda
+    // 1 = Kod skeniran, čeka se potvrda merenja
     let workflowState = 0;
-    let pendingPickerNum = null;
+    let pendingPickerCode = null;
 
     let barcodeBuffer = "";
     let lastKeyTime = Date.now();
@@ -276,10 +276,10 @@
 
     function handleBarcodeInput(code) {
       document.getElementById('debugLog').innerText = "Očitan QR: " + code;
-      pendingPickerNum = code;
+      pendingPickerCode = code;
       workflowState = 1;
 
-      // Prikazujemo osnovne podatke berača dok je vaga aktivna i osciluje
+      // Prikazujemo podatke berača/gajbice na desnom panelu
       document.getElementById('valPicker').innerText = code;
       document.getElementById('valCrate').innerText = code;
       
@@ -290,15 +290,22 @@
 
     function cancelWorkflow() {
       workflowState = 0;
-      pendingPickerNum = null;
+      pendingPickerCode = null;
       document.getElementById('inlinePromptBox').style.display = 'none';
       document.getElementById('valPicker').innerText = "-";
       document.getElementById('valCrate').innerText = "-";
+      document.getElementById('valConfirmedInput').innerText = "0.00 kg";
     }
 
     function confirmWeightAndSave() {
-      if (!pendingPickerNum) return;
+      if (!pendingPickerCode) return;
       let finalConfirmedWeight = liveCurrentKg;
+
+      // Izvlačimo čisti broj berača iz formata tipa "BR'01 G'01" (uzima prvi broj ili ceo kod)
+      let pickerCleanNum = pendingPickerCode.replace(/[^0-9]/g, '');
+      if (!pickerCleanNum) {
+        pickerCleanNum = pendingPickerCode.split(' ')[0] || pendingPickerCode;
+      }
 
       document.getElementById('valConfirmedInput').innerText = finalConfirmedWeight.toFixed(2) + " kg";
       document.getElementById('inlinePromptBox').style.display = 'none';
@@ -306,8 +313,8 @@
       let payload = {
         action: "saveHarvestFromCrateScan",
         data: {
-          picker: pendingPickerNum,
-          crateId: pendingPickerNum,
+          picker: pickerCleanNum,
+          crateId: pendingPickerCode,
           sector: "Zasad 1",
           netWeight: finalConfirmedWeight,
           badFruit: 0,
@@ -330,17 +337,17 @@
           tareScale();
           loadGlobalStats();
           workflowState = 0;
-          pendingPickerNum = null;
+          pendingPickerCode = null;
         } else {
           alert("Greška: " + (res.error || "Nepoznat berač"));
           workflowState = 0;
-          pendingPickerNum = null;
+          pendingPickerCode = null;
         }
       })
       .catch(err => {
         alert("Serverska greška: " + err.message);
         workflowState = 0;
-        pendingPickerNum = null;
+        pendingPickerCode = null;
       });
     }
 
@@ -556,10 +563,12 @@
           if (finalKg > -0.01 && finalKg < 0.01) finalKg = 0;
           liveCurrentKg = finalKg;
           
-          // Težina se uvek slobodno ažurira uživo dok se ne potvrdi
+          // Ubrana količina se uvek slobodno ažurira uživo
           document.getElementById('weightVal').innerText = finalKg.toFixed(2) + " kg";
           
+          // Ako je otvoren prozor za potvrdu, prebrana količina prati težinu na vagi u realnom vremenu
           if (workflowState === 1) {
+            document.getElementById('valConfirmedInput').innerText = finalKg.toFixed(2) + " kg";
             document.getElementById('promptWeightVal').innerText = finalKg.toFixed(2) + " kg";
           }
         }
@@ -580,10 +589,11 @@
 
     async function tareScale() {
       workflowState = 0;
-      pendingPickerNum = null;
+      pendingPickerCode = null;
       document.getElementById('inlinePromptBox').style.display = 'none';
       tareOffset = rawWeight;
       document.getElementById('weightVal').innerText = "0.00 kg";
+      document.getElementById('valConfirmedInput').innerText = "0.00 kg";
       if (port && port.writable) {
         let writer = port.writable.getWriter();
         await writer.write(new TextEncoder().encode("T\n"));
