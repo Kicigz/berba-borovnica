@@ -144,7 +144,6 @@
     .sq-purple { background-color: #8e44ad; border: 2px solid #6c3483; }
     .sq-green { background-color: #27ae60; border: 2px solid #1e8449; }
     
-    /* Kontejner za pojedinačna polja ispod reda */
     .fields-detail-container {
       background: #f8f9fa; border: 1px dashed #bdc3c7; border-radius: 6px; padding: 10px; margin-top: 8px;
       display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
@@ -155,9 +154,9 @@
     }
     
     .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-    .report-group-card { background: white; border-radius: 10px; padding: 14px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border-left: 6px solid #2980b9; transition: transform 0.1s; }
-    .report-group-card:hover { transform: translateY(-2px); }
-    .picker-detail-row { background: white; border: 1px solid #e1e8ed; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+    .report-group-card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #b2bec3; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; border-left: 8px solid #2980b9; transition: transform 0.1s; }
+    .report-group-card:hover { transform: translateY(-2px); border-color: #0984e3; }
+    .picker-detail-row { background: white; border: 1px solid #b2bec3; border-radius: 8px; padding: 12px; margin-bottom: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.06); border-left: 5px solid #0984e3; }
   </style>
 </head>
 <body>
@@ -431,7 +430,7 @@
       }).catch(err => console.error("Greška pri učitavanju statistike:", err));
     }
 
-    // --- ADMINISTRACIJA I SVI PROZORI (1 do 6) ---
+    // --- ADMINISTRACIJA I SVI PROZORI ---
     function openMenuModal() {
       let html = `<h3 style="margin-bottom:12px; font-size:16px;">Izaberite opciju administracije:</h3>
         <div style="display: flex; flex-direction: column; gap: 8px;">`;
@@ -440,13 +439,13 @@
         { id: "1", label: "1. Dodaj berača u grupu" },
         { id: "2", label: "2. Radnici na vagi i Grupovođe" },
         { id: "3", label: "3. Izveštaj o branju" },
-        { id: "4", label: "4. Koji se zasad bere" },
+        { id: "4", label: "4. Zasad i mapa" },
         { id: "5", label: "5. Izmene merenja na vagi" },
         { id: "6", label: "6. Obračun dana" }
       ];
 
       menuItems.forEach(item => {
-        let hasAccess = (loggedUser.role === 'admin' || loggedUser.permissions.includes(item.id) || (loggedUser.role === 'grupovoda' && item.id === '4'));
+        let hasAccess = checkUserAccess(item.id);
         let bgStyle = hasAccess ? "#2980b9" : "#bdc3c7";
         let clickAction = hasAccess ? `openWindow('${item.id}')` : `alert('Nemate dozvolu!')`;
         html += `<button class="btn" style="background:${bgStyle}; padding: 12px; text-align:left;" onclick="${clickAction}">${item.label}</button>`;
@@ -455,6 +454,15 @@
       html += `</div>`;
       document.getElementById('modalBodyContent').innerHTML = html;
       document.getElementById('menuModal').style.display = 'flex';
+    }
+
+    function checkUserAccess(windowId) {
+      if (loggedUser.role === 'admin') return true;
+      let perms = loggedUser.permissions || [];
+      if (windowId === '4') {
+        return perms.includes('4a') || perms.includes('4b') || perms.includes('4c') || perms.includes('4');
+      }
+      return perms.includes(windowId);
     }
 
     function closeModal() {
@@ -466,11 +474,9 @@
     }
 
     function openWindow(num) {
-      if (loggedUser.role !== 'admin' && !loggedUser.permissions.includes(String(num))) {
-        if (!(loggedUser.role === 'grupovoda' && num === '4')) {
-          alert("Nemate dozvolu za pristup prozoru " + num + "!");
-          return;
-        }
+      if (!checkUserAccess(num)) {
+        alert("Nemate dozvolu za pristup prozoru " + num + "!");
+        return;
       }
       if (num === '1') { loadWindow1(); return; }
       if (num === '2') { loadWindow2('vaga'); return; }
@@ -493,10 +499,9 @@
         let groups = resGroups.success ? resGroups.groups : [];
         let pickers = resPickers.success ? resPickers.pickers : [];
 
-        let groupSelectHtml = "";
         let options = `<option value="">-- Izaberi grupu --</option>`;
         groups.forEach(g => { options += `<option value="${g.extra}" data-name="${g.name}">Grupa ${g.extra} (${g.name})</option>`; });
-        groupSelectHtml = `<select id="pickerGroupSelect" style="flex:1; padding:10px; border-radius:6px; border:1px solid #bdc3c7; font-size:15px;">${options}</select>`;
+        let groupSelectHtml = `<select id="pickerGroupSelect" style="flex:1; padding:10px; border-radius:6px; border:1px solid #bdc3c7; font-size:15px;">${options}</select>`;
 
         let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <h3 style="margin:0; font-size:16px;">➕ Dodavanje berača</h3>
@@ -576,7 +581,7 @@
       .then(res => { if (res.success) loadWindow1(); });
     }
 
-    // PROZOR 2: Radnici na vagi i Grupovođe sa dozvolama (uključujući Prozor 4)
+    // PROZOR 2: Radnici na vagi i Grupovođe (sa novim dozvolama 4a, 4b, 4c)
     function loadWindow2(activeTab = 'vaga') {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje osoblja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -600,8 +605,9 @@
           { id: "1", label: "1. Dodaj berača" },
           { id: "2", label: "2. Radnici i vođe" },
           { id: "3", label: "3. Izveštaj berbe" },
-          { id: "4", label: "4. Zasad i mapa (Pregled i vođenje)" },
-          { id: "4_admin", label: "4. Predefinisanje mape zasada" },
+          { id: "4a", label: "4a. Pregled mape" },
+          { id: "4b", label: "4b. Vođenje mape (promena polja)" },
+          { id: "4c", label: "4c. Predefinisanje mapa" },
           { id: "5", label: "5. Izmene merenja" },
           { id: "6", label: "6. Obračun dana" }
         ];
@@ -609,7 +615,7 @@
         if (activeTab === 'vaga') {
           let checkboxesHtml = `<div class="checkbox-group">`;
           permOptions.forEach(p => {
-            let checked = (p.id === '1' || p.id === '3' || p.id === '4' || p.id === '5') ? 'checked' : '';
+            let checked = (p.id === '1' || p.id === '3' || p.id === '4a' || p.id === '4b' || p.id === '5') ? 'checked' : '';
             checkboxesHtml += `<label><input type="checkbox" class="worker-perm-chk" value="${p.id}" ${checked}> ${p.label}</label>`;
           });
           checkboxesHtml += `</div>`;
@@ -639,7 +645,7 @@
         } else {
           let checkboxesHtml = `<div class="checkbox-group">`;
           permOptions.forEach(p => {
-            let checked = (p.id === '4') ? 'checked' : '';
+            let checked = (p.id === '4a' || p.id === '4b') ? 'checked' : '';
             checkboxesHtml += `<label><input type="checkbox" class="leader-perm-chk" value="${p.id}" ${checked}> ${p.label}</label>`;
           });
           checkboxesHtml += `</div>`;
@@ -698,7 +704,7 @@
       .then(r => r.json()).then(res => { if (res.success) loadWindow2('vaga'); });
     }
 
-    // PROZOR 3: Izveštaj o branju
+    // PROZOR 3: Izveštaj o branju (Poboljšana vidljivost kartica)
     function loadWindow3(selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -733,8 +739,8 @@
             <h3 style="margin:0; font-size:16px;">📊 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})</h3>
             <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="loadWindow3(null)">← Nazad na grupe</button>
           </div>
-          <div class="section-card">
-            <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Ukupno ubrano za grupu: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span></div>
+          <div class="section-card" style="border: 2px solid #2980b9;">
+            <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Ukupno ubrano za grupu: <span style="color:#27ae60; font-size:18px;">${totalGroupKg.toFixed(2)} kg</span></div>
           </div>
           <div class="section-card">
             <h4>Učinak po beračima u grupi</h4>`;
@@ -743,10 +749,10 @@
           groupPickers.forEach(p => {
             let stats = pickerStats[p.pickerNum] || { kg: 0, crates: 0 };
             html += `<div class="picker-detail-row" style="display:flex; justify-content:space-between; align-items:center;">
-              <div><b>Berač #${p.pickerNum}</b></div>
+              <div><b style="font-size:15px; color:#2c3e50;">Berač #${p.pickerNum}</b></div>
               <div style="text-align:right;">
-                <span style="color:#27ae60; font-weight:bold; font-size:15px;">${stats.kg.toFixed(2)} kg</span>
-                <span style="font-size:12px; color:#7f8c8d; margin-left:8px;">(${stats.crates} gajbica)</span>
+                <span style="color:#27ae60; font-weight:bold; font-size:16px;">${stats.kg.toFixed(2)} kg</span>
+                <span style="font-size:13px; color:#34495e; margin-left:8px; font-weight:bold;">(${stats.crates} gajbice)</span>
               </div>
             </div>`;
           });
@@ -771,11 +777,11 @@
           let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
 
           html += `<div class="report-group-card" onclick="loadWindow3('${groupNum}')">
-            <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
-            <div style="font-size:13px; color:#555; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
-            <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #eee; padding-top:6px;">
+            <div style="font-size:17px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
+            <div style="font-size:14px; color:#333; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
+            <div style="display:flex; justify-content:space-between; font-size:14px; border-top:2px solid #dfe6e9; padding-top:8px; color:#2c3e50;">
               <span>👥 Berača: <b>${groupPickers.length}</b></span>
-              <span style="color:#27ae60; font-weight:bold; font-size:14px;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+              <span style="color:#27ae60; font-weight:bold; font-size:15px;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
             </div>
           </div>`;
         });
@@ -784,22 +790,40 @@
       });
     }
 
-    // PROZOR 4: Zasad i Mapa (Sa izmenom imena njive, dodatnim poljima i pregledom polja po redovima)
+    // PROZOR 4: Zasad i Mapa (Sa podrškom za 4a, 4b, 4c i punom kontrolom redova i polja)
     function loadWindow4SubMenu() {
+      let perms = loggedUser.permissions || [];
+      let isAdmin = (loggedUser.role === 'admin');
+      let canView = isAdmin || perms.includes('4a') || perms.includes('4b') || perms.includes('4c');
+      let canManage = isAdmin || perms.includes('4b');
+      let canAdminMap = isAdmin || perms.includes('4c');
+
+      if (!canView) {
+        alert("Nemate dozvolu za pristup mapi zasada!");
+        openMenuModal();
+        return;
+      }
+
       let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h3 style="margin:0; font-size:16px;">🌱 Zasad i Mapa</h3>
         <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
       </div>
-      <div style="display: flex; flex-direction: column; gap: 10px; margin-top:10px;">
-        <button class="btn" style="background:#2980b9; text-align:left; padding:12px;" onclick="loadHarvestMap('preview')">🌱 Pregled i vođenje berbe</button>
-        <button class="btn" style="background:#8e44ad; text-align:left; padding:12px;" onclick="loadHarvestMap('admin')">⚙️ Predefinisanje mape zasada</button>
-      </div>`;
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top:10px;">`;
+
+      if (canView || canManage) {
+        html += `<button class="btn" style="background:#2980b9; text-align:left; padding:12px;" onclick="loadHarvestMap('preview')">🌱 Pregled i vođenje berbe ${canManage ? '(Omogućeno menjanje statusa)' : '(Samo pregled)'}</button>`;
+      }
+      if (canAdminMap) {
+        html += `<button class="btn" style="background:#8e44ad; text-align:left; padding:12px;" onclick="loadHarvestMap('admin')">⚙️ Predefinisanje mape zasada (Dodavanje/brisanje redova i polja)</button>`;
+      }
+
+      html += `</div>`;
       document.getElementById('modalBodyContent').innerHTML = html;
       document.getElementById('menuModal').style.display = 'flex';
     }
 
     let plantationMap = [];
-    let selectedRowForPreview = null; // Pamti koji red je otvoren u pregledu berbe
+    let selectedRowForPreview = null;
 
     function fetchMapFromServer(callback) {
       fetch(WEB_APP_URL, {
@@ -855,7 +879,9 @@
               🌱 <span>${fieldName}</span>
               ${isAdminMode ? `<button class="btn-action btn-edit" style="padding:2px 6px; font-size:11px;" onclick="editFieldName(${fIdx})">✏️</button>` : ''}
             </h4>
-            ${isAdminMode ? `<button class="btn-action btn-del" onclick="deleteField(${fIdx})">Obriši njivu</button>` : ''}
+            <div style="display:flex; gap:6px;">
+              ${isAdminMode ? `<button class="btn-action btn-edit" style="background:#2980b9;" onclick="addNewRowToField(${fIdx})">➕ Dodaj red</button><button class="btn-action btn-del" onclick="deleteField(${fIdx})">Obriši njivu</button>` : ''}
+            </div>
           </div>
           <div class="rows-grid">`;
 
@@ -864,26 +890,38 @@
         } else {
           field.rows.forEach((row, rIdx) => {
             let rowBgClass = row.status === 'green' ? 'sq-green' : 'sq-purple';
-            let clickAttr = isAdminMode ? `onclick="editRowFields(${fIdx}, ${rIdx})" title="Klikni za izmenu broja polja"` : `onclick="selectRowForPreview(${fIdx}, ${rIdx})" title="Klikni da prikažeš polja reda"`;
-            html += `<div class="map-square ${rowBgClass}" ${clickAttr}><span>${row.rowNum}</span><span style="font-size:9px; opacity:0.8;">${row.fieldsCount || 0}p</span></div>`;
+            let clickAttr = isAdminMode ? `onclick="editRowMenu(${fIdx}, ${rIdx})" title="Klikni za izmenu reda / polja"` : `onclick="selectRowForPreview(${fIdx}, ${rIdx})" title="Klikni da prikažeš polja reda"`;
+            html += `<div class="map-square ${rowBgClass}" ${clickAttr}><span>${row.rowNum}</span><span style="font-size:9px; opacity:0.8;">${(row.fieldStatusList ? row.fieldStatusList.length : row.fieldsCount || 0)}p</span></div>`;
           });
         }
         html += `</div>`;
 
-        // Ako nismo u admin modu i kliknuto je na ovaj red, prikaži pojedinačna polja ispod
-        if (!isAdminMode && selectedRowForPreview && selectedRowForPreview.fIdx === fIdx) {
+        // Prikaz polja ispod reda (bilo u admin modu ili u pregledu berbe ako je red izabran)
+        let activeRowForDisplay = null;
+        let isRowActiveForAdmin = isAdminMode && selectedRowForPreview && selectedRowForPreview.fIdx === fIdx;
+        let isRowActiveForPreview = !isAdminMode && selectedRowForPreview && selectedRowForPreview.fIdx === fIdx;
+
+        if (isRowActiveForAdmin || isRowActiveForPreview) {
           let activeRow = field.rows[selectedRowForPreview.rIdx];
           if (activeRow) {
-            let count = activeRow.fieldsCount || 10;
+            let count = activeRow.fieldStatusList ? activeRow.fieldStatusList.length : (activeRow.fieldsCount || 10);
             if (!activeRow.fieldStatusList || activeRow.fieldStatusList.length !== count) {
               activeRow.fieldStatusList = new Array(count).fill('purple');
             }
+            
+            let canModifySubFields = isAdminMode || checkUserAccess('4b');
+
             html += `<div class="fields-detail-container">
-              <div style="width:100%; font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Polja u redu ${activeRow.rowNum} (Klikni na polje da ga označite kao obrano):</div>`;
-            for (let p = 0; p < count; p++) {
+              <div style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size:13px; font-weight:bold; color:#2c3e50;">Polja u redu ${activeRow.rowNum} ${canModifySubFields ? '(Klikni na polje da promeniš status):' : '(Pregled polja):'}</span>
+                ${isAdminMode ? `<button class="btn-action btn-edit" style="background:#27ae60; padding:2px 6px; font-size:11px;" onclick="addSubField(${fIdx}, ${selectedRowForPreview.rIdx})">➕ Dodaj polje</button>` : ''}
+              </div>`;
+
+            for (let p = 0; p < activeRow.fieldStatusList.length; p++) {
               let pColor = (activeRow.fieldStatusList[p] === 'green') ? '#27ae60' : '#8e44ad';
               let pBorder = (activeRow.fieldStatusList[p] === 'green') ? '#1e8449' : '#6c3483';
-              html += `<div class="field-sub-square" style="background-color:${pColor}; border:2px solid ${pBorder};" onclick="toggleSubField(${fIdx}, ${selectedRowForPreview.rIdx}, ${p})">P${p+1}</div>`;
+              let clickSubAction = canModifySubFields ? `onclick="toggleSubField(${fIdx}, ${selectedRowForPreview.rIdx}, ${p})"` : '';
+              html += `<div class="field-sub-square" style="background-color:${pColor}; border:2px solid ${pBorder}; ${canModifySubFields ? 'cursor:pointer;' : ''}" ${clickSubAction}>P${p+1}</div>`;
             }
             html += `</div>`;
           }
@@ -908,6 +946,14 @@
       loadHarvestMap('admin');
     }
 
+    function addNewRowToField(fIdx) {
+      let field = plantationMap[fIdx];
+      let nextRowNum = "R" + (field.rows.length + 1);
+      let defaultFields = 10;
+      field.rows.push({ rowNum: nextRowNum, fieldsCount: defaultFields, status: 'purple', fieldStatusList: new Array(defaultFields).fill('purple') });
+      loadHarvestMap('admin');
+    }
+
     function editFieldName(fIdx) {
       let currentName = plantationMap[fIdx].fieldId;
       let newName = prompt("Unesite novo ime njive:", currentName);
@@ -923,31 +969,52 @@
       loadHarvestMap('admin');
     }
 
-    function editRowFields(fIdx, rIdx) {
-      let currentFields = plantationMap[fIdx].rows[rIdx].fieldsCount || 10;
-      let newCount = prompt("Unesite novi broj polja za red " + plantationMap[fIdx].rows[rIdx].rowNum + ":", currentFields);
-      if (newCount !== null) {
-        let parsed = parseInt(newCount);
-        if (!isNaN(parsed) && parsed >= 0) {
-          plantationMap[fIdx].rows[rIdx].fieldsCount = parsed;
-          if (!plantationMap[fIdx].rows[rIdx].fieldStatusList) {
-            plantationMap[fIdx].rows[rIdx].fieldStatusList = new Array(parsed).fill('purple');
-          } else {
-            while(plantationMap[fIdx].rows[rIdx].fieldStatusList.length < parsed) plantationMap[fIdx].rows[rIdx].fieldStatusList.push('purple');
-            while(plantationMap[fIdx].rows[rIdx].fieldStatusList.length > parsed) plantationMap[fIdx].rows[rIdx].fieldStatusList.pop();
+    function editRowMenu(fIdx, rIdx) {
+      let row = plantationMap[fIdx].rows[rIdx];
+      let actionChoice = prompt(`Opcije za red ${row.rowNum}:\n1 - Izmeni broj polja\n2 - Otvori/upravljaj poljima ovog reda\n3 - Obriši ovaj red`, "2");
+      if (actionChoice === "1") {
+        let newCount = prompt("Unesite novi broj polja:", row.fieldStatusList ? row.fieldStatusList.length : row.fieldsCount);
+        if (newCount !== null) {
+          let parsed = parseInt(newCount);
+          if (!isNaN(parsed) && parsed > 0) {
+            row.fieldsCount = parsed;
+            if (!row.fieldStatusList) row.fieldStatusList = new Array(parsed).fill('purple');
+            else {
+              while(row.fieldStatusList.length < parsed) row.fieldStatusList.push('purple');
+              while(row.fieldStatusList.length > parsed) row.fieldStatusList.pop();
+            }
+            loadHarvestMap('admin');
           }
+        }
+      } else if (actionChoice === "2") {
+        selectedRowForPreview = { fIdx, rIdx };
+        loadHarvestMap('admin');
+      } else if (actionChoice === "3") {
+        if (confirm("Obrisati red " + row.rowNum + "?")) {
+          plantationMap[fIdx].rows.splice(rIdx, 1);
+          selectedRowForPreview = null;
           loadHarvestMap('admin');
         }
       }
     }
 
+    function addSubField(fIdx, rIdx) {
+      let row = plantationMap[fIdx].rows[rIdx];
+      if (!row.fieldStatusList) row.fieldStatusList = new Array(row.fieldsCount || 10).fill('purple');
+      row.fieldStatusList.push('purple');
+      row.fieldsCount = row.fieldStatusList.length;
+      saveMapToCloudSilent();
+      loadHarvestMap('admin');
+    }
+
     function selectRowForPreview(fIdx, rIdx) {
       if (selectedRowForPreview && selectedRowForPreview.fIdx === fIdx && selectedRowForPreview.rIdx === rIdx) {
-        selectedRowForPreview = null; // Zatvori ako je već bio otvoren
+        selectedRowForPreview = null;
       } else {
         selectedRowForPreview = { fIdx, rIdx };
       }
-      loadHarvestMap('preview');
+      let mode = checkUserAccess('4c') ? 'admin' : 'preview';
+      loadHarvestMap(mode);
     }
 
     function toggleSubField(fIdx, rIdx, pIdx) {
@@ -956,12 +1023,12 @@
 
       rowObj.fieldStatusList[pIdx] = (rowObj.fieldStatusList[pIdx] === 'green') ? 'purple' : 'green';
 
-      // Provera da li su sva polja u redu zelena -> automatski prebaci ceo red u zeleno
       let allGreen = rowObj.fieldStatusList.every(status => status === 'green');
       rowObj.status = allGreen ? 'green' : 'purple';
 
       saveMapToCloudSilent();
-      loadHarvestMap('preview');
+      let mode = checkUserAccess('4c') ? 'admin' : 'preview';
+      loadHarvestMap(mode);
     }
 
     function saveMapToCloud() {
@@ -1039,7 +1106,7 @@
       });
     }
 
-    // PROZOR 6: Obračun dana
+    // PROZOR 6: Obračun dana (Poboljšana vidljivost kartica)
     function loadWindow6(selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -1076,9 +1143,9 @@
             <h3 style="margin:0; font-size:16px;">💰 Obračun: Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})</h3>
             <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="loadWindow6(null)">← Nazad na grupe</button>
           </div>
-          <div class="section-card">
-            <div style="font-size:15px; font-weight:bold; color:#2c3e50;">Ukupno kilograma: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span></div>
-            <div style="font-size:15px; font-weight:bold; color:#2980b9; margin-top:4px;">Ukupna isplata grupe: <span>${totalGroupPay.toFixed(2)} RSD</span></div>
+          <div class="section-card" style="border: 2px solid #2980b9;">
+            <div style="font-size:16px; font-weight:bold; color:#2c3e50;">Ukupno kilograma: <span style="color:#27ae60; font-size:18px;">${totalGroupKg.toFixed(2)} kg</span></div>
+            <div style="font-size:16px; font-weight:bold; color:#2980b9; margin-top:6px;">Ukupna isplata grupe: <span style="font-size:18px;">${totalGroupPay.toFixed(2)} RSD</span></div>
           </div>
           <div class="section-card">
             <h4>Pojedinačni obračun po beračima</h4>`;
@@ -1088,10 +1155,10 @@
             let stats = pickerStats[p.pickerNum] || { kg: 0, crates: 0 };
             let pay = stats.kg * defaultPricePerKg;
             html += `<div class="picker-detail-row" style="display:flex; justify-content:space-between; align-items:center;">
-              <div><b>Berač #${p.pickerNum}</b> <span style="font-size:12px; color:#666;">(${stats.crates} gajbica)</span></div>
+              <div><b style="font-size:15px; color:#2c3e50;">Berač #${p.pickerNum}</b> <span style="font-size:13px; color:#333; font-weight:bold;">(${stats.crates} gajbica)</span></div>
               <div style="text-align:right;">
-                <span style="color:#27ae60; font-weight:bold;">${stats.kg.toFixed(2)} kg</span><br>
-                <span style="color:#2980b9; font-weight:bold; font-size:13px;">${pay.toFixed(2)} RSD</span>
+                <span style="color:#27ae60; font-weight:bold; font-size:15px;">${stats.kg.toFixed(2)} kg</span><br>
+                <span style="color:#2980b9; font-weight:bold; font-size:15px;">${pay.toFixed(2)} RSD</span>
               </div>
             </div>`;
           });
@@ -1116,13 +1183,13 @@
           let totalGroupPay = totalGroupKg * defaultPricePerKg;
 
           html += `<div class="report-group-card" onclick="loadWindow6('${groupNum}')">
-            <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
-            <div style="font-size:13px; color:#555; margin-bottom:6px;">Vođa: <b>${leaderName}</b></div>
-            <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #eee; padding-top:6px;">
+            <div style="font-size:17px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
+            <div style="font-size:14px; color:#333; margin-bottom:6px;">Vođa: <b>${leaderName}</b></div>
+            <div style="display:flex; justify-content:space-between; font-size:14px; border-top:2px solid #dfe6e9; padding-top:6px; color:#2c3e50;">
               <span>👥 Berača: <b>${groupPickers.length}</b></span>
-              <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+              <span style="color:#27ae60; font-weight:bold; font-size:15px;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:14px; margin-top:4px; color:#2980b9; font-weight:bold;">
+            <div style="display:flex; justify-content:space-between; font-size:15px; margin-top:6px; color:#2980b9; font-weight:bold; border-top:1px dashed #b2bec3; padding-top:4px;">
               <span>Isplata:</span><span>${totalGroupPay.toFixed(2)} RSD</span>
             </div>
           </div>`;
@@ -1215,15 +1282,14 @@
         { id: "1", label: "1. Dodaj berača u grupu", desc: "Dodeljivanje brojeva beračima" },
         { id: "2", label: "2. Radnici na vagi i Grupovođe", desc: "Pregled i dodavanje lica" },
         { id: "3", label: "3. Izveštaj o branju", desc: "Pregled količina i učinka" },
-        { id: "4", label: "4. Koji se zasad bere", desc: "Pregled, vođenje berbe i mape" },
+        { id: "4", label: "4. Zasad i mapa", desc: "Pregled, vođenje berbe i mape" },
         { id: "5", label: "5. Izmene merenja na vagi", desc: "Korekcija eventualnih grešaka" },
         { id: "6", label: "6. Obračun dana", desc: "Završni obračun dnevnica i isplata" }
       ];
 
       let html = "";
       menuItems.forEach(item => {
-        let hasAccess = (loggedUser.role === 'admin' || loggedUser.permissions.includes(item.id) || (loggedUser.role === 'grupovoda' && item.id === '4'));
-        if (hasAccess) {
+        if (checkUserAccess(item.id)) {
           html += `<div class="leader-card" onclick="openWindow('${item.id}')">
             <h3>${item.label}</h3>
             <p>${item.desc}</p>
