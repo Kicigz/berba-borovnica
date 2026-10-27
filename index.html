@@ -581,7 +581,7 @@
       .then(res => { if (res.success) loadWindow1(); });
     }
 
-    // PROZOR 2: Radnici na vagi i Grupovođe (sa novim dozvolama 4a, 4b, 4c)
+    // PROZOR 2: Radnici na vagi i Grupovođe
     function loadWindow2(activeTab = 'vaga') {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje osoblja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -704,7 +704,7 @@
       .then(r => r.json()).then(res => { if (res.success) loadWindow2('vaga'); });
     }
 
-    // PROZOR 3: Izveštaj o branju (Poboljšana vidljivost kartica)
+    // PROZOR 3: Izveštaj o branju
     function loadWindow3(selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -790,7 +790,7 @@
       });
     }
 
-    // PROZOR 4: Zasad i Mapa (Sa podrškom za 4a, 4b, 4c i punom kontrolom redova i polja)
+    // PROZOR 4: Zasad i Mapa
     function loadWindow4SubMenu() {
       let perms = loggedUser.permissions || [];
       let isAdmin = (loggedUser.role === 'admin');
@@ -814,7 +814,7 @@
         html += `<button class="btn" style="background:#2980b9; text-align:left; padding:12px;" onclick="loadHarvestMap('preview')">🌱 Pregled i vođenje berbe ${canManage ? '(Omogućeno menjanje statusa)' : '(Samo pregled)'}</button>`;
       }
       if (canAdminMap) {
-        html += `<button class="btn" style="background:#8e44ad; text-align:left; padding:12px;" onclick="loadHarvestMap('admin')">⚙️ Predefinisanje mape zasada (Dodavanje/brisanje redova i polja)</button>`;
+        html += `<button class="btn" style="background:#8e44ad; text-align:left; padding:12px;" onclick="loadHarvestMap('admin')">⚙️ Predefinisanje mape zasada</button>`;
       }
 
       html += `</div>`;
@@ -889,19 +889,22 @@
           html += `<span style="font-size:12px; color:#95a5a6;">Nema redova.</span>`;
         } else {
           field.rows.forEach((row, rIdx) => {
-            let rowBgClass = row.status === 'green' ? 'sq-green' : 'sq-purple';
-            let clickAttr = isAdminMode ? `onclick="editRowMenu(${fIdx}, ${rIdx})" title="Klikni za izmenu reda / polja"` : `onclick="selectRowForPreview(${fIdx}, ${rIdx})" title="Klikni da prikažeš polja reda"`;
-            html += `<div class="map-square ${rowBgClass}" ${clickAttr}><span>${row.rowNum}</span><span style="font-size:9px; opacity:0.8;">${(row.fieldStatusList ? row.fieldStatusList.length : row.fieldsCount || 0)}p</span></div>`;
+            let rowBgClass = (isAdminMode) ? 'sq-purple' : (row.status === 'green' ? 'sq-green' : 'sq-purple');
+            let clickAttr = `onclick="selectRowForPreview(${fIdx}, ${rIdx})" title="Klikni da prikažeš polja reda"`;
+            
+            let rowDeleteBtn = isAdminMode ? `<button class="btn-action btn-del" style="padding:1px 4px; font-size:9px; margin-top:2px;" onclick="event.stopPropagation(); deleteRowFromField(${fIdx}, ${rIdx})">- Obriši</button>` : '';
+
+            html += `<div class="map-square ${rowBgClass}" ${clickAttr}>
+              <span>${row.rowNum}</span>
+              <span style="font-size:9px; opacity:0.8;">${(row.fieldStatusList ? row.fieldStatusList.length : row.fieldsCount || 0)}p</span>
+              ${rowDeleteBtn}
+            </div>`;
           });
         }
         html += `</div>`;
 
-        // Prikaz polja ispod reda (bilo u admin modu ili u pregledu berbe ako je red izabran)
-        let activeRowForDisplay = null;
-        let isRowActiveForAdmin = isAdminMode && selectedRowForPreview && selectedRowForPreview.fIdx === fIdx;
-        let isRowActiveForPreview = !isAdminMode && selectedRowForPreview && selectedRowForPreview.fIdx === fIdx;
-
-        if (isRowActiveForAdmin || isRowActiveForPreview) {
+        // Prikaz pojedinačnih polja ispod izabranog reda
+        if (selectedRowForPreview && selectedRowForPreview.fIdx === fIdx) {
           let activeRow = field.rows[selectedRowForPreview.rIdx];
           if (activeRow) {
             let count = activeRow.fieldStatusList ? activeRow.fieldStatusList.length : (activeRow.fieldsCount || 10);
@@ -909,17 +912,17 @@
               activeRow.fieldStatusList = new Array(count).fill('purple');
             }
             
-            let canModifySubFields = isAdminMode || checkUserAccess('4b');
+            let canModifySubFields = !isAdminMode && checkUserAccess('4b');
 
             html += `<div class="fields-detail-container">
               <div style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                 <span style="font-size:13px; font-weight:bold; color:#2c3e50;">Polja u redu ${activeRow.rowNum} ${canModifySubFields ? '(Klikni na polje da promeniš status):' : '(Pregled polja):'}</span>
-                ${isAdminMode ? `<button class="btn-action btn-edit" style="background:#27ae60; padding:2px 6px; font-size:11px;" onclick="addSubField(${fIdx}, ${selectedRowForPreview.rIdx})">➕ Dodaj polje</button>` : ''}
+                ${isAdminMode ? `<div style="display:flex; gap:6px;"><button class="btn-action btn-edit" style="background:#27ae60; padding:2px 6px; font-size:11px;" onclick="addSubField(${fIdx}, ${selectedRowForPreview.rIdx})">➕ Dodaj polje</button><button class="btn-action btn-del" style="padding:2px 6px; font-size:11px;" onclick="removeSubField(${fIdx}, ${selectedRowForPreview.rIdx})">➖ Obriši polje</button></div>` : ''}
               </div>`;
 
             for (let p = 0; p < activeRow.fieldStatusList.length; p++) {
-              let pColor = (activeRow.fieldStatusList[p] === 'green') ? '#27ae60' : '#8e44ad';
-              let pBorder = (activeRow.fieldStatusList[p] === 'green') ? '#1e8449' : '#6c3483';
+              let pColor = isAdminMode ? '#8e44ad' : ((activeRow.fieldStatusList[p] === 'green') ? '#27ae60' : '#8e44ad');
+              let pBorder = isAdminMode ? '#6c3483' : ((activeRow.fieldStatusList[p] === 'green') ? '#1e8449' : '#6c3483');
               let clickSubAction = canModifySubFields ? `onclick="toggleSubField(${fIdx}, ${selectedRowForPreview.rIdx}, ${p})"` : '';
               html += `<div class="field-sub-square" style="background-color:${pColor}; border:2px solid ${pBorder}; ${canModifySubFields ? 'cursor:pointer;' : ''}" ${clickSubAction}>P${p+1}</div>`;
             }
@@ -954,6 +957,13 @@
       loadHarvestMap('admin');
     }
 
+    function deleteRowFromField(fIdx, rIdx) {
+      if (!confirm("Obrisati ovaj red?")) return;
+      plantationMap[fIdx].rows.splice(rIdx, 1);
+      selectedRowForPreview = null;
+      loadHarvestMap('admin');
+    }
+
     function editFieldName(fIdx) {
       let currentName = plantationMap[fIdx].fieldId;
       let newName = prompt("Unesite novo ime njive:", currentName);
@@ -969,35 +979,6 @@
       loadHarvestMap('admin');
     }
 
-    function editRowMenu(fIdx, rIdx) {
-      let row = plantationMap[fIdx].rows[rIdx];
-      let actionChoice = prompt(`Opcije za red ${row.rowNum}:\n1 - Izmeni broj polja\n2 - Otvori/upravljaj poljima ovog reda\n3 - Obriši ovaj red`, "2");
-      if (actionChoice === "1") {
-        let newCount = prompt("Unesite novi broj polja:", row.fieldStatusList ? row.fieldStatusList.length : row.fieldsCount);
-        if (newCount !== null) {
-          let parsed = parseInt(newCount);
-          if (!isNaN(parsed) && parsed > 0) {
-            row.fieldsCount = parsed;
-            if (!row.fieldStatusList) row.fieldStatusList = new Array(parsed).fill('purple');
-            else {
-              while(row.fieldStatusList.length < parsed) row.fieldStatusList.push('purple');
-              while(row.fieldStatusList.length > parsed) row.fieldStatusList.pop();
-            }
-            loadHarvestMap('admin');
-          }
-        }
-      } else if (actionChoice === "2") {
-        selectedRowForPreview = { fIdx, rIdx };
-        loadHarvestMap('admin');
-      } else if (actionChoice === "3") {
-        if (confirm("Obrisati red " + row.rowNum + "?")) {
-          plantationMap[fIdx].rows.splice(rIdx, 1);
-          selectedRowForPreview = null;
-          loadHarvestMap('admin');
-        }
-      }
-    }
-
     function addSubField(fIdx, rIdx) {
       let row = plantationMap[fIdx].rows[rIdx];
       if (!row.fieldStatusList) row.fieldStatusList = new Array(row.fieldsCount || 10).fill('purple');
@@ -1007,14 +988,28 @@
       loadHarvestMap('admin');
     }
 
+    function removeSubField(fIdx, rIdx) {
+      let row = plantationMap[fIdx].rows[rIdx];
+      if (row.fieldStatusList && row.fieldStatusList.length > 0) {
+        row.fieldStatusList.pop();
+        row.fieldsCount = row.fieldStatusList.length;
+        saveMapToCloudSilent();
+        loadHarvestMap('admin');
+      }
+    }
+
     function selectRowForPreview(fIdx, rIdx) {
       if (selectedRowForPreview && selectedRowForPreview.fIdx === fIdx && selectedRowForPreview.rIdx === rIdx) {
         selectedRowForPreview = null;
       } else {
         selectedRowForPreview = { fIdx, rIdx };
       }
-      let mode = checkUserAccess('4c') ? 'admin' : 'preview';
-      loadHarvestMap(mode);
+      let mode = checkUserAccess('4c') && loggedUser.role !== 'grupovoda' ? 'admin' : 'preview';
+      if (document.getElementById('modalBodyContent').innerText.includes("Predefinisanje")) {
+        loadHarvestMap('admin');
+      } else {
+        loadHarvestMap('preview');
+      }
     }
 
     function toggleSubField(fIdx, rIdx, pIdx) {
@@ -1027,8 +1022,7 @@
       rowObj.status = allGreen ? 'green' : 'purple';
 
       saveMapToCloudSilent();
-      let mode = checkUserAccess('4c') ? 'admin' : 'preview';
-      loadHarvestMap(mode);
+      loadHarvestMap('preview');
     }
 
     function saveMapToCloud() {
@@ -1106,7 +1100,7 @@
       });
     }
 
-    // PROZOR 6: Obračun dana (Poboljšana vidljivost kartica)
+    // PROZOR 6: Obračun dana
     function loadWindow6(selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
