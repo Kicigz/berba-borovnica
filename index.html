@@ -81,7 +81,6 @@
     .sub-box .label { font-size: 11px; text-transform: uppercase; opacity: 0.9; }
     .sub-box .value { font-size: 22px; font-weight: bold; margin-top: 4px; }
 
-    /* Mali inline prozorčići u belom polju ispod */
     .inline-prompt-box {
       background: #fff; border: 2px dashed #2980b9; padding: 10px; border-radius: 8px;
       margin-top: 8px; text-align: center; display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -108,6 +107,32 @@
     .modal-card { background: white; width: 100%; max-width: 900px; height: 92vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
     .modal-header { background: #2c3e50; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
     .modal-body { padding: 12px; overflow-y: auto; flex: 1; background: #f8f9fa; }
+    
+    .section-card { background: white; padding: 12px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .section-card h4 { margin-top: 0; color: #2c3e50; font-size: 15px; border-bottom: 2px solid #f1f2f6; padding-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .form-group-col { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 100px; }
+    .form-group-col label { font-size: 11px; font-weight: bold; color: #34495e; text-transform: uppercase; }
+    .form-group-col input, .form-group-col select { padding: 10px; font-size: 15px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; width: 100%; }
+    .form-row { display: flex; gap: 8px; margin-top: 8px; align-items: flex-end; flex-wrap: wrap; }
+    .checkbox-group { display: grid; grid-template-columns: repeat(1, 1fr); gap: 6px; margin-top: 8px; background: #fdfefe; padding: 8px; border-radius: 8px; border: 1px solid #e1e8ed; }
+    @media (min-width: 500px) { .checkbox-group { grid-template-columns: repeat(2, 1fr); } }
+    .checkbox-group label { font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; color: #34495e; }
+    .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+    .tab-header { display: flex; gap: 6px; margin-bottom: 10px; border-bottom: 2px solid #e1e8ed; padding-bottom: 6px; overflow-x: auto; }
+    .tab-btn { background: #bdc3c7; color: #2c3e50; border: none; padding: 8px 12px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+    .tab-btn.active { background: #2980b9; color: white; }
+    .mobile-card-item { background: white; border: 1px solid #dcdde1; border-radius: 8px; padding: 12px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 6px; }
+    .mobile-card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #2c3e50; font-size: 15px; }
+    .mobile-card-body { font-size: 14px; color: #555; display: flex; flex-direction: column; gap: 3px; }
+    .mobile-card-actions { display: flex; gap: 8px; margin-top: 6px; justify-content: flex-end; border-top: 1px solid #f1f2f6; padding-top: 8px; }
+    .btn-action { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; color: white; }
+    .btn-del { background: #e74c3c; }
+    .btn-edit { background: #f39c12; }
+    .group-section { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd; }
+    .group-section h5 { margin: 0 0 6px 0; color: #2c3e50; font-size: 14px; border-bottom: 1px dashed #eee; padding-bottom: 4px; }
+    .picker-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .picker-chip { background: #eaf2f8; color: #2980b9; border: 1px solid #b9d7ea; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .picker-chip:hover { background: #fadbd8; color: #c0392b; border-color: #f5b7b1; }
   </style>
 </head>
 <body>
@@ -181,7 +206,6 @@
             </div>
           </div>
 
-          <!-- PROZOR 1: Potvrda ubrane količine -->
           <div id="inlinePromptBox1" class="inline-prompt-box">
             <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">1. Potvrda ubrane količine (<span id="promptPickerNum1" style="color:#c0392b;">-</span>)</div>
             <div style="font-size:12px; color:#555; margin-bottom:6px;">Uživo: <b id="promptWeightVal1">0.00 kg</b></div>
@@ -191,7 +215,6 @@
             </div>
           </div>
 
-          <!-- PROZOR 2: Potvrda prebrane količine i kala -->
           <div id="inlinePromptBox2" class="inline-prompt-box">
             <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">2. Potvrda prebranog i kala</div>
             <div style="font-size:12px; color:#555; margin-bottom:4px;">Prebrana uživo: <b id="promptPrebranaVal">0.00 kg</b></div>
@@ -251,10 +274,6 @@
     let keepReading = false;
     let rawWeight = 0, tareOffset = 0, liveCurrentKg = 0;
     
-    // Workflow stanja:
-    // 0 = Čeka se skeniranje QR koda (vaga osciluje slobodno)
-    // 1 = Kod očitan, otvoren Prozor 1 za potvrdu ubrane količine (vaga i dalje osciluje)
-    // 2 = Ubrana količina potvrđena i fiksirana, otvoren Prozor 2 za prebranu količinu i kalo (vaga i dalje osciluje)
     let workflowState = 0;
     let pendingPickerCode = null;
     let lockedInputWeight = 0;
@@ -262,7 +281,6 @@
     let barcodeBuffer = "";
     let lastKeyTime = Date.now();
 
-    // Globalni slušač za skener
     document.addEventListener('keydown', function(e) {
       if (document.getElementById('menuModal').style.display === 'flex' || 
           document.activeElement.tagName === 'INPUT' || 
@@ -288,16 +306,13 @@
     });
 
     function handleBarcodeInput(code) {
-      // Ako već nismo u stanju mirovanja ili čekanja, pokrećemo proces za novu gajbicu
       document.getElementById('debugLog').innerText = "Očitan QR: " + code;
       pendingPickerCode = code;
       workflowState = 1;
 
-      // Prikazujemo osnovne podatke berača
       document.getElementById('valPicker').innerText = code;
       document.getElementById('valCrate').innerText = code;
       
-      // Otvaramo Prozor 1
       document.getElementById('promptPickerNum1').innerText = code;
       document.getElementById('inlinePromptBox1').style.display = 'block';
       document.getElementById('inlinePromptBox2').style.display = 'none';
@@ -315,26 +330,21 @@
       document.getElementById('valBadFruit').innerText = "0.00 kg";
     }
 
-    // KORAK 2: Kliknuto "Potvrdi ubrano"
     function confirmInputWeight() {
       if (!pendingPickerCode) return;
       
-      // Fiksiramo ubranu količinu
       lockedInputWeight = liveCurrentKg;
       document.getElementById('weightVal').innerText = lockedInputWeight.toFixed(2) + " kg (Fiksirano)";
       
-      // Zatvaramo Prozor 1 i otvaramo Prozor 2 (prebrana i kalo kreću da osciluju)
       document.getElementById('inlinePromptBox1').style.display = 'none';
       document.getElementById('inlinePromptBox2').style.display = 'block';
       
       workflowState = 2;
     }
 
-    // KORAK 4: Kliknuto "Sačuvaj merenje" (Potvrda prebrane količine i kala)
     function confirmFinalSave() {
       if (!pendingPickerCode) return;
 
-      // Trenutna vrednost na vagi u trenutku potvrde predstavlja prebranu količinu, a kalo je razlika ili trenutna vaga
       let finalPrebranaKg = liveCurrentKg;
       let finalKaloKg = Math.max(0, lockedInputWeight - finalPrebranaKg);
 
@@ -343,7 +353,6 @@
         pickerCleanNum = pendingPickerCode.split(' ')[0] || pendingPickerCode;
       }
 
-      // Vizuelno zamrzavamo poslednje merenje na ekranu
       document.getElementById('valConfirmedInput').innerText = finalPrebranaKg.toFixed(2) + " kg";
       document.getElementById('valBadFruit').innerText = finalKaloKg.toFixed(2) + " kg";
       document.getElementById('inlinePromptBox2').style.display = 'none';
@@ -373,8 +382,6 @@
           document.getElementById('valPickerRank').innerText = res.rankText || "Uspešno sačuvano";
           
           loadGlobalStats();
-          
-          // Resetujemo stanje ali ostavljamo podatke zamrznute dok se ne očita novi QR kod
           workflowState = 0;
           pendingPickerCode = null;
         } else {
@@ -390,6 +397,108 @@
       });
     }
 
+    // --- FUNKCIJE ZA STATISTIKU I DATUM ---
+    function loadGlobalStats() {
+      fetch(WEB_APP_URL, {
+        method: "POST", body: JSON.stringify({ action: "getGlobalStats" })
+      }).then(r => r.json()).then(d => {
+        if (d) {
+          document.getElementById('hdrDate').innerText = d.date || "-";
+          document.getElementById('hdrTotalKg').innerText = (parseFloat(d.totalKg) || 0).toFixed(2);
+          document.getElementById('hdrTotalPickers').innerText = d.totalPickers || 0;
+        }
+      }).catch(err => console.error("Greška pri učitavanju statistike:", err));
+    }
+
+    // --- ADMINISTRACIJA I OTVARANJE PROZORA ---
+    function openMenuModal() {
+      let html = `<h3 style="margin-bottom:12px; font-size:16px;">Izaberite opciju administracije:</h3>
+        <div style="display: flex; flex-direction: column; gap: 8px;">`;
+
+      const menuItems = [
+        { id: "1", label: "1. Dodaj berača u grupu" },
+        { id: "2", label: "2. Radnici na vagi i Grupovođe" },
+        { id: "3", label: "3. Izveštaj o branju" },
+        { id: "4", label: "4. Koji se zasad bere" },
+        { id: "5", label: "5. Izmene merenja na vagi" },
+        { id: "6", label: "6. Obračun dana" }
+      ];
+
+      menuItems.forEach(item => {
+        let hasAccess = (loggedUser.role === 'admin' || loggedUser.permissions.includes(item.id) || (loggedUser.role === 'grupovoda' && item.id === '4'));
+        let bgStyle = hasAccess ? "#2980b9" : "#bdc3c7";
+        let clickAction = hasAccess ? `openWindow('${item.id}')` : `alert('Nemate dozvolu!')`;
+        html += `<button class="btn" style="background:${bgStyle}; padding: 12px; text-align:left;" onclick="${clickAction}">${item.label}</button>`;
+      });
+
+      html += `</div>`;
+      document.getElementById('modalBodyContent').innerHTML = html;
+      document.getElementById('menuModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modalBodyContent').innerHTML = '';
+      document.getElementById('modalBodyContent').scrollTop = 0;
+      document.getElementById('menuModal').style.display = 'none';
+      if (loggedUser && loggedUser.role === 'grupovoda') renderLeaderDashboard();
+      else loadGlobalStats();
+    }
+
+    function openWindow(num) {
+      if (loggedUser.role !== 'admin' && !loggedUser.permissions.includes(String(num))) {
+        if (!(loggedUser.role === 'grupovoda' && num === '4')) {
+          alert("Nemate dozvolu za pristup prozoru " + num + "!");
+          return;
+        }
+      }
+      if (num === '1') { loadWindow1(); return; }
+      if (num === '2') { loadWindow2(); return; }
+      if (num === '3') { loadWindow3(); return; }
+      if (num === '4') { loadWindow4SubMenu(); return; }
+      if (num === '5') { loadWindow5(); return; }
+      if (num === '6') { loadWindow6(); return; }
+    }
+
+    // Funkcije prozora za administraciju
+    function loadWindow1() {
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje berača...</p>`;
+      document.getElementById('menuModal').style.display = 'flex';
+      fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) })
+      .then(r => r.json()).then(res => {
+        document.getElementById('modalBodyContent').innerHTML = `<h3>Prozor 1: Dodavanje berača</h3><button class="btn" onclick="openMenuModal()">← Nazad</button>`;
+      });
+    }
+
+    function loadWindow2() {
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje osoblja...</p>`;
+      document.getElementById('menuModal').style.display = 'flex';
+      fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) })
+      .then(r => r.json()).then(res => {
+        document.getElementById('modalBodyContent').innerHTML = `<h3>Prozor 2: Radnici i Grupovođe</h3><button class="btn" onclick="openMenuModal()">← Nazad</button>`;
+      });
+    }
+
+    function loadWindow3() {
+      document.getElementById('modalBodyContent').innerHTML = `<h3>Prozor 3: Izveštaj o branju</h3><button class="btn" onclick="openMenuModal()">← Nazad</button>`;
+      document.getElementById('menuModal').style.display = 'flex';
+    }
+
+    function loadWindow4SubMenu() {
+      document.getElementById('modalBodyContent').innerHTML = `<h3>Prozor 4: Zasad i Mapa</h3><button class="btn" onclick="openMenuModal()">← Nazad</button>`;
+      document.getElementById('menuModal').style.display = 'flex';
+    }
+
+    function loadWindow5() {
+      document.getElementById('modalBodyContent').innerHTML = `<h3>Prozor 5: Izmene merenja</h3><button class="btn" onclick="openMenuModal()">← Nazad</button>`;
+      document.getElementById('menuModal').style.display = 'flex';
+    }
+
+    function loadWindow6() {
+      document.getElementById('modalBodyContent').innerHTML = `<h3>Prozor 6: Obračun dana</h3><button class="btn" onclick="openMenuModal()">← Nazad</button>`;
+      document.getElementById('menuModal').style.display = 'flex';
+    }
+
+    // --- OSTALE POMOĆNE FUNKCIJE ---
     let plantationMap = [];
 
     function fetchMapFromServer(callback) {
@@ -469,7 +578,7 @@
             document.getElementById('scaleSection').style.display = 'flex';
             document.getElementById('bottomNavContainer').style.display = 'flex';
             document.getElementById('leaderDashboardSection').style.display = 'none';
-            loadGlobalStats();
+            loadGlobalStats(); // Učitava datum i statse pri prijavi
           }
         } else {
           alert(res.error || "Greška pri prijavi!");
@@ -602,7 +711,6 @@
           if (finalKg > -0.01 && finalKg < 0.01) finalKg = 0;
           liveCurrentKg = finalKg;
           
-          // 1. Vaga uvek osciluje i meri uživo sve dok se ubran količina ne fiksira
           if (workflowState !== 2) {
             document.getElementById('weightVal').innerText = finalKg.toFixed(2) + " kg";
           }
@@ -611,7 +719,6 @@
             document.getElementById('promptWeightVal1').innerText = finalKg.toFixed(2) + " kg";
           }
 
-          // 3. Kada je otvoren Prozor 2, prebrana količina i kalo slobodno osciluju sa vage
           if (workflowState === 2) {
             let activePrebrana = finalKg;
             let activeKalo = Math.max(0, lockedInputWeight - activePrebrana);
@@ -634,54 +741,6 @@
         await writer.write(new TextEncoder().encode("T\n"));
         writer.releaseLock();
       }
-    }
-
-    function openMenuModal() {
-      let html = `<h3 style="margin-bottom:12px; font-size:16px;">Izaberite opciju administracije:</h3>
-        <div style="display: flex; flex-direction: column; gap: 8px;">`;
-
-      const menuItems = [
-        { id: "1", label: "1. Dodaj berača u grupu" },
-        { id: "2", label: "2. Radnici na vagi i Grupovođe" },
-        { id: "3", label: "3. Izveštaj o branju" },
-        { id: "4", label: "4. Koji se zasad bere" },
-        { id: "5", label: "5. Izmene merenja na vagi" },
-        { id: "6", label: "6. Obračun dana" }
-      ];
-
-      menuItems.forEach(item => {
-        let hasAccess = (loggedUser.role === 'admin' || loggedUser.permissions.includes(item.id) || (loggedUser.role === 'grupovoda' && item.id === '4'));
-        let bgStyle = hasAccess ? "#2980b9" : "#bdc3c7";
-        let clickAction = hasAccess ? `openWindow('${item.id}')` : `alert('Nemate dozvolu!')`;
-        html += `<button class="btn" style="background:${bgStyle}; padding: 12px; text-align:left;" onclick="${clickAction}">${item.label}</button>`;
-      });
-
-      html += `</div>`;
-      document.getElementById('modalBodyContent').innerHTML = html;
-      document.getElementById('menuModal').style.display = 'flex';
-    }
-
-    function closeModal() {
-      document.getElementById('modalBodyContent').innerHTML = '';
-      document.getElementById('modalBodyContent').scrollTop = 0;
-      document.getElementById('menuModal').style.display = 'none';
-      if (loggedUser && loggedUser.role === 'grupovoda') renderLeaderDashboard();
-      else loadGlobalStats();
-    }
-
-    function openWindow(num) {
-      if (loggedUser.role !== 'admin' && !loggedUser.permissions.includes(String(num))) {
-        if (!(loggedUser.role === 'grupovoda' && num === '4')) {
-          alert("Nemate dozvolu za pristup prozoru " + num + "!");
-          return;
-        }
-      }
-      if (num === '1') { loadWindow1(); return; }
-      if (num === '2') { loadWindow2(); return; }
-      if (num === '3') { loadWindow3(); return; }
-      if (num === '4') { loadWindow4SubMenu(); return; }
-      if (num === '5') { loadWindow5(); return; }
-      if (num === '6') { loadWindow6(); return; }
     }
   </script>
 </body>
