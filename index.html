@@ -133,16 +133,27 @@
     .picker-chip { background: #eaf2f8; color: #2980b9; border: 1px solid #b9d7ea; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
     
     .map-container { display: flex; flex-direction: column; gap: 10px; }
-    .field-box-card { background: white; padding: 10px; border-radius: 8px; border: 1px solid #dcdde1; position: relative; }
+    .field-box-card { background: white; padding: 12px; border-radius: 8px; border: 1px solid #dcdde1; position: relative; }
     .rows-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
     .map-square {
-      width: 46px; height: 46px; border-radius: 8px; display: flex;
+      width: 48px; height: 48px; border-radius: 8px; display: flex;
       flex-direction: column; justify-content: center; align-items: center; font-weight: bold; font-size: 13px;
       cursor: pointer; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.15); transition: transform 0.1s;
     }
     .map-square:hover { transform: scale(1.05); }
     .sq-purple { background-color: #8e44ad; border: 2px solid #6c3483; }
     .sq-green { background-color: #27ae60; border: 2px solid #1e8449; }
+    
+    /* Kontejner za pojedinačna polja ispod reda */
+    .fields-detail-container {
+      background: #f8f9fa; border: 1px dashed #bdc3c7; border-radius: 6px; padding: 10px; margin-top: 8px;
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    }
+    .field-sub-square {
+      width: 36px; height: 36px; border-radius: 6px; display: flex; justify-content: center; align-items: center;
+      font-size: 11px; font-weight: bold; color: white; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
     .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
     .report-group-card { background: white; border-radius: 10px; padding: 14px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border-left: 6px solid #2980b9; transition: transform 0.1s; }
     .report-group-card:hover { transform: translateY(-2px); }
@@ -565,7 +576,7 @@
       .then(res => { if (res.success) loadWindow1(); });
     }
 
-    // PROZOR 2: Radnici na vagi i Grupovođe sa dozvolama
+    // PROZOR 2: Radnici na vagi i Grupovođe sa dozvolama (uključujući Prozor 4)
     function loadWindow2(activeTab = 'vaga') {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje osoblja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -589,7 +600,8 @@
           { id: "1", label: "1. Dodaj berača" },
           { id: "2", label: "2. Radnici i vođe" },
           { id: "3", label: "3. Izveštaj berbe" },
-          { id: "4", label: "4. Zasad i mapa" },
+          { id: "4", label: "4. Zasad i mapa (Pregled i vođenje)" },
+          { id: "4_admin", label: "4. Predefinisanje mape zasada" },
           { id: "5", label: "5. Izmene merenja" },
           { id: "6", label: "6. Obračun dana" }
         ];
@@ -686,7 +698,7 @@
       .then(r => r.json()).then(res => { if (res.success) loadWindow2('vaga'); });
     }
 
-    // PROZOR 3: Izveštaj o branju (pregledan čist prikaz)
+    // PROZOR 3: Izveštaj o branju
     function loadWindow3(selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -772,7 +784,7 @@
       });
     }
 
-    // PROZOR 4: Zasad i Mapa sa brojem polja pri dodavanju njive i prebacivanjem u zeleno
+    // PROZOR 4: Zasad i Mapa (Sa izmenom imena njive, dodatnim poljima i pregledom polja po redovima)
     function loadWindow4SubMenu() {
       let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h3 style="margin:0; font-size:16px;">🌱 Zasad i Mapa</h3>
@@ -787,6 +799,7 @@
     }
 
     let plantationMap = [];
+    let selectedRowForPreview = null; // Pamti koji red je otvoren u pregledu berbe
 
     function fetchMapFromServer(callback) {
       fetch(WEB_APP_URL, {
@@ -835,9 +848,13 @@
       if (plantationMap.length === 0) return `<p style="text-align:center; color:#7f8c8d;">Nema unetih njiva u mapi.</p>`;
       let html = "";
       plantationMap.forEach((field, fIdx) => {
+        let fieldName = field.fieldId || "Njiva";
         html += `<div class="field-box-card">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h4 style="margin:0 0 6px 0;">🌱 ${field.fieldId}</h4>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h4 style="margin:0; display:flex; align-items:center; gap:6px;">
+              🌱 <span>${fieldName}</span>
+              ${isAdminMode ? `<button class="btn-action btn-edit" style="padding:2px 6px; font-size:11px;" onclick="editFieldName(${fIdx})">✏️</button>` : ''}
+            </h4>
             ${isAdminMode ? `<button class="btn-action btn-del" onclick="deleteField(${fIdx})">Obriši njivu</button>` : ''}
           </div>
           <div class="rows-grid">`;
@@ -847,11 +864,32 @@
         } else {
           field.rows.forEach((row, rIdx) => {
             let rowBgClass = row.status === 'green' ? 'sq-green' : 'sq-purple';
-            let clickAttr = isAdminMode ? `onclick="editRowFields(${fIdx}, ${rIdx})" title="Klikni za izmenu broja polja"` : `onclick="toggleRowStatus(${fIdx}, ${rIdx})" title="Klikni da promeniš status (obrano/neobrano)"`;
+            let clickAttr = isAdminMode ? `onclick="editRowFields(${fIdx}, ${rIdx})" title="Klikni za izmenu broja polja"` : `onclick="selectRowForPreview(${fIdx}, ${rIdx})" title="Klikni da prikažeš polja reda"`;
             html += `<div class="map-square ${rowBgClass}" ${clickAttr}><span>${row.rowNum}</span><span style="font-size:9px; opacity:0.8;">${row.fieldsCount || 0}p</span></div>`;
           });
         }
-        html += `</div></div>`;
+        html += `</div>`;
+
+        // Ako nismo u admin modu i kliknuto je na ovaj red, prikaži pojedinačna polja ispod
+        if (!isAdminMode && selectedRowForPreview && selectedRowForPreview.fIdx === fIdx) {
+          let activeRow = field.rows[selectedRowForPreview.rIdx];
+          if (activeRow) {
+            let count = activeRow.fieldsCount || 10;
+            if (!activeRow.fieldStatusList || activeRow.fieldStatusList.length !== count) {
+              activeRow.fieldStatusList = new Array(count).fill('purple');
+            }
+            html += `<div class="fields-detail-container">
+              <div style="width:100%; font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Polja u redu ${activeRow.rowNum} (Klikni na polje da ga označite kao obrano):</div>`;
+            for (let p = 0; p < count; p++) {
+              let pColor = (activeRow.fieldStatusList[p] === 'green') ? '#27ae60' : '#8e44ad';
+              let pBorder = (activeRow.fieldStatusList[p] === 'green') ? '#1e8449' : '#6c3483';
+              html += `<div class="field-sub-square" style="background-color:${pColor}; border:2px solid ${pBorder};" onclick="toggleSubField(${fIdx}, ${selectedRowForPreview.rIdx}, ${p})">P${p+1}</div>`;
+            }
+            html += `</div>`;
+          }
+        }
+
+        html += `</div>`;
       });
       return html;
     }
@@ -864,10 +902,19 @@
 
       let rowsArr = [];
       for (let i = 1; i <= fRows; i++) {
-        rowsArr.push({ rowNum: "R" + i, fieldsCount: fFields, status: 'purple' });
+        rowsArr.push({ rowNum: "R" + i, fieldsCount: fFields, status: 'purple', fieldStatusList: new Array(fFields).fill('purple') });
       }
       plantationMap.push({ fieldId: fName, rows: rowsArr });
       loadHarvestMap('admin');
+    }
+
+    function editFieldName(fIdx) {
+      let currentName = plantationMap[fIdx].fieldId;
+      let newName = prompt("Unesite novo ime njive:", currentName);
+      if (newName !== null && newName.trim()) {
+        plantationMap[fIdx].fieldId = newName.trim();
+        loadHarvestMap('admin');
+      }
     }
 
     function deleteField(fIdx) {
@@ -883,14 +930,36 @@
         let parsed = parseInt(newCount);
         if (!isNaN(parsed) && parsed >= 0) {
           plantationMap[fIdx].rows[rIdx].fieldsCount = parsed;
+          if (!plantationMap[fIdx].rows[rIdx].fieldStatusList) {
+            plantationMap[fIdx].rows[rIdx].fieldStatusList = new Array(parsed).fill('purple');
+          } else {
+            while(plantationMap[fIdx].rows[rIdx].fieldStatusList.length < parsed) plantationMap[fIdx].rows[rIdx].fieldStatusList.push('purple');
+            while(plantationMap[fIdx].rows[rIdx].fieldStatusList.length > parsed) plantationMap[fIdx].rows[rIdx].fieldStatusList.pop();
+          }
           loadHarvestMap('admin');
         }
       }
     }
 
-    function toggleRowStatus(fIdx, rIdx) {
-      let currentStatus = plantationMap[fIdx].rows[rIdx].status;
-      plantationMap[fIdx].rows[rIdx].status = (currentStatus === 'green') ? 'purple' : 'green';
+    function selectRowForPreview(fIdx, rIdx) {
+      if (selectedRowForPreview && selectedRowForPreview.fIdx === fIdx && selectedRowForPreview.rIdx === rIdx) {
+        selectedRowForPreview = null; // Zatvori ako je već bio otvoren
+      } else {
+        selectedRowForPreview = { fIdx, rIdx };
+      }
+      loadHarvestMap('preview');
+    }
+
+    function toggleSubField(fIdx, rIdx, pIdx) {
+      let rowObj = plantationMap[fIdx].rows[rIdx];
+      if (!rowObj.fieldStatusList) rowObj.fieldStatusList = new Array(rowObj.fieldsCount || 10).fill('purple');
+
+      rowObj.fieldStatusList[pIdx] = (rowObj.fieldStatusList[pIdx] === 'green') ? 'purple' : 'green';
+
+      // Provera da li su sva polja u redu zelena -> automatski prebaci ceo red u zeleno
+      let allGreen = rowObj.fieldStatusList.every(status => status === 'green');
+      rowObj.status = allGreen ? 'green' : 'purple';
+
       saveMapToCloudSilent();
       loadHarvestMap('preview');
     }
@@ -912,7 +981,7 @@
       }).catch(err => console.error("Greška pri automatskom čuvanju mape", err));
     }
 
-    // PROZOR 5: Izmene merenja na vagi (pregledan čist prikaz)
+    // PROZOR 5: Izmene merenja na vagi
     function loadWindow5() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje merenja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
