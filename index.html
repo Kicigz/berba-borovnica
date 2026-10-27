@@ -146,6 +146,7 @@
     .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
     .report-group-card { background: white; border-radius: 10px; padding: 14px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border-left: 6px solid #2980b9; transition: transform 0.1s; }
     .report-group-card:hover { transform: translateY(-2px); }
+    .picker-detail-row { background: white; border: 1px solid #e1e8ed; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
   </style>
 </head>
 <body>
@@ -685,7 +686,7 @@
       .then(r => r.json()).then(res => { if (res.success) loadWindow2('vaga'); });
     }
 
-    // PROZOR 3: Izveštaj o branju sa mogućnošću ulaska u detalje grupe
+    // PROZOR 3: Izveštaj o branju (pregledan čist prikaz)
     function loadWindow3(selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -718,13 +719,13 @@
 
           let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3 style="margin:0; font-size:16px;">📊 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})</h3>
-            <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="loadWindow3(null)">← Sve grupe</button>
+            <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="loadWindow3(null)">← Nazad na grupe</button>
           </div>
           <div class="section-card">
-            <div style="font-size:15px; font-weight:bold; color:#2c3e50; margin-bottom:8px;">Ukupno ubrano: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span></div>
+            <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Ukupno ubrano za grupu: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span></div>
           </div>
           <div class="section-card">
-            <h4>Učinak po beračima</h4>`;
+            <h4>Učinak po beračima u grupi</h4>`;
 
           groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
           groupPickers.forEach(p => {
@@ -732,7 +733,7 @@
             html += `<div class="picker-detail-row" style="display:flex; justify-content:space-between; align-items:center;">
               <div><b>Berač #${p.pickerNum}</b></div>
               <div style="text-align:right;">
-                <span style="color:#27ae60; font-weight:bold;">${stats.kg.toFixed(2)} kg</span>
+                <span style="color:#27ae60; font-weight:bold; font-size:15px;">${stats.kg.toFixed(2)} kg</span>
                 <span style="font-size:12px; color:#7f8c8d; margin-left:8px;">(${stats.crates} gajbica)</span>
               </div>
             </div>`;
@@ -743,9 +744,10 @@
         }
 
         let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="margin:0; font-size:16px;">📊 Izveštaj po grupama (Klikni za detalje)</h3>
+          <h3 style="margin:0; font-size:16px;">📊 Izveštaj o branju po grupama</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
         </div>
+        <p style="font-size:13px; color:#666; margin-bottom:10px;">Izaberite grupu da vidite učinak pojedinačnih berača:</p>
         <div class="report-card-grid">`;
 
         groups.forEach(g => {
@@ -761,7 +763,7 @@
             <div style="font-size:13px; color:#555; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
             <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #eee; padding-top:6px;">
               <span>👥 Berača: <b>${groupPickers.length}</b></span>
-              <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+              <span style="color:#27ae60; font-weight:bold; font-size:14px;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
             </div>
           </div>`;
         });
@@ -770,7 +772,7 @@
       });
     }
 
-    // PROZOR 4: Zasad i Mapa sa predefinisanjem i prebacivanjem u zeleno
+    // PROZOR 4: Zasad i Mapa sa brojem polja pri dodavanju njive i prebacivanjem u zeleno
     function loadWindow4SubMenu() {
       let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h3 style="margin:0; font-size:16px;">🌱 Zasad i Mapa</h3>
@@ -815,6 +817,7 @@
           <div class="form-row">
             <div class="form-group-col"><label>Naziv njive</label><input type="text" id="mapFieldName" placeholder="npr. Zasad 1"></div>
             <div class="form-group-col"><label>Broj redova</label><input type="number" id="mapFieldRows" min="1" value="5"></div>
+            <div class="form-group-col"><label>Broj polja po redu</label><input type="number" id="mapFieldsPerRow" min="1" value="10"></div>
           </div>
           <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="addNewFieldToMap()">Dodaj njivu</button>
         </div>`;
@@ -844,7 +847,7 @@
         } else {
           field.rows.forEach((row, rIdx) => {
             let rowBgClass = row.status === 'green' ? 'sq-green' : 'sq-purple';
-            let clickAttr = isAdminMode ? `onclick="editRowFields(${fIdx}, ${rIdx})" title="Klikni za podešavanje polja"` : `onclick="toggleRowStatus(${fIdx}, ${rIdx})" title="Klikni da promeniš status (obrano/neobrano)"`;
+            let clickAttr = isAdminMode ? `onclick="editRowFields(${fIdx}, ${rIdx})" title="Klikni za izmenu broja polja"` : `onclick="toggleRowStatus(${fIdx}, ${rIdx})" title="Klikni da promeniš status (obrano/neobrano)"`;
             html += `<div class="map-square ${rowBgClass}" ${clickAttr}><span>${row.rowNum}</span><span style="font-size:9px; opacity:0.8;">${row.fieldsCount || 0}p</span></div>`;
           });
         }
@@ -856,11 +859,12 @@
     function addNewFieldToMap() {
       let fName = document.getElementById('mapFieldName').value.trim();
       let fRows = parseInt(document.getElementById('mapFieldRows').value) || 5;
+      let fFields = parseInt(document.getElementById('mapFieldsPerRow').value) || 10;
       if (!fName) { alert("Unesite naziv njive!"); return; }
 
       let rowsArr = [];
       for (let i = 1; i <= fRows; i++) {
-        rowsArr.push({ rowNum: "R" + i, fieldsCount: 10, status: 'purple' });
+        rowsArr.push({ rowNum: "R" + i, fieldsCount: fFields, status: 'purple' });
       }
       plantationMap.push({ fieldId: fName, rows: rowsArr });
       loadHarvestMap('admin');
@@ -874,7 +878,7 @@
 
     function editRowFields(fIdx, rIdx) {
       let currentFields = plantationMap[fIdx].rows[rIdx].fieldsCount || 10;
-      let newCount = prompt("Unesite broj polja za red " + plantationMap[fIdx].rows[rIdx].rowNum + ":", currentFields);
+      let newCount = prompt("Unesite novi broj polja za red " + plantationMap[fIdx].rows[rIdx].rowNum + ":", currentFields);
       if (newCount !== null) {
         let parsed = parseInt(newCount);
         if (!isNaN(parsed) && parsed >= 0) {
@@ -908,7 +912,7 @@
       }).catch(err => console.error("Greška pri automatskom čuvanju mape", err));
     }
 
-    // PROZOR 5: Izmene merenja na vagi
+    // PROZOR 5: Izmene merenja na vagi (pregledan čist prikaz)
     function loadWindow5() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje merenja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -920,22 +924,23 @@
       .then(([resWorkers, resMeas]) => {
         let measurements = (resMeas.success && resMeas.measurements) ? resMeas.measurements : [];
         let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="margin:0; font-size:16px;">⚙️ Izmene merenja</h3>
+          <h3 style="margin:0; font-size:16px;">⚙️ Izmene i pregled merenja</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
         </div>`;
 
         if (measurements.length === 0) {
-          html += `<p style="text-align:center; color:#7f8c8d;">Nema zabeleženih merenja za izmenu.</p>`;
+          html += `<p style="text-align:center; color:#7f8c8d; margin-top:20px;">Nema zabeleženih merenja za izmenu.</p>`;
         } else {
           measurements.forEach(item => {
             html += `<div class="mobile-card-item">
               <div class="mobile-card-header">
-                <span>⏰ ${item.time || '-'} | Berač ${item.pickerNum || '-'}</span>
-                <span style="color:#27ae60;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</span>
+                <span>⏰ Vreme: ${item.time || '-'} | Berač #${item.pickerNum || '-'}</span>
+                <span style="color:#27ae60; font-size:15px;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</span>
               </div>
+              <div style="font-size:13px; color:#555;">Gajbica: <b>${item.crateId || '-'}</b> | Kalo: <b>${(parseFloat(item.kalo) || 0).toFixed(2)} kg</b></div>
               <div class="mobile-card-actions">
-                <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')">Izmeni</button>
-                <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši</button>
+                <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')">Izmeni težinu</button>
+                <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši merenje</button>
               </div>
             </div>`;
           });
@@ -965,7 +970,7 @@
       });
     }
 
-    // PROZOR 6: Obračun dana sa pojedinačnim pregledom po grupama
+    // PROZOR 6: Obračun dana
     function loadWindow6(selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -1000,7 +1005,7 @@
 
           let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3 style="margin:0; font-size:16px;">💰 Obračun: Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})</h3>
-            <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="loadWindow6(null)">← Sve grupe</button>
+            <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="loadWindow6(null)">← Nazad na grupe</button>
           </div>
           <div class="section-card">
             <div style="font-size:15px; font-weight:bold; color:#2c3e50;">Ukupno kilograma: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span></div>
