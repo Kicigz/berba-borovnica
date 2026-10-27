@@ -81,7 +81,7 @@
     .sub-box .label { font-size: 11px; text-transform: uppercase; opacity: 0.9; }
     .sub-box .value { font-size: 22px; font-weight: bold; margin-top: 4px; }
 
-    /* Mali inline prozorčić u belom polju ispod */
+    /* Mali inline prozorčići u belom polju ispod */
     .inline-prompt-box {
       background: #fff; border: 2px dashed #2980b9; padding: 10px; border-radius: 8px;
       margin-top: 8px; text-align: center; display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -181,13 +181,24 @@
             </div>
           </div>
 
-          <!-- Mali prozorčić za potvrdu u belom polju ispod -->
-          <div id="inlinePromptBox" class="inline-prompt-box">
-            <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Potvrda merenja za berača: <span id="promptPickerNum" style="color:#c0392b;">-</span></div>
-            <div style="font-size:12px; color:#555; margin-bottom:6px;">Izmereno: <b id="promptWeightVal">0.00 kg</b></div>
+          <!-- PROZOR 1: Potvrda ubrane količine -->
+          <div id="inlinePromptBox1" class="inline-prompt-box">
+            <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">1. Potvrda ubrane količine (<span id="promptPickerNum1" style="color:#c0392b;">-</span>)</div>
+            <div style="font-size:12px; color:#555; margin-bottom:6px;">Uživo: <b id="promptWeightVal1">0.00 kg</b></div>
             <div style="display:flex; gap:6px;">
               <button class="btn" style="background:#e74c3c; padding:6px; font-size:12px;" onclick="cancelWorkflow()">Otkaži</button>
-              <button class="btn" style="background:#27ae60; padding:6px; font-size:12px;" onclick="confirmWeightAndSave()">Potvrdi</button>
+              <button class="btn" style="background:#27ae60; padding:6px; font-size:12px;" onclick="confirmInputWeight()">Potvrdi ubrano</button>
+            </div>
+          </div>
+
+          <!-- PROZOR 2: Potvrda prebrane količine i kala -->
+          <div id="inlinePromptBox2" class="inline-prompt-box">
+            <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">2. Potvrda prebranog i kala</div>
+            <div style="font-size:12px; color:#555; margin-bottom:4px;">Prebrana uživo: <b id="promptPrebranaVal">0.00 kg</b></div>
+            <div style="font-size:12px; color:#555; margin-bottom:6px;">Kalo uživo: <b id="promptKaloVal">0.00 kg</b></div>
+            <div style="display:flex; gap:6px;">
+              <button class="btn" style="background:#e74c3c; padding:6px; font-size:12px;" onclick="cancelWorkflow()">Otkaži</button>
+              <button class="btn" style="background:#27ae60; padding:6px; font-size:12px;" onclick="confirmFinalSave()">Sačuvaj merenje</button>
             </div>
           </div>
 
@@ -205,7 +216,7 @@
           <div><b>Danas ubrao:</b> <span id="valPickerTotalKg" class="highlight-total">0.00 kg</span></div>
           <div><b>Plasman:</b><br><div id="valPickerRank" class="rank-badge">-</div></div>
         </div>
-        <div id="noPickerMsg" style="color: #7f8c8d; text-align: center; margin-top: 12px; font-size: 14px;">Prvo skenirajte QR kod, pa stavite gajbicu na vagu.</div>
+        <div id="noPickerMsg" style="color: #7f8c8d; text-align: center; margin-top: 12px; font-size: 14px;">Skenirajte QR kod nove gajbice.</div>
       </div>
     </div>
 
@@ -241,10 +252,12 @@
     let rawWeight = 0, tareOffset = 0, liveCurrentKg = 0;
     
     // Workflow stanja:
-    // 0 = Čeka se skeniranje QR koda
-    // 1 = Kod skeniran, čeka se potvrda merenja
+    // 0 = Čeka se skeniranje QR koda (vaga osciluje slobodno)
+    // 1 = Kod očitan, otvoren Prozor 1 za potvrdu ubrane količine (vaga i dalje osciluje)
+    // 2 = Ubrana količina potvrđena i fiksirana, otvoren Prozor 2 za prebranu količinu i kalo (vaga i dalje osciluje)
     let workflowState = 0;
     let pendingPickerCode = null;
+    let lockedInputWeight = 0;
 
     let barcodeBuffer = "";
     let lastKeyTime = Date.now();
@@ -275,40 +288,65 @@
     });
 
     function handleBarcodeInput(code) {
+      // Ako već nismo u stanju mirovanja ili čekanja, pokrećemo proces za novu gajbicu
       document.getElementById('debugLog').innerText = "Očitan QR: " + code;
       pendingPickerCode = code;
       workflowState = 1;
 
-      // Prikazujemo podatke berača/gajbice na desnom panelu
+      // Prikazujemo osnovne podatke berača
       document.getElementById('valPicker').innerText = code;
       document.getElementById('valCrate').innerText = code;
       
-      // Prikazujemo mali prozorčić za potvrdu u belom polju ispod
-      document.getElementById('promptPickerNum').innerText = code;
-      document.getElementById('inlinePromptBox').style.display = 'block';
+      // Otvaramo Prozor 1
+      document.getElementById('promptPickerNum1').innerText = code;
+      document.getElementById('inlinePromptBox1').style.display = 'block';
+      document.getElementById('inlinePromptBox2').style.display = 'none';
     }
 
     function cancelWorkflow() {
       workflowState = 0;
       pendingPickerCode = null;
-      document.getElementById('inlinePromptBox').style.display = 'none';
+      lockedInputWeight = 0;
+      document.getElementById('inlinePromptBox1').style.display = 'none';
+      document.getElementById('inlinePromptBox2').style.display = 'none';
       document.getElementById('valPicker').innerText = "-";
       document.getElementById('valCrate').innerText = "-";
       document.getElementById('valConfirmedInput').innerText = "0.00 kg";
+      document.getElementById('valBadFruit').innerText = "0.00 kg";
     }
 
-    function confirmWeightAndSave() {
+    // KORAK 2: Kliknuto "Potvrdi ubrano"
+    function confirmInputWeight() {
       if (!pendingPickerCode) return;
-      let finalConfirmedWeight = liveCurrentKg;
+      
+      // Fiksiramo ubranu količinu
+      lockedInputWeight = liveCurrentKg;
+      document.getElementById('weightVal').innerText = lockedInputWeight.toFixed(2) + " kg (Fiksirano)";
+      
+      // Zatvaramo Prozor 1 i otvaramo Prozor 2 (prebrana i kalo kreću da osciluju)
+      document.getElementById('inlinePromptBox1').style.display = 'none';
+      document.getElementById('inlinePromptBox2').style.display = 'block';
+      
+      workflowState = 2;
+    }
 
-      // Izvlačimo čisti broj berača iz formata tipa "BR'01 G'01" (uzima prvi broj ili ceo kod)
+    // KORAK 4: Kliknuto "Sačuvaj merenje" (Potvrda prebrane količine i kala)
+    function confirmFinalSave() {
+      if (!pendingPickerCode) return;
+
+      // Trenutna vrednost na vagi u trenutku potvrde predstavlja prebranu količinu, a kalo je razlika ili trenutna vaga
+      let finalPrebranaKg = liveCurrentKg;
+      let finalKaloKg = Math.max(0, lockedInputWeight - finalPrebranaKg);
+
       let pickerCleanNum = pendingPickerCode.replace(/[^0-9]/g, '');
       if (!pickerCleanNum) {
         pickerCleanNum = pendingPickerCode.split(' ')[0] || pendingPickerCode;
       }
 
-      document.getElementById('valConfirmedInput').innerText = finalConfirmedWeight.toFixed(2) + " kg";
-      document.getElementById('inlinePromptBox').style.display = 'none';
+      // Vizuelno zamrzavamo poslednje merenje na ekranu
+      document.getElementById('valConfirmedInput').innerText = finalPrebranaKg.toFixed(2) + " kg";
+      document.getElementById('valBadFruit').innerText = finalKaloKg.toFixed(2) + " kg";
+      document.getElementById('inlinePromptBox2').style.display = 'none';
 
       let payload = {
         action: "saveHarvestFromCrateScan",
@@ -316,9 +354,9 @@
           picker: pickerCleanNum,
           crateId: pendingPickerCode,
           sector: "Zasad 1",
-          netWeight: finalConfirmedWeight,
-          badFruit: 0,
-          inputWeight: finalConfirmedWeight
+          netWeight: finalPrebranaKg,
+          badFruit: finalKaloKg,
+          inputWeight: lockedInputWeight
         }
       };
 
@@ -331,11 +369,12 @@
         if (res.success) {
           document.getElementById('valLeader').innerText = res.leaderName || "-";
           document.getElementById('valSector').innerText = "Zasad 1";
-          document.getElementById('valPickerTotalKg').innerText = (res.pickerTotalKg || finalConfirmedWeight).toFixed(2) + " kg";
+          document.getElementById('valPickerTotalKg').innerText = (res.pickerTotalKg || finalPrebranaKg).toFixed(2) + " kg";
           document.getElementById('valPickerRank').innerText = res.rankText || "Uspešno sačuvano";
           
-          tareScale();
           loadGlobalStats();
+          
+          // Resetujemo stanje ali ostavljamo podatke zamrznute dok se ne očita novi QR kod
           workflowState = 0;
           pendingPickerCode = null;
         } else {
@@ -563,37 +602,33 @@
           if (finalKg > -0.01 && finalKg < 0.01) finalKg = 0;
           liveCurrentKg = finalKg;
           
-          // Ubrana količina se uvek slobodno ažurira uživo
-          document.getElementById('weightVal').innerText = finalKg.toFixed(2) + " kg";
+          // 1. Vaga uvek osciluje i meri uživo sve dok se ubran količina ne fiksira
+          if (workflowState !== 2) {
+            document.getElementById('weightVal').innerText = finalKg.toFixed(2) + " kg";
+          }
           
-          // Ako je otvoren prozor za potvrdu, prebrana količina prati težinu na vagi u realnom vremenu
           if (workflowState === 1) {
-            document.getElementById('valConfirmedInput').innerText = finalKg.toFixed(2) + " kg";
-            document.getElementById('promptWeightVal').innerText = finalKg.toFixed(2) + " kg";
+            document.getElementById('promptWeightVal1').innerText = finalKg.toFixed(2) + " kg";
+          }
+
+          // 3. Kada je otvoren Prozor 2, prebrana količina i kalo slobodno osciluju sa vage
+          if (workflowState === 2) {
+            let activePrebrana = finalKg;
+            let activeKalo = Math.max(0, lockedInputWeight - activePrebrana);
+
+            document.getElementById('valConfirmedInput').innerText = activePrebrana.toFixed(2) + " kg";
+            document.getElementById('valBadFruit').innerText = activeKalo.toFixed(2) + " kg";
+            document.getElementById('promptPrebranaVal').innerText = activePrebrana.toFixed(2) + " kg";
+            document.getElementById('promptKaloVal').innerText = activeKalo.toFixed(2) + " kg";
           }
         }
       } catch (e) {}
     }
 
-    function loadGlobalStats() {
-      fetch(WEB_APP_URL, {
-        method: "POST", body: JSON.stringify({ action: "getGlobalStats" })
-      }).then(r => r.json()).then(d => {
-        if (d) {
-          document.getElementById('hdrDate').innerText = d.date || "-";
-          document.getElementById('hdrTotalKg').innerText = (parseFloat(d.totalKg) || 0).toFixed(2);
-          document.getElementById('hdrTotalPickers').innerText = d.totalPickers || 0;
-        }
-      });
-    }
-
     async function tareScale() {
-      workflowState = 0;
-      pendingPickerCode = null;
-      document.getElementById('inlinePromptBox').style.display = 'none';
+      cancelWorkflow();
       tareOffset = rawWeight;
       document.getElementById('weightVal').innerText = "0.00 kg";
-      document.getElementById('valConfirmedInput').innerText = "0.00 kg";
       if (port && port.writable) {
         let writer = port.writable.getWriter();
         await writer.write(new TextEncoder().encode("T\n"));
