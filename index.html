@@ -114,6 +114,18 @@
     .form-group-col label { font-size: 11px; font-weight: bold; color: #34495e; text-transform: uppercase; }
     .form-group-col input, .form-group-col select { padding: 10px; font-size: 15px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; width: 100%; }
     .form-row { display: flex; gap: 8px; margin-top: 8px; align-items: flex-end; flex-wrap: wrap; }
+    
+    /* Stilizacija za brze kockice berača */
+    .pickers-grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 8px; margin-top: 10px; max-height: 350px; overflow-y: auto; padding: 4px; }
+    .picker-box-item {
+      background-color: #e74c3c; color: white; border-radius: 8px; padding: 8px 4px; text-align: center;
+      cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: transform 0.1s; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50px;
+    }
+    .picker-box-item:hover { transform: scale(1.05); }
+    .picker-box-item.assigned { background-color: #27ae60; }
+    .picker-box-label { font-size: 10px; font-weight: bold; background: rgba(0,0,0,0.2); width: 100%; border-radius: 4px; margin-bottom: 2px; padding: 1px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .picker-box-num { font-size: 18px; font-weight: bold; }
+
     .checkbox-group { display: grid; grid-template-columns: repeat(1, 1fr); gap: 6px; margin-top: 8px; background: #fdfefe; padding: 8px; border-radius: 8px; border: 1px solid #e1e8ed; }
     @media (min-width: 500px) { .checkbox-group { grid-template-columns: repeat(2, 1fr); } }
     .checkbox-group label { font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; color: #34495e; }
@@ -331,7 +343,6 @@
     });
 
     function handleBarcodeInput(code) {
-      // Očitani QR kod sadrži SAMO broj berača (npr. "15")
       let pickerCleanNum = code.replace(/[^0-9]/g, '');
       if (!pickerCleanNum) {
         pickerCleanNum = code.split(' ')[0] || code;
@@ -339,7 +350,6 @@
 
       document.getElementById('debugLog').innerText = "Očitan berač: " + pickerCleanNum;
 
-      // Zatraži od servera da izračuna sledeći redni broj gajbice za ovog berača danas
       fetch(WEB_APP_URL, {
         method: "POST",
         body: JSON.stringify({ action: "getNextCrateNumber", pickerNum: pickerCleanNum })
@@ -348,7 +358,7 @@
       .then(res => {
         if (res.success) {
           pendingPickerNum = pickerCleanNum;
-          assignedCrateNumber = res.crateNumber; // Automatski dodeljen redni broj gajbice (npr. 1, 2, 3...)
+          assignedCrateNumber = res.crateNumber;
           workflowState = 1;
 
           document.getElementById('valPicker').innerText = pendingPickerNum;
@@ -364,7 +374,7 @@
         }
       })
       .catch(err => {
-        alert("Serverska greška prilikom dodela gajbice: " + err.message);
+        alert("Serverska greška: " + err.message);
       });
     }
 
@@ -450,7 +460,7 @@
         if (d) {
           document.getElementById('hdrDate').innerText = d.date || "-";
           document.getElementById('hdrTotalKg').innerText = (parseFloat(d.totalKg) || 0).toFixed(2);
-          document.getElementById('hdrTotalPickers').innerText = d.totalPickers || 0; // Automatski zbir svih berača dodatih u Modulu 2
+          document.getElementById('hdrTotalPickers').innerText = d.totalPickers || 0;
         }
       }).catch(err => console.error("Greška pri učitavanju statistike:", err));
     }
@@ -511,7 +521,7 @@
       if (num === '6') { loadWindow6(); return; }
     }
 
-    // PROZOR 1: Dodavanje berača u grupu
+    // PROZOR 1: Dodavanje berača u grupu (Sa vizuelnim kockicama)
     function loadWindow1() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje berača...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -524,26 +534,38 @@
         let groups = resGroups.success ? resGroups.groups : [];
         let pickers = resPickers.success ? resPickers.pickers : [];
 
-        let options = `<option value="">-- Izaberi grupu --</option>`;
-        groups.forEach(g => { options += `<option value="${g.extra}" data-name="${g.name}">Grupa ${g.extra} (${g.name})</option>`; });
-        let groupSelectHtml = `<select id="pickerGroupSelect" style="flex:1; padding:10px; border-radius:6px; border:1px solid #bdc3c7; font-size:15px;">${options}</select>`;
+        let isGroupLeader = (loggedUser && loggedUser.role === 'grupovoda');
+        let currentLeaderGroupNum = isGroupLeader ? loggedUser.extra : "";
+
+        let groupSelectHtml = "";
+        if (!isGroupLeader) {
+          let options = `<option value="">-- Izaberi grupu --</option>`;
+          groups.forEach(g => { options += `<option value="${g.extra}" data-name="${g.name}">Grupa ${g.extra} (${g.name})</option>`; });
+          groupSelectHtml = `<div class="form-group-col" style="flex:2;"><label>Grupa</label><select id="pickerGroupSelect" style="flex:1; padding:10px; border-radius:6px; border:1px solid #bdc3c7; font-size:15px;">${options}</select></div>`;
+        } else {
+          let myGroupObj = groups.find(g => String(g.extra) === String(currentLeaderGroupNum));
+          let myGroupName = myGroupObj ? myGroupObj.name : 'Moja Grupa';
+          groupSelectHtml = `<div class="form-group-col"><label>Grupa</label><input type="text" value="Grupa ${currentLeaderGroupNum} (${myGroupName})" disabled style="background:#e9ecef; font-weight:bold;"></div>`;
+        }
 
         let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="margin:0; font-size:16px;">➕ Dodavanje berača</h3>
+          <h3 style="margin:0; font-size:16px;">➕ Dodavanje berača (${isGroupLeader ? 'Grupovođa: Grupa ' + currentLeaderGroupNum : 'Admin / Vaga'})</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
         </div>
         
         <div class="section-card">
-          <h4>Unesi broj berača</h4>
+          <h4>Unesite ukupan broj berača za danas</h4>
           <div class="form-row">
-            <div class="form-group-col"><label>Broj</label><input type="text" id="pickerNumInput" placeholder="npr. 01" maxlength="4"></div>
-            <div class="form-group-col" style="flex:2;"><label>Grupa</label>${groupSelectHtml}</div>
+            <div class="form-group-col"><label>Broj berača (npr. 50)</label><input type="number" id="totalPickersCountInput" min="1" max="300" value="50"></div>
+            ${groupSelectHtml}
           </div>
-          <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="savePicker()">Dodaj berača</button>
+          <button class="btn" style="background:#2980b9; margin-top:10px;" onclick="generatePickerBoxes()">Generiši kockice berača</button>
         </div>
 
+        <div id="pickerBoxesArea"></div>
+
         <div class="section-card">
-          <h4>Raspored berača (${pickers.length})</h4>`;
+          <h4>Raspored berača po grupama</h4>`;
 
         let groupedPickers = {};
         groups.forEach(g => { groupedPickers[g.extra] = { leader: g.name, list: [] }; });
@@ -574,28 +596,99 @@
         }
         html += `</div>`;
         document.getElementById('modalBodyContent').innerHTML = html;
+
+        // Automatski generiši kockice za 50 berača pri otvaranju
+        setTimeout(() => generatePickerBoxes(pickers, groups), 100);
       });
     }
 
-    function savePicker() {
-      let pickerNum = document.getElementById('pickerNumInput').value.trim();
-      let groupNum = document.getElementById('pickerGroupSelect').value;
-      let selectEl = document.getElementById('pickerGroupSelect');
-      let leaderName = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
+    function generatePickerBoxes(existingPickers = null, groupsList = null) {
+      let count = parseInt(document.getElementById('totalPickersCountInput').value) || 50;
+      
+      let isGroupLeader = (loggedUser && loggedUser.role === 'grupovoda');
+      let targetGroupNum = isGroupLeader ? loggedUser.extra : document.getElementById('pickerGroupSelect').value;
 
-      if (!pickerNum || !groupNum) { alert("Unesite broj berača i izaberite grupu!"); return; }
+      if (!isGroupLeader && !targetGroupNum) {
+        alert("Molimo izaberite grupu iz menija pre generisanja kockica!");
+        return;
+      }
+
+      // Ako već nemamo učitane berače, povuci ih sa servera
+      if (!existingPickers) {
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) renderBoxesGrid(count, res.pickers, targetGroupNum);
+        });
+      } else {
+        renderBoxesGrid(count, existingPickers, targetGroupNum);
+      }
+    }
+
+    function renderBoxesGrid(totalCount, pickersList, activeGroupNum) {
+      let assignedMap = {}; // pickerNum -> groupNum
+      if (pickersList) {
+        pickersList.forEach(p => { assignedMap[String(p.pickerNum)] = String(p.groupNum); });
+      }
+
+      let html = `<div class="section-card">
+        <h4 style="color:#27ae60;">Kliknite na kockicu da dodate/uklonite berača iz grupe:</h4>
+        <div class="pickers-grid-container">`;
+
+      for (let i = 1; i <= totalCount; i++) {
+        let pNumStr = String(i);
+        let assignedGroup = assignedMap[pNumStr];
+        let isAssigned = (assignedGroup !== undefined);
+        let boxClass = isAssigned ? "picker-box-item assigned" : "picker-box-item";
+        let labelText = isAssigned ? "G " + assignedGroup : "Slobodan";
+
+        html += `<div class="${boxClass}" id="pickerBox_${i}" onclick="togglePickerAssignment('${i}')">
+          <div class="picker-box-label" id="boxLabel_${i}">${labelText}</div>
+          <div class="picker-box-num">${i}</div>
+        </div>`;
+      }
+
+      html += `</div></div>`;
+      let area = document.getElementById('pickerBoxesArea');
+      if (area) area.innerHTML = html;
+    }
+
+    function togglePickerAssignment(pickerNum) {
+      let isGroupLeader = (loggedUser && loggedUser.role === 'grupovoda');
+      let targetGroupNum = isGroupLeader ? loggedUser.extra : document.getElementById('pickerGroupSelect').value;
+      let selectEl = document.getElementById('pickerGroupSelect');
+      let leaderName = isGroupLeader ? loggedUser.name : (selectEl && selectEl.selectedIndex > 0 ? selectEl.options[selectEl.selectedIndex].getAttribute('data-name') : "Vođa");
+
+      if (!targetGroupNum) {
+        alert("Izaberite grupu!");
+        return;
+      }
+
+      let boxEl = document.getElementById('pickerBox_' + pickerNum);
+      let labelEl = document.getElementById('boxLabel_' + pickerNum);
+      let isAssignedNow = boxEl.classList.contains('assigned');
+
+      let actionName = isAssignedNow ? "deletePicker" : "savePickerToGroup";
+      let payload = isAssignedNow ? { pickerNumber: pickerNum } : { data: { pickerNum: pickerNum, groupNum: targetGroupNum, leaderName: leaderName } };
 
       fetch(WEB_APP_URL, {
         method: "POST",
-        body: JSON.stringify({ action: "savePickerToGroup", data: { pickerNum, groupNum, leaderName } })
+        body: JSON.stringify({ action: actionName, ...payload })
       })
       .then(res => res.json())
-      .then(res => { 
-        if (res.success) { 
-          loadWindow1(); 
+      .then(res => {
+        if (res.success) {
+          if (isAssignedNow) {
+            boxEl.classList.remove('assigned');
+            labelEl.innerText = "Slobodan";
+          } else {
+            boxEl.classList.add('assigned');
+            labelEl.innerText = "G " + targetGroupNum;
+          }
           loadGlobalStats(); // Osveži ukupan broj berača u gornjoj traci
-        } 
-        else { alert(res.error || "Greška pri čuvanju berača"); } 
+        } else {
+          alert(res.error || "Greška pri ažuriranju berača");
+        }
       });
     }
 
