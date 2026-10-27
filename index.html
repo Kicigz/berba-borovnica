@@ -231,7 +231,7 @@
           </div>
 
           <div id="inlinePromptBox1" class="inline-prompt-box">
-            <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">1. Potvrda ubrane količine (<span id="promptPickerNum1" style="color:#c0392b;">-</span>)</div>
+            <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">1. Potvrda ubrane količine (Berač #<span id="promptPickerNum1" style="color:#c0392b;">-</span> | Gajbica: <span id="promptCrateNum1" style="color:#d35400;">-</span>)</div>
             <div style="font-size:12px; color:#555; margin-bottom:6px;">Uživo: <b id="promptWeightVal1">0.00 kg</b></div>
             <div style="display:flex; gap:6px;">
               <button class="btn" style="background:#e74c3c; padding:6px; font-size:12px;" onclick="cancelWorkflow()">Otkaži</button>
@@ -263,7 +263,7 @@
           <div><b>Danas ubrao:</b> <span id="valPickerTotalKg" class="highlight-total">0.00 kg</span></div>
           <div><b>Plasman:</b><br><div id="valPickerRank" class="rank-badge">-</div></div>
         </div>
-        <div id="noPickerMsg" style="color: #7f8c8d; text-align: center; margin-top: 12px; font-size: 14px;">Skenirajte QR kod nove gajbice.</div>
+        <div id="noPickerMsg" style="color: #7f8c8d; text-align: center; margin-top: 12px; font-size: 14px;">Skenirajte QR kod berača.</div>
       </div>
     </div>
 
@@ -299,7 +299,8 @@
     let rawWeight = 0, tareOffset = 0, liveCurrentKg = 0;
     
     let workflowState = 0;
-    let pendingPickerCode = null;
+    let pendingPickerNum = null;
+    let assignedCrateNumber = null;
     let lockedInputWeight = 0;
 
     let barcodeBuffer = "";
@@ -330,21 +331,47 @@
     });
 
     function handleBarcodeInput(code) {
-      document.getElementById('debugLog').innerText = "Očitan QR: " + code;
-      pendingPickerCode = code;
-      workflowState = 1;
+      // Očitani QR kod sadrži SAMO broj berača (npr. "15")
+      let pickerCleanNum = code.replace(/[^0-9]/g, '');
+      if (!pickerCleanNum) {
+        pickerCleanNum = code.split(' ')[0] || code;
+      }
 
-      document.getElementById('valPicker').innerText = code;
-      document.getElementById('valCrate').innerText = code;
-      
-      document.getElementById('promptPickerNum1').innerText = code;
-      document.getElementById('inlinePromptBox1').style.display = 'block';
-      document.getElementById('inlinePromptBox2').style.display = 'none';
+      document.getElementById('debugLog').innerText = "Očitan berač: " + pickerCleanNum;
+
+      // Zatraži od servera da izračuna sledeći redni broj gajbice za ovog berača danas
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "getNextCrateNumber", pickerNum: pickerCleanNum })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          pendingPickerNum = pickerCleanNum;
+          assignedCrateNumber = res.crateNumber; // Automatski dodeljen redni broj gajbice (npr. 1, 2, 3...)
+          workflowState = 1;
+
+          document.getElementById('valPicker').innerText = pendingPickerNum;
+          document.getElementById('valCrate').innerText = "#" + assignedCrateNumber;
+          document.getElementById('valLeader').innerText = res.leaderName || "-";
+          
+          document.getElementById('promptPickerNum1').innerText = pendingPickerNum;
+          document.getElementById('promptCrateNum1').innerText = "#" + assignedCrateNumber;
+          document.getElementById('inlinePromptBox1').style.display = 'block';
+          document.getElementById('inlinePromptBox2').style.display = 'none';
+        } else {
+          alert("Greška: " + (res.error || "Berač nije pronađen u Modulu 2 / grupama"));
+        }
+      })
+      .catch(err => {
+        alert("Serverska greška prilikom dodela gajbice: " + err.message);
+      });
     }
 
     function cancelWorkflow() {
       workflowState = 0;
-      pendingPickerCode = null;
+      pendingPickerNum = null;
+      assignedCrateNumber = null;
       lockedInputWeight = 0;
       document.getElementById('inlinePromptBox1').style.display = 'none';
       document.getElementById('inlinePromptBox2').style.display = 'none';
@@ -355,7 +382,7 @@
     }
 
     function confirmInputWeight() {
-      if (!pendingPickerCode) return;
+      if (!pendingPickerNum) return;
       lockedInputWeight = liveCurrentKg;
       document.getElementById('weightVal').innerText = lockedInputWeight.toFixed(2) + " kg (Fiksirano)";
       document.getElementById('inlinePromptBox1').style.display = 'none';
@@ -364,15 +391,10 @@
     }
 
     function confirmFinalSave() {
-      if (!pendingPickerCode) return;
+      if (!pendingPickerNum) return;
 
       let finalPrebranaKg = liveCurrentKg;
       let finalKaloKg = Math.max(0, lockedInputWeight - finalPrebranaKg);
-
-      let pickerCleanNum = pendingPickerCode.replace(/[^0-9]/g, '');
-      if (!pickerCleanNum) {
-        pickerCleanNum = pendingPickerCode.split(' ')[0] || pendingPickerCode;
-      }
 
       document.getElementById('valConfirmedInput').innerText = finalPrebranaKg.toFixed(2) + " kg";
       document.getElementById('valBadFruit').innerText = finalKaloKg.toFixed(2) + " kg";
@@ -381,8 +403,8 @@
       let payload = {
         action: "saveHarvestFromCrateScan",
         data: {
-          picker: pickerCleanNum,
-          crateId: pendingPickerCode,
+          picker: pendingPickerNum,
+          crateId: "Gajbica #" + assignedCrateNumber,
           sector: "Zasad 1",
           netWeight: finalPrebranaKg,
           badFruit: finalKaloKg,
@@ -404,17 +426,20 @@
           
           loadGlobalStats();
           workflowState = 0;
-          pendingPickerCode = null;
+          pendingPickerNum = null;
+          assignedCrateNumber = null;
         } else {
-          alert("Greška: " + (res.error || "Nepoznat berač"));
+          alert("Greška: " + (res.error || "Neuspešno čuvanje"));
           workflowState = 0;
-          pendingPickerCode = null;
+          pendingPickerNum = null;
+          assignedCrateNumber = null;
         }
       })
       .catch(err => {
         alert("Serverska greška: " + err.message);
         workflowState = 0;
-        pendingPickerCode = null;
+        pendingPickerNum = null;
+        assignedCrateNumber = null;
       });
     }
 
@@ -425,7 +450,7 @@
         if (d) {
           document.getElementById('hdrDate').innerText = d.date || "-";
           document.getElementById('hdrTotalKg').innerText = (parseFloat(d.totalKg) || 0).toFixed(2);
-          document.getElementById('hdrTotalPickers').innerText = d.totalPickers || 0;
+          document.getElementById('hdrTotalPickers').innerText = d.totalPickers || 0; // Automatski zbir svih berača dodatih u Modulu 2
         }
       }).catch(err => console.error("Greška pri učitavanju statistike:", err));
     }
@@ -566,7 +591,10 @@
       })
       .then(res => res.json())
       .then(res => { 
-        if (res.success) { loadWindow1(); } 
+        if (res.success) { 
+          loadWindow1(); 
+          loadGlobalStats(); // Osveži ukupan broj berača u gornjoj traci
+        } 
         else { alert(res.error || "Greška pri čuvanju berača"); } 
       });
     }
@@ -578,7 +606,12 @@
         body: JSON.stringify({ action: "deletePicker", pickerNumber: pickerNumber })
       })
       .then(res => res.json())
-      .then(res => { if (res.success) loadWindow1(); });
+      .then(res => { 
+        if (res.success) { 
+          loadWindow1(); 
+          loadGlobalStats(); 
+        } 
+      });
     }
 
     // PROZOR 2: Radnici na vagi i Grupovođe
@@ -903,7 +936,6 @@
         }
         html += `</div>`;
 
-        // Prikaz pojedinačnih polja ispod izabranog reda
         if (selectedRowForPreview && selectedRowForPreview.fIdx === fIdx) {
           let activeRow = field.rows[selectedRowForPreview.rIdx];
           if (activeRow) {
@@ -1004,7 +1036,6 @@
       } else {
         selectedRowForPreview = { fIdx, rIdx };
       }
-      let mode = checkUserAccess('4c') && loggedUser.role !== 'grupovoda' ? 'admin' : 'preview';
       if (document.getElementById('modalBodyContent').innerText.includes("Predefinisanje")) {
         loadHarvestMap('admin');
       } else {
@@ -1064,10 +1095,10 @@
           measurements.forEach(item => {
             html += `<div class="mobile-card-item">
               <div class="mobile-card-header">
-                <span>⏰ Vreme: ${item.time || '-'} | Berač #${item.pickerNum || '-'}</span>
+                <span>⏰ Vreme: ${item.time || '-'} | Berač #${item.pickerNum || '-'} (${item.crateId || '-'})</span>
                 <span style="color:#27ae60; font-size:15px;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</span>
               </div>
-              <div style="font-size:13px; color:#555;">Gajbica: <b>${item.crateId || '-'}</b> | Kalo: <b>${(parseFloat(item.kalo) || 0).toFixed(2)} kg</b></div>
+              <div style="font-size:13px; color:#555;">Kalo: <b>${(parseFloat(item.kalo) || 0).toFixed(2)} kg</b></div>
               <div class="mobile-card-actions">
                 <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')">Izmeni težinu</button>
                 <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši merenje</button>
