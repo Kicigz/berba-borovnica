@@ -133,6 +133,25 @@
     .picker-grid { display: flex; flex-wrap: wrap; gap: 6px; }
     .picker-chip { background: #eaf2f8; color: #2980b9; border: 1px solid #b9d7ea; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
     .picker-chip:hover { background: #fadbd8; color: #c0392b; border-color: #f5b7b1; }
+    
+    .map-container { display: flex; flex-direction: column; gap: 10px; }
+    .field-box-card { background: white; padding: 10px; border-radius: 8px; border: 1px solid #dcdde1; position: relative; }
+    .rows-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .map-square {
+      width: 46px; height: 46px; border-radius: 8px; display: flex;
+      flex-direction: column; justify-content: center; align-items: center; font-weight: bold; font-size: 13px;
+      cursor: pointer; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.15); transition: transform 0.1s;
+    }
+    .map-square:hover { transform: scale(1.05); }
+    .sq-purple { background-color: #8e44ad; border: 2px solid #6c3483; }
+    .sq-green { background-color: #27ae60; border: 2px solid #1e8449; }
+    .fields-container {
+      background: #f1f2f6; padding: 8px; border-radius: 8px; margin-top: 6px; border: 1px dashed #bdc3c7;
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    }
+    .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+    .report-group-card { background: white; border-radius: 10px; padding: 14px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border-left: 6px solid #2980b9; }
+    .picker-detail-row { background: white; border: 1px solid #e1e8ed; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
   </style>
 </head>
 <body>
@@ -332,13 +351,10 @@
 
     function confirmInputWeight() {
       if (!pendingPickerCode) return;
-      
       lockedInputWeight = liveCurrentKg;
       document.getElementById('weightVal').innerText = lockedInputWeight.toFixed(2) + " kg (Fiksirano)";
-      
       document.getElementById('inlinePromptBox1').style.display = 'none';
       document.getElementById('inlinePromptBox2').style.display = 'block';
-      
       workflowState = 2;
     }
 
@@ -397,7 +413,6 @@
       });
     }
 
-    // --- FUNKCIJE ZA STATISTIKU I DATUM ---
     function loadGlobalStats() {
       fetch(WEB_APP_URL, {
         method: "POST", body: JSON.stringify({ action: "getGlobalStats" })
@@ -410,7 +425,7 @@
       }).catch(err => console.error("Greška pri učitavanju statistike:", err));
     }
 
-    // --- ADMINISTRACIJA I OTVARANJE PROZORA ---
+    // --- ADMINISTRACIJA I SVI PROZORI (1 do 6) ---
     function openMenuModal() {
       let html = `<h3 style="margin-bottom:12px; font-size:16px;">Izaberite opciju administracije:</h3>
         <div style="display: flex; flex-direction: column; gap: 8px;">`;
@@ -459,65 +474,381 @@
       if (num === '6') { loadWindow6(); return; }
     }
 
-    // Funkcije prozora za administraciju
+    // PROZOR 1: Dodavanje berača u grupu
     function loadWindow1() {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje berača...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
-      fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) })
-      .then(r => r.json()).then(res => {
-        document.getElementById('modalBodyContent').innerHTML = `<h3>Prozor 1: Dodavanje berača</h3><button class="btn" onclick="openMenuModal()">← Nazad</button>`;
+
+      Promise.all([
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json())
+      ])
+      .then(([resGroups, resPickers]) => {
+        let groups = resGroups.success ? resGroups.groups : [];
+        let pickers = resPickers.success ? resPickers.pickers : [];
+
+        let groupSelectHtml = "";
+        let options = `<option value="">-- Izaberi grupu --</option>`;
+        groups.forEach(g => { options += `<option value="${g.extra}" data-name="${g.name}">Grupa ${g.extra} (${g.name})</option>`; });
+        groupSelectHtml = `<select id="pickerGroupSelect" style="flex:1; padding:8px; border-radius:6px; border:1px solid #bdc3c7;">${options}</select>`;
+
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:16px;">➕ Dodavanje berača</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+        </div>
+        
+        <div class="section-card">
+          <h4>Unesi broj berača</h4>
+          <div class="form-row">
+            <div class="form-group-col"><label>Broj</label><input type="text" id="pickerNumInput" placeholder="npr. 01" maxlength="4"></div>
+            <div class="form-group-col" style="flex:2;"><label>Grupa</label>${groupSelectHtml}</div>
+          </div>
+          <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="savePicker()">Dodaj berača</button>
+        </div>
+
+        <div class="section-card">
+          <h4>Raspored berača (${pickers.length})</h4>`;
+
+        let groupedPickers = {};
+        groups.forEach(g => { groupedPickers[g.extra] = { leader: g.name, list: [] }; });
+        pickers.forEach(p => {
+          let gNum = String(p.groupNum);
+          if (!groupedPickers[gNum]) {
+            groupedPickers[gNum] = { leader: p.leaderName || 'Grupa', list: [] };
+          }
+          groupedPickers[gNum].list.push(p.pickerNum);
+        });
+
+        for (let gNum in groupedPickers) {
+          let groupData = groupedPickers[gNum];
+          groupData.list.sort((a, b) => parseInt(a) - parseInt(b));
+
+          html += `<div class="group-section">
+            <h5>Grupa ${gNum} (${groupData.leader}) - ${groupData.list.length} berača</h5>
+            <div class="picker-grid">`;
+
+          if (groupData.list.length === 0) {
+            html += `<span style="font-size:12px; color:#95a5a6;">Nema berača.</span>`;
+          } else {
+            groupData.list.forEach(num => {
+              html += `<div class="picker-chip" onclick="deletePicker('${num}')">${num}</div>`;
+            });
+          }
+          html += `</div></div>`;
+        }
+        html += `</div>`;
+        document.getElementById('modalBodyContent').innerHTML = html;
       });
     }
 
-    function loadWindow2() {
-      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje osoblja...</p>`;
-      document.getElementById('menuModal').style.display = 'flex';
-      fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) })
-      .then(r => r.json()).then(res => {
-        document.getElementById('modalBodyContent').innerHTML = `<h3>Prozor 2: Radnici i Grupovođe</h3><button class="btn" onclick="openMenuModal()">← Nazad</button>`;
-      });
-    }
+    function savePicker() {
+      let pickerNum = document.getElementById('pickerNumInput').value.trim();
+      let groupNum = document.getElementById('pickerGroupSelect').value;
+      let selectEl = document.getElementById('pickerGroupSelect');
+      let leaderName = selectEl.options[selectEl.selectedIndex].getAttribute('data-name');
 
-    function loadWindow3() {
-      document.getElementById('modalBodyContent').innerHTML = `<h3>Prozor 3: Izveštaj o branju</h3><button class="btn" onclick="openMenuModal()">← Nazad</button>`;
-      document.getElementById('menuModal').style.display = 'flex';
-    }
+      if (!pickerNum || !groupNum) { alert("Unesite broj berača i izaberite grupu!"); return; }
 
-    function loadWindow4SubMenu() {
-      document.getElementById('modalBodyContent').innerHTML = `<h3>Prozor 4: Zasad i Mapa</h3><button class="btn" onclick="openMenuModal()">← Nazad</button>`;
-      document.getElementById('menuModal').style.display = 'flex';
-    }
-
-    function loadWindow5() {
-      document.getElementById('modalBodyContent').innerHTML = `<h3>Prozor 5: Izmene merenja</h3><button class="btn" onclick="openMenuModal()">← Nazad</button>`;
-      document.getElementById('menuModal').style.display = 'flex';
-    }
-
-    function loadWindow6() {
-      document.getElementById('modalBodyContent').innerHTML = `<h3>Prozor 6: Obračun dana</h3><button class="btn" onclick="openMenuModal()">← Nazad</button>`;
-      document.getElementById('menuModal').style.display = 'flex';
-    }
-
-    // --- OSTALE POMOĆNE FUNKCIJE ---
-    let plantationMap = [];
-
-    function fetchMapFromServer(callback) {
       fetch(WEB_APP_URL, {
         method: "POST",
-        body: JSON.stringify({ action: "getMapFromCloud" })
+        body: JSON.stringify({ action: "savePickerToGroup", data: { pickerNum, groupNum, leaderName } })
+      })
+      .then(res => res.json())
+      .then(res => { 
+        if (res.success) { loadWindow1(); } 
+        else { alert(res.error || "Greška pri čuvanju berača"); } 
+      });
+    }
+
+    function deletePicker(pickerNumber) {
+      if (!confirm("Ukloniti berača broj " + pickerNumber + "?")) return;
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "deletePicker", pickerNumber: pickerNumber })
+      })
+      .then(res => res.json())
+      .then(res => { if (res.success) loadWindow1(); });
+    }
+
+    // PROZOR 2: Radnici na vagi i Grupovođe
+    function loadWindow2(activeTab = 'vaga') {
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje osoblja...</p>`;
+      document.getElementById('menuModal').style.display = 'flex';
+      
+      fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) })
+      .then(res => res.json())
+      .then(res => {
+        let workers = res.workers || [];
+        let groups = res.groups || [];
+
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:16px;">👥 Registracija i Dozvole</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+        </div>
+        <div class="tab-header">
+          <button class="tab-btn ${activeTab === 'vaga' ? 'active' : ''}" onclick="loadWindow2('vaga')">⚖️ Radnici na vagi</button>
+          <button class="tab-btn ${activeTab === 'grupa' ? 'active' : ''}" onclick="loadWindow2('grupa')">👥 Grupovođe</button>
+        </div>`;
+
+        if (activeTab === 'vaga') {
+          html += `<div class="section-card">
+            <h4>Dodaj radnika na vagi</h4>
+            <div class="form-row">
+              <div class="form-group-col"><label>Ime i Prezime</label><input type="text" id="workerNameInput" placeholder="npr. Marko"></div>
+              <div class="form-group-col"><label>Broj vage</label><input type="number" id="workerScaleInput" min="1" value="1"></div>
+              <div class="form-group-col"><label>PIN (2 cifre)</label><input type="password" id="workerPinInput" placeholder="2 cifre" maxlength="2"></div>
+            </div>
+            <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="saveWorker('vaga')">Sačuvaj radnika</button>
+          </div>
+          <div class="section-card">
+            <h4>Postojeći radnici (${workers.length})</h4>`;
+          workers.forEach(w => {
+            html += `<div class="mobile-card-item"><div class="mobile-card-header"><span>👤 ${w.name} (Vaga ${w.extra})</span><button class="btn-action btn-del" onclick="deleteWorkerRecord('${w.pin}')">Obriši</button></div></div>`;
+          });
+          html += `</div>`;
+        } else {
+          html += `<div class="section-card">
+            <h4>Dodaj grupovođu</h4>
+            <div class="form-row">
+              <div class="form-group-col"><label>Ime i Prezime</label><input type="text" id="groupLeaderNameInput" placeholder="npr. Petar"></div>
+              <div class="form-group-col"><label>Broj grupe</label><input type="number" id="groupNumberInput" min="1" value="1"></div>
+              <div class="form-group-col"><label>PIN (3 cifre)</label><input type="password" id="groupLeaderPinInput" placeholder="3 cifre" maxlength="3"></div>
+            </div>
+            <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="saveWorker('grupovoda')">Sačuvaj grupovođu</button>
+          </div>
+          <div class="section-card">
+            <h4>Postojeće grupe (${groups.length})</h4>`;
+          groups.forEach(g => {
+            html += `<div class="mobile-card-item"><div class="mobile-card-header"><span>👥 Grupa ${g.extra} — ${g.name}</span><button class="btn-action btn-del" onclick="deleteWorkerRecord('${g.pin}')">Obriši</button></div></div>`;
+          });
+          html += `</div>`;
+        }
+        document.getElementById('modalBodyContent').innerHTML = html;
+      });
+    }
+
+    function saveWorker(roleType) {
+      let name, pin, extra;
+      if (roleType === 'vaga') {
+        name = document.getElementById('workerNameInput').value.trim();
+        pin = document.getElementById('workerPinInput').value.trim();
+        extra = document.getElementById('workerScaleInput').value.trim();
+      } else {
+        name = document.getElementById('groupLeaderNameInput').value.trim();
+        pin = document.getElementById('groupLeaderPinInput').value.trim();
+        extra = document.getElementById('groupNumberInput').value.trim();
+      }
+      if (!name || !pin || !extra) { alert("Popunite sva polja!"); return; }
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "saveWorkerOrGroup", data: { name, pin, role: roleType, extra, permissions: ["1","3","4","5"] } })
+      }).then(r => r.json()).then(res => { if (res.success) loadWindow2(roleType); else alert(res.error); });
+    }
+
+    function deleteWorkerRecord(pin) {
+      if (!confirm("Obrisati ovo lice?")) return;
+      fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "deleteWorkerOrGroup", pin: pin }) })
+      .then(r => r.json()).then(res => { if (res.success) loadWindow2('vaga'); });
+    }
+
+    // PROZOR 3: Izveštaj o branju
+    function loadWindow3() {
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja...</p>`;
+      document.getElementById('menuModal').style.display = 'flex';
+
+      Promise.all([
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
+      ])
+      .then(([resWorkers, resPickers, resMeas]) => {
+        let groups = resWorkers.success ? resWorkers.groups : [];
+        let pickers = resPickers.success ? resPickers.pickers : [];
+        let measurements = resMeas.success ? resMeas.measurements : [];
+
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:16px;">📊 Izveštaj po grupama</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+        </div>
+        <div class="report-card-grid">`;
+
+        groups.forEach(g => {
+          let groupNum = g.extra;
+          let leaderName = g.name;
+          let groupPickers = pickers.filter(p => String(p.groupNum) === String(groupNum));
+          let pickerNums = groupPickers.map(p => p.pickerNum);
+          let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
+          let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+
+          html += `<div class="report-group-card">
+            <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
+            <div style="font-size:13px; color:#555; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #eee; padding-top:6px;">
+              <span>👥 Berača: <b>${groupPickers.length}</b></span>
+              <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+            </div>
+          </div>`;
+        });
+        html += `</div>`;
+        document.getElementById('modalBodyContent').innerHTML = html;
+      });
+    }
+
+    // PROZOR 4: Zasad i Mapa
+    function loadWindow4SubMenu() {
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0; font-size:16px;">🌱 Zasad i Mapa</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top:10px;">
+        <button class="btn" style="background:#2980b9; text-align:left; padding:12px;" onclick="loadHarvestMap('preview')">🌱 Pregled i vođenje berbe</button>
+        <button class="btn" style="background:#8e44ad; text-align:left; padding:12px;" onclick="loadHarvestMap('admin')">⚙️ Predefinisanje mape zasada</button>
+      </div>`;
+      document.getElementById('modalBodyContent').innerHTML = html;
+      document.getElementById('menuModal').style.display = 'flex';
+    }
+
+    let plantationMap = [];
+    let activeSelectedRow = null;
+
+    function loadHarvestMap(mode) {
+      let isAdminMode = (mode === 'admin');
+      let titleText = isAdminMode ? "Predefinisanje mape" : "Pregled zasada";
+
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0; font-size:16px;">🌱 ${titleText}</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="loadWindow4SubMenu()">← Nazad</button>
+      </div>
+      <div class="map-container" id="mapListContainer">` + renderMapHtml(isAdminMode) + `</div>`;
+
+      document.getElementById('modalBodyContent').innerHTML = html;
+    }
+
+    function renderMapHtml(isAdminMode) {
+      if (plantationMap.length === 0) return `<p style="text-align:center; color:#7f8c8d;">Nema unetih njiva u bazi.</p>`;
+      let html = "";
+      plantationMap.forEach((field, fIdx) => {
+        html += `<div class="field-box-card"><h4 style="margin:0 0 6px 0;">🌱 ${field.fieldId}</h4><div class="rows-grid">`;
+        field.rows.forEach((row, rIdx) => {
+          let rowBgClass = row.status === 'green' ? 'sq-green' : 'sq-purple';
+          html += `<div class="map-square ${rowBgClass}"><span>${row.rowNum}</span></div>`;
+        });
+        html += `</div></div>`;
+      });
+      return html;
+    }
+
+    // PROZOR 5: Izmene merenja na vagi
+    function loadWindow5() {
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje merenja...</p>`;
+      document.getElementById('menuModal').style.display = 'flex';
+
+      Promise.all([
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
+      ])
+      .then(([resWorkers, resMeas]) => {
+        let measurements = (resMeas.success && resMeas.measurements) ? resMeas.measurements : [];
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:16px;">⚙️ Izmene merenja</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+        </div>`;
+
+        if (measurements.length === 0) {
+          html += `<p style="text-align:center; color:#7f8c8d;">Nema zabeleženih merenja za izmenu.</p>`;
+        } else {
+          measurements.forEach(item => {
+            html += `<div class="mobile-card-item">
+              <div class="mobile-card-header">
+                <span>⏰ ${item.time || '-'} | Berač ${item.pickerNum || '-'}</span>
+                <span style="color:#27ae60;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</span>
+              </div>
+              <div class="mobile-card-actions">
+                <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')">Izmeni</button>
+                <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši</button>
+              </div>
+            </div>`;
+          });
+        }
+        document.getElementById('modalBodyContent').innerHTML = html;
+      });
+    }
+
+    function promptAdminAction(actionType, measurementId, pickerNum, currentWeight) {
+      let adminPin = prompt(`Unesite ADMINISTRATIVNI PIN za potvrdu:`, "");
+      if (adminPin === null || !adminPin.trim()) return;
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ 
+          action: "verifyAdminAndModifyMeasurement", 
+          adminPin: adminPin.trim(),
+          measurementId: measurementId,
+          actionType: actionType,
+          newWeight: (actionType === 'edit') ? prompt("Nova težina u kg:", currentWeight) : null
+        })
       })
       .then(res => res.json())
       .then(res => {
-        if (res.success) {
-          plantationMap = res.mapData || [];
-          if (callback) callback();
-        }
-      }).catch(() => { if (callback) callback(); });
+        if (res.success) { alert("Uspešno izmenjeno!"); loadWindow5(); }
+        else { alert(res.error || "Pogrešan PIN!"); }
+      });
     }
 
+    // PROZOR 6: Obračun dana
+    function loadWindow6() {
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna...</p>`;
+      document.getElementById('menuModal').style.display = 'flex';
+
+      Promise.all([
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
+      ])
+      .then(([resGroups, resPickers, resMeas]) => {
+        let groups = resGroups.success ? resGroups.groups : [];
+        let pickers = resPickers.success ? resPickers.pickers : [];
+        let measurements = resMeas.success ? resMeas.measurements : [];
+        let defaultPricePerKg = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
+
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:16px;">💰 Obračun dana - Grupe</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+        </div>
+        <div class="report-card-grid">`;
+
+        groups.forEach(g => {
+          let groupNum = g.extra;
+          let leaderName = g.name;
+          let groupPickers = pickers.filter(p => String(p.groupNum) === String(groupNum));
+          let pickerNums = groupPickers.map(p => p.pickerNum);
+          let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
+          let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+          let totalGroupPay = totalGroupKg * defaultPricePerKg;
+
+          html += `<div class="report-group-card">
+            <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
+            <div style="font-size:13px; color:#555; margin-bottom:6px;">Vođa: <b>${leaderName}</b></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #eee; padding-top:6px;">
+              <span>👥 Berača: <b>${groupPickers.length}</b></span>
+              <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:14px; margin-top:4px; color:#2980b9; font-weight:bold;">
+              <span>Isplata:</span><span>${totalGroupPay.toFixed(2)} RSD</span>
+            </div>
+          </div>`;
+        });
+        html += `</div>`;
+        document.getElementById('modalBodyContent').innerHTML = html;
+      });
+    }
+
+    // --- POMOĆNE SISTEMSKE FUNKCIJE ---
     window.onload = function() {
       autoConnectUSB();
       fetchMapFromServer();
+      loadGlobalStats();
     };
 
     function toggleFullScreen() {
@@ -578,7 +909,7 @@
             document.getElementById('scaleSection').style.display = 'flex';
             document.getElementById('bottomNavContainer').style.display = 'flex';
             document.getElementById('leaderDashboardSection').style.display = 'none';
-            loadGlobalStats(); // Učitava datum i statse pri prijavi
+            loadGlobalStats();
           }
         } else {
           alert(res.error || "Greška pri prijavi!");
@@ -741,6 +1072,20 @@
         await writer.write(new TextEncoder().encode("T\n"));
         writer.releaseLock();
       }
+    }
+
+    function fetchMapFromServer(callback) {
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "getMapFromCloud" })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          plantationMap = res.mapData || [];
+          if (callback) callback();
+        }
+      }).catch(() => { if (callback) callback(); });
     }
   </script>
 </body>
