@@ -116,13 +116,13 @@
     .form-row { display: flex; gap: 8px; margin-top: 8px; align-items: flex-end; flex-wrap: wrap; }
     
     /* Optimizovane manje kockice (savršeno za 150+ berača) */
-    .pickers-grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 5px; margin-top: 10px; max-height: 350px; overflow-y: auto; padding: 4px; }
+    .pickers-grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 5px; margin-top: 10px; max-height: 320px; overflow-y: auto; padding: 4px; }
     .picker-box-item {
       background-color: #e74c3c; color: white; border-radius: 6px; padding: 4px 2px; text-align: center;
       cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.15); transition: transform 0.1s; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 42px;
     }
     .picker-box-item:hover { transform: scale(1.05); }
-    .picker-box-item.assigned { background-color: #27ae60; }
+    .picker-box-item.selected { background-color: #27ae60; border: 2px solid #ffeaa7; }
     .picker-box-label { font-size: 8px; font-weight: bold; background: rgba(0,0,0,0.2); width: 100%; border-radius: 3px; margin-bottom: 1px; padding: 1px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .picker-box-num { font-size: 14px; font-weight: bold; }
 
@@ -142,7 +142,6 @@
     .group-section { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd; }
     .group-section h5 { margin: 0 0 6px 0; color: #2c3e50; font-size: 14px; border-bottom: 1px dashed #eee; padding-bottom: 4px; }
     .picker-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-    /* Uklonjen krstić u čipu jer se briše jednim klikom bez potvrde */
     .picker-chip { background: #eaf2f8; color: #2980b9; border: 1px solid #b9d7ea; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
     .picker-chip:hover { background: #d4e6f1; }
     
@@ -226,7 +225,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 1.1)</h3>
+            <h3>Vaga i Kontrola (ver 1.0)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -523,8 +522,11 @@
       if (num === '6') { loadWindow6(); return; }
     }
 
-    // PROZOR 1: Dodavanje berača u grupu (Sa manjim kockicama i prikazom samo nedodeljenih)
+    // PROZOR 1: Dodavanje berača sa lokalnom selekcijom i masovnim čuvanjem
+    let selectedPickersCache = new Set(); // Čuva selektovane brojeve lokalno pre potvrde
+
     function loadWindow1() {
+      selectedPickersCache.clear();
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje berača...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
 
@@ -590,7 +592,6 @@
             html += `<span style="font-size:12px; color:#95a5a6;">Nema berača.</span>`;
           } else {
             groupData.list.forEach(num => {
-              // Brisanje berača jednim klikom bez potvrde
               html += `<div class="picker-chip" onclick="quickDeletePicker('${num}')">${num} ✕</div>`;
             });
           }
@@ -621,13 +622,16 @@
     }
 
     function renderBoxesGrid(totalCount, pickersList, activeGroupNum) {
-      let assignedMap = {}; // pickerNum -> groupNum
+      let assignedMap = {}; 
       if (pickersList) {
         pickersList.forEach(p => { assignedMap[String(p.pickerNum)] = String(p.groupNum); });
       }
 
       let html = `<div class="section-card">
-        <h4 style="color:#27ae60;">Slobodni brojevi berača (klikom dodajete u grupu):</h4>
+        <h4 style="color:#27ae60; display:flex; justify-content:space-between; align-items:center;">
+          <span>Slobodni brojevi (kliknite da obeležite):</span>
+          <span id="selectedCountBadge" style="font-size:12px; background:#2980b9; color:white; padding:3px 8px; border-radius:4px;">Izabrano: 0</span>
+        </h4>
         <div class="pickers-grid-container">`;
 
       let unassignedCount = 0;
@@ -635,11 +639,14 @@
         let pNumStr = String(i);
         let assignedGroup = assignedMap[pNumStr];
         
-        // Prikazujemo SAMO one koji NISU dodeljeni ni jednoj grupi
         if (!assignedGroup) {
           unassignedCount++;
-          html += `<div class="picker-box-item" id="pickerBox_${i}" onclick="togglePickerAssignment('${i}')">
-            <div class="picker-box-label" id="boxLabel_${i}">Slobodan</div>
+          let isSelected = selectedPickersCache.has(pNumStr);
+          let boxClass = isSelected ? "picker-box-item selected" : "picker-box-item";
+          let labelText = isSelected ? "Izabrano" : "Slobodan";
+
+          html += `<div class="${boxClass}" id="pickerBox_${i}" onclick="toggleLocalSelection('${i}')">
+            <div class="picker-box-label" id="boxLabel_${i}">${labelText}</div>
             <div class="picker-box-num">${i}</div>
           </div>`;
         }
@@ -649,12 +656,48 @@
         html += `<div style="grid-column: 1 / -1; text-align:center; color:#7f8c8d; padding:15px; font-size:14px;">Svi generisani brojevi su raspoređeni u grupe!</div>`;
       }
 
-      html += `</div></div>`;
+      html += `</div>`;
+      
+      // Dugme za potvrdu masovnog čuvanja
+      html += `<button class="btn" style="background:#27ae60; margin-top:12px;" onclick="saveBatchPickers()">💾 Sačuvaj obeležene berače u grupu</button>`;
+      html += `</div>`;
+
       let area = document.getElementById('pickerBoxesArea');
       if (area) area.innerHTML = html;
+      updateSelectedBadge();
     }
 
-    function togglePickerAssignment(pickerNum) {
+    // Samo lokalno menjanje stanja u kešu (bez čekanja mreže)
+    function toggleLocalSelection(pickerNum) {
+      let boxEl = document.getElementById('pickerBox_' + pickerNum);
+      let labelEl = document.getElementById('boxLabel_' + pickerNum);
+
+      if (selectedPickersCache.has(pickerNum)) {
+        selectedPickersCache.delete(pickerNum);
+        boxEl.classList.remove('selected');
+        labelEl.innerText = "Slobodan";
+      } else {
+        selectedPickersCache.add(pickerNum);
+        boxEl.classList.add('selected');
+        labelEl.innerText = "Izabrano";
+      }
+      updateSelectedBadge();
+    }
+
+    function updateSelectedBadge() {
+      let badge = document.getElementById('selectedCountBadge');
+      if (badge) {
+        badge.innerText = "Izabrano: " + selectedPickersCache.size;
+      }
+    }
+
+    // Masovno slanje svih izabranih brojeva jednim jedinim zahtevom
+    function saveBatchPickers() {
+      if (selectedPickersCache.size === 0) {
+        alert("Niste obeležili nijednog berača!");
+        return;
+      }
+
       let isGroupLeader = (loggedUser && loggedUser.role === 'grupovoda');
       let targetGroupNum = isGroupLeader ? loggedUser.extra : document.getElementById('pickerGroupSelect').value;
       let selectEl = document.getElementById('pickerGroupSelect');
@@ -665,25 +708,40 @@
         return;
       }
 
+      // Pretvori Set u niz
+      let pickersArray = Array.from(selectedPickersCache);
+
+      // Prikazujemo indikator učitavanja na dugmetu
+      let btn = event.target;
+      let originalText = btn.innerText;
+      btn.innerText = "Čuvanje u toku...";
+      btn.disabled = true;
+
       fetch(WEB_APP_URL, {
         method: "POST",
         body: JSON.stringify({ 
-          action: "savePickerToGroup", 
-          data: { pickerNum: pickerNum, groupNum: targetGroupNum, leaderName: leaderName } 
+          action: "saveBatchPickersToGroup", 
+          data: { pickers: pickersArray, groupNum: targetGroupNum, leaderName: leaderName } 
         })
       })
       .then(res => res.json())
       .then(res => {
         if (res.success) {
-          loadWindow1(); // Osveži prozor da berač nestane iz slobodnih i pojavi se u grupi
+          loadWindow1(); // Osveži prozor
           loadGlobalStats(); 
         } else {
-          alert(res.error || "Greška pri dodeli berača");
+          alert(res.error || "Greška pri čuvanju berača");
+          btn.innerText = originalText;
+          btn.disabled = false;
         }
+      })
+      .catch(err => {
+        alert("Serverska greška: " + err.message);
+        btn.innerText = originalText;
+        btn.disabled = false;
       });
     }
 
-    // Brisanje berača jednim klikom sa spiska grupe (bez potvrde)
     function quickDeletePicker(pickerNumber) {
       fetch(WEB_APP_URL, {
         method: "POST",
