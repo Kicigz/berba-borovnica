@@ -1,4 +1,181 @@
-<div id="loginScreen">
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Kontrole Berbe Borovnica</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 10px; font-size: 16px; box-sizing: border-box; }
+    
+    #loginScreen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #2c3e50; z-index: 9999; display: flex;
+      justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;
+    }
+    .login-box {
+      background: white; padding: 20px; border-radius: 14px;
+      width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .login-box h2 { margin-top: 0; color: #2c3e50; font-size: 20px; }
+    #pinDisplay {
+      font-size: 28px; font-weight: bold; letter-spacing: 6px;
+      background: #f1f2f6; padding: 10px; border-radius: 8px; margin-bottom: 15px;
+      border: 2px solid #bdc3c7; height: 36px; line-height: 36px; color: #333;
+    }
+    .numpad-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;
+    }
+    .num-btn {
+      background: #34495e; color: white; border: none; font-size: 22px; font-weight: bold;
+      padding: 14px; border-radius: 8px; cursor: pointer; transition: background 0.1s;
+    }
+    .num-btn:hover { background: #415b76; }
+    .num-btn.enter { background: #27ae60; grid-column: span 3; }
+    .num-btn.enter:hover { background: #219653; }
+    .num-btn.clear { background: #e74c3c; }
+
+    #setupModal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;
+    }
+    .setup-card { background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 12px; text-align: left; }
+    .setup-card h3 { margin-top: 0; color: #2c3e50; }
+    .setup-card label { display: block; margin-top: 10px; font-size: 14px; font-weight: bold; color: #333; }
+    .setup-card input { width: 100%; padding: 10px; font-size: 16px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+
+    #mainApp { display: none; }
+    
+    .top-bar {
+      background: #2c3e50; color: white; border-radius: 10px; padding: 10px 14px;
+      margin: 0 auto 12px auto; max-width: 960px; display: flex;
+      justify-content: space-between; align-items: center; font-size: 14px; font-weight: bold;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15); flex-wrap: wrap; gap: 8px;
+    }
+    .top-bar span { color: #f39c12; }
+
+    .main-container { display: flex; flex-direction: column; gap: 12px; max-width: 960px; margin: 0 auto; }
+    @media (min-width: 768px) {
+      .main-container { flex-direction: row; }
+    }
+    .panel {
+      flex: 1; background: white; padding: 14px; border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; position: relative;
+    }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 12px; }
+    h3 { margin: 0; color: #333; font-size: 18px; }
+
+    .info-content { font-size: 15px; line-height: 1.6; text-align: left; background: #f8f9fa; padding: 12px; border-radius: 10px; border: 1px solid #e9ecef; }
+    .highlight-picker { font-size: 22px; color: #c0392b; font-weight: bold; }
+    .highlight-total { font-size: 17px; color: #27ae60; font-weight: bold; }
+    .rank-badge { font-size: 14px; color: #2980b9; font-weight: bold; background: #eaf2f8; padding: 4px 8px; border-radius: 6px; display: inline-block; }
+
+    .weight-box { background: #34495e; color: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
+    .weight-box .label { font-size: 13px; text-transform: uppercase; color: #bdc3c7; letter-spacing: 1px; }
+    .weight-box .value { font-size: 42px; font-weight: bold; margin-top: 4px; }
+
+    .split-bottom-boxes { display: flex; gap: 8px; margin-bottom: 8px; }
+    .sub-box { flex: 1; padding: 10px; border-radius: 10px; text-align: center; color: white; }
+    .box-input-weight { background: #2980b9; }
+    .box-kalo { background: #e74c3c; }
+    .sub-box .label { font-size: 11px; text-transform: uppercase; opacity: 0.9; }
+    .sub-box .value { font-size: 22px; font-weight: bold; margin-top: 4px; }
+
+    .inline-prompt-box {
+      background: #fff; border: 2px dashed #2980b9; padding: 10px; border-radius: 8px;
+      margin-top: 8px; text-align: center; display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .btn { display: block; width: 100%; padding: 12px; font-size: 15px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; text-align: center; box-sizing: border-box; }
+    .btn-tare { background-color: #e67e22; padding: 8px 12px; font-size: 13px; width: auto; margin: 0; }
+    
+    .bottom-status-container { display: flex; flex-direction: column; gap: 10px; max-width: 960px; margin: 12px auto 0 auto; }
+    @media (min-width: 600px) {
+      .bottom-status-container { flex-direction: row; }
+    }
+    #status { flex: 1; font-size: 13px; font-weight: bold; background: #fadbd8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .debug-box { flex: 1; font-family: monospace; font-size: 11px; background: #1e1e1e; color: #00ff00; padding: 10px; border-radius: 8px; display: flex; align-items: center; overflow: hidden; white-space: nowrap; }
+    .btn-menu-nav { flex: 1; background-color: #8e44ad; color: white; border: none; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; padding: 12px; }
+
+    .leader-dashboard { max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+    .leader-card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border-top: 5px solid #2980b9; }
+    .leader-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+    .leader-card h3 { color: #2c3e50; margin-top: 0; font-size: 17px; }
+    .leader-card p { color: #7f8c8d; font-size: 13px; margin-bottom: 0; }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box; }
+    .modal-card { background: white; width: 100%; max-width: 900px; height: 92vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .modal-header { background: #2c3e50; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 12px; overflow-y: auto; flex: 1; background: #f8f9fa; }
+    
+    .section-card { background: white; padding: 12px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .section-card h4 { margin-top: 0; color: #2c3e50; font-size: 15px; border-bottom: 2px solid #f1f2f6; padding-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .form-group-col { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 100px; }
+    .form-group-col label { font-size: 11px; font-weight: bold; color: #34495e; text-transform: uppercase; }
+    .form-group-col input, .form-group-col select { padding: 10px; font-size: 15px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; width: 100%; }
+    .form-row { display: flex; gap: 8px; margin-top: 8px; align-items: flex-end; flex-wrap: wrap; }
+    
+    .pickers-grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 4px; margin-top: 10px; max-height: 280px; overflow-y: auto; padding: 4px; }
+    .picker-box-item {
+      background-color: #e74c3c; color: white; border-radius: 5px; padding: 2px 1px; text-align: center;
+      cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.15); transition: transform 0.1s; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 38px;
+    }
+    .picker-box-item:hover { transform: scale(1.05); }
+    .picker-box-item.selected { background-color: #27ae60; border: 2px solid #ffeaa7; }
+    .picker-box-label { font-size: 7px; font-weight: bold; background: rgba(0,0,0,0.2); width: 100%; border-radius: 2px; margin-bottom: 1px; padding: 1px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .picker-box-num { font-size: 13px; font-weight: bold; }
+
+    .picker-chip { background: #eaf2f8; color: #2980b9; border: 2px solid #b9d7ea; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; user-select: none; }
+    .picker-chip:hover { background: #d4e6f1; }
+    .picker-chip.to-delete { background: #fadbd8; color: #c0392b; border-color: #e74c3c; text-decoration: line-through; }
+
+    .checkbox-group { display: grid; grid-template-columns: repeat(1, 1fr); gap: 6px; margin-top: 8px; background: #fdfefe; padding: 8px; border-radius: 8px; border: 1px solid #e1e8ed; }
+    @media (min-width: 500px) { .checkbox-group { grid-template-columns: repeat(2, 1fr); } }
+    .checkbox-group label { font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; color: #34495e; }
+    .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+    .tab-header { display: flex; gap: 6px; margin-bottom: 10px; border-bottom: 2px solid #e1e8ed; padding-bottom: 6px; overflow-x: auto; }
+    .tab-btn { background: #bdc3c7; color: #2c3e50; border: none; padding: 8px 12px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+    .tab-btn.active { background: #2980b9; color: white; }
+    .mobile-card-item { background: white; border: 1px solid #dcdde1; border-radius: 8px; padding: 12px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 6px; }
+    .mobile-card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #2c3e50; font-size: 15px; }
+    .mobile-card-actions { display: flex; gap: 8px; margin-top: 6px; justify-content: flex-end; border-top: 1px solid #f1f2f6; padding-top: 8px; }
+    .btn-action { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; color: white; }
+    .btn-del { background: #e74c3c; }
+    .btn-edit { background: #f39c12; }
+    .group-section { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd; }
+    .group-section h5 { margin: 0 0 6px 0; color: #2c3e50; font-size: 14px; border-bottom: 1px dashed #eee; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+    .picker-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    
+    .map-container { display: flex; flex-direction: column; gap: 10px; }
+    .field-box-card { background: white; padding: 12px; border-radius: 8px; border: 1px solid #dcdde1; position: relative; }
+    .rows-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .map-square {
+      width: 48px; height: 48px; border-radius: 8px; display: flex;
+      flex-direction: column; justify-content: center; align-items: center; font-weight: bold; font-size: 13px;
+      cursor: pointer; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.15); transition: transform 0.1s;
+    }
+    .map-square:hover { transform: scale(1.05); }
+    .sq-purple { background-color: #8e44ad; border: 2px solid #6c3483; }
+    .sq-green { background-color: #27ae60; border: 2px solid #1e8449; }
+    
+    .fields-detail-container {
+      background: #f8f9fa; border: 1px dashed #bdc3c7; border-radius: 6px; padding: 10px; margin-top: 8px;
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    }
+    .field-sub-square {
+      width: 36px; height: 36px; border-radius: 6px; display: flex; justify-content: center; align-items: center;
+      font-size: 11px; font-weight: bold; color: white; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+    .report-group-card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #b2bec3; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; border-left: 8px solid #2980b9; transition: transform 0.1s; }
+    .report-group-card:hover { transform: translateY(-2px); border-color: #0984e3; }
+    .picker-detail-row { background: white; border: 1px solid #b2bec3; border-radius: 8px; padding: 12px; margin-bottom: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.06); border-left: 5px solid #0984e3; }
+  </style>
+</head>
+<body>
+
+  <div id="loginScreen">
     <div class="login-box">
       <h2>Unesite PIN (Brojčanik)</h2>
       <div id="pinDisplay">_</div>
@@ -1123,7 +1300,6 @@
       });
     }
 
-    // --- PROZOR 6: Obračun dana sa sabijenim redovima i Viber dugmetom ---
     function loadWindow6(selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -1156,7 +1332,6 @@
             }
           });
 
-          // Tekst za Viber poruku sa obračunom grupe
           let viberText = `*Obračun berbe - Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})*%0A` +
                           `Ukupno: ${totalGroupKg.toFixed(2)} kg%0A` +
                           `Isplata: ${totalGroupPay.toFixed(2)} RSD%0A` +
@@ -1185,7 +1360,6 @@
             let stats = pickerStats[p.pickerNum] || { kg: 0, crates: 0 };
             let pay = stats.kg * defaultPricePerKg;
             
-            // Sabijen red za berača bez skrolovanja
             html += `<div style="background:white; border:1px solid #dcdde1; border-radius:5px; padding:6px 10px; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
               <div><b>#${p.pickerNum}</b> <span style="font-size:11px; color:#666;">(${stats.crates}g)</span></div>
               <div style="text-align:right;">
