@@ -242,7 +242,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 3.5)</h3>
+            <h3>Vaga i Kontrola (ver 3.6)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -337,7 +337,7 @@
     let lastKeyTime = Date.now();
     let currentAdminTab = 'vaga';
     let cachedPickersGlobal = [];
-    let currentTotalPickersLimit = 150;
+    let currentTotalPickersLimit = parseInt(localStorage.getItem('savedTotalPickersLimit')) || 150;
 
     document.addEventListener('keydown', function(e) {
       if (document.getElementById('menuModal').style.display === 'flex' || 
@@ -606,7 +606,7 @@
           let groupData = groupedPickers[gNum];
           groupData.list.sort((a, b) => parseInt(a) - parseInt(b));
 
-          let deleteBtnHeader = groupData.list.length > 0 ? `<button class="btn-action btn-del" style="padding:4px 10px; font-size:12px;" onclick="saveBatchDeletePickers([${groupData.list.map(n => "'" + n + "'").join(',')}])">🗑️ Obriši celu grupu</button>` : '';
+          let deleteBtnHeader = `<div id="groupDeleteBtnArea_${gNum}" style="display:none;"></div>`;
 
           html += `<div class="group-section">
             <h5><span>Grupa ${gNum} (${groupData.leader}) - ${groupData.list.length} berača</span> ${deleteBtnHeader}</h5>
@@ -617,16 +617,10 @@
             html += `<span style="font-size:13px; color:#95a5a6;">Nema berača.</span>`;
           } else {
             groupData.list.forEach(num => {
-              html += `<div class="picker-chip" id="chip_${num}" onclick="toggleDeleteChip('${num}')">${num}</div>`;
+              html += `<div class="picker-chip" id="chip_${num}" onclick="toggleDeleteChip('${num}', '${gNum}')">${num}</div>`;
             });
           }
-          html += `</div>`;
-          
-          if (groupData.list.length > 0) {
-            html += `<button class="btn" style="background:#e74c3c; margin-top:10px; padding:10px; font-size:14px;" onclick="executeBatchDelete('${gNum}')">🗑️ Ukloni obeležene iz grupe</button>`;
-          }
-
-          html += `</div>`;
+          html += `</div></div>`;
         }
         html += `</div>`;
         document.getElementById('modalBodyContent').innerHTML = html;
@@ -638,6 +632,7 @@
     function applyTotalPickersCount() {
       let count = parseInt(document.getElementById('totalPickersCountInput').value) || 150;
       currentTotalPickersLimit = count;
+      localStorage.setItem('savedTotalPickersLimit', count);
       renderBoxesGrid(count, cachedPickersGlobal);
     }
 
@@ -756,25 +751,42 @@
       });
     }
 
-    let deletePickersCache = new Set();
+    let deletePickersCacheMap = {}; // groupNum -> Set of pickerNums
 
-    function toggleDeleteChip(pickerNum) {
+    function toggleDeleteChip(pickerNum, groupNum) {
+      if (!deletePickersCacheMap[groupNum]) {
+        deletePickersCacheMap[groupNum] = new Set();
+      }
+      let groupSet = deletePickersCacheMap[groupNum];
       let chipEl = document.getElementById('chip_' + pickerNum);
-      if (deletePickersCache.has(pickerNum)) {
-        deletePickersCache.delete(pickerNum);
+
+      if (groupSet.has(pickerNum)) {
+        groupSet.delete(pickerNum);
         chipEl.classList.remove('to-delete');
       } else {
-        deletePickersCache.add(pickerNum);
+        groupSet.add(pickerNum);
         chipEl.classList.add('to-delete');
+      }
+
+      let btnArea = document.getElementById('groupDeleteBtnArea_' + groupNum);
+      if (btnArea) {
+        if (groupSet.size > 0) {
+          btnArea.style.display = 'block';
+          btnArea.innerHTML = `<button class="btn-action btn-del" style="padding:4px 10px; font-size:12px;" onclick="executeBatchDelete('${groupNum}')">🗑️ Ukloni obeležene (${groupSet.size})</button>`;
+        } else {
+          btnArea.style.display = 'none';
+          btnArea.innerHTML = '';
+        }
       }
     }
 
     function executeBatchDelete(groupNum) {
-      if (deletePickersCache.size === 0) {
+      let groupSet = deletePickersCacheMap[groupNum];
+      if (!groupSet || groupSet.size === 0) {
         alert("Niste izabrali nijednog berača za brisanje!");
         return;
       }
-      saveBatchDeletePickers(Array.from(deletePickersCache));
+      saveBatchDeletePickers(Array.from(groupSet));
     }
 
     function saveBatchDeletePickers(pickersArray) {
@@ -787,7 +799,7 @@
       .then(res => res.json())
       .then(res => {
         if (res.success) {
-          deletePickersCache.clear();
+          deletePickersCacheMap = {};
           loadWindow1();
           loadGlobalStats();
         } else {
@@ -1012,7 +1024,7 @@
             <div style="font-size:15px; color:#333; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
             <div style="display:flex; justify-content:space-between; font-size:14px; border-top:2px solid #dfe6e9; padding-top:8px; color:#2c3e50;">
               <span>👥 Berača: <b>${groupPickers.length}</b></span>
-              <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+              <span style="color:#27ae60; font-weight:bold;">⚖️ Prebrano: ${totalGroupKg.toFixed(2)} kg</span>
             </div>
             <div style="font-size:13px; color:#e74c3c; margin-top:4px; font-weight:bold;">Kalo: ${totalGroupKalo.toFixed(2)} kg</div>
           </div>`;
@@ -1108,13 +1120,19 @@
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h4 style="margin:0; display:flex; align-items:center; gap:8px;">
               🌱 <span>${fieldName}</span>
-              ${isAdminMode ? `<button class="btn-action btn-edit" style="padding:4px 8px; font-size:12px;" onclick="editFieldName(${fIdx})">✏️</button>` : ''}
+              ${isAdminMode ? `<button class="btn-action btn-edit" style="padding:4px 8px; font-size:12px;" onclick="editFieldName(${fIdx})">✏️</button><button class="btn-action btn-del" style="padding:4px 8px; font-size:12px;" onclick="deleteField(${fIdx})">🗑️ Obriši njivu</button>` : ''}
             </h4>
-            <div style="display:flex; gap:8px;">
-              ${isAdminMode ? `<button class="btn-action btn-edit" style="background:#2980b9;" onclick="addNewRowToField(${fIdx})">➕ Dodaj red</button><button class="btn-action btn-del" onclick="deleteField(${fIdx})">Obriši njivu</button>` : ''}
-            </div>
-          </div>
-          <div class="rows-grid">`;
+            <div style="display:flex; gap:8px;"></div>
+          </div>`;
+
+        if (isAdminMode) {
+          html += `<div style="display:flex; gap:8px; margin-bottom:10px;">
+            <button class="btn-action btn-edit" style="background:#2980b9;" onclick="addNewRowToField(${fIdx})">➕ Dodaj red</button>
+            <button class="btn-action btn-del" onclick="deleteLastRowFromField(${fIdx})">🗑️ Obriši red</button>
+          </div>`;
+        }
+
+        html += `<div class="rows-grid">`;
 
         if (!field.rows || field.rows.length === 0) {
           html += `<span style="font-size:13px; color:#95a5a6;">Nema redova.</span>`;
@@ -1122,12 +1140,10 @@
           field.rows.forEach((row, rIdx) => {
             let rowBgClass = (isAdminMode) ? 'sq-purple' : (row.status === 'green' ? 'sq-green' : 'sq-purple');
             let clickAttr = `onclick="selectRowForPreview(${fIdx}, ${rIdx})" title="Klikni da prikažeš polja reda"`;
-            let rowDeleteBtn = isAdminMode ? `<button class="btn-action btn-del" style="padding:2px 6px; font-size:10px; margin-top:3px;" onclick="event.stopPropagation(); deleteRowFromField(${fIdx}, ${rIdx})">- Obriši</button>` : '';
 
             html += `<div class="map-square ${rowBgClass}" ${clickAttr}>
               <span>${row.rowNum}</span>
               <span style="font-size:10px; opacity:0.8;">${(row.fieldStatusList ? row.fieldStatusList.length : row.fieldsCount || 0)}p</span>
-              ${rowDeleteBtn}
             </div>`;
           });
         }
@@ -1186,9 +1202,11 @@
       loadHarvestMap('admin');
     }
 
-    function deleteRowFromField(fIdx, rIdx) {
-      if (!confirm("Obrisati ovaj red?")) return;
-      plantationMap[fIdx].rows.splice(rIdx, 1);
+    function deleteLastRowFromField(fIdx) {
+      let field = plantationMap[fIdx];
+      if (!field.rows || field.rows.length === 0) { alert("Nema redova za brisanje!"); return; }
+      if (!confirm("Obrisati poslednji red?")) return;
+      field.rows.pop();
       selectedRowForPreview = null;
       loadHarvestMap('admin');
     }
@@ -1468,7 +1486,7 @@
           <h4>Unos podataka po danima</h4>
           <div class="form-row">
             <div class="form-group-col"><label>Datum</label><input type="date" id="hDate" value="${todayStr}" onchange="updateAutoPrebranaKg()"></div>
-            <div class="form-group-col"><label>Prebrana količina (kg) [Automatski]</label><input type="number" id="hPrebrana" step="0.01" value="0" style="background:#e9ecef; font-weight:bold;"></div>
+            <div class="form-group-col"><label>Prebrana količina (kg) [Automatski sa vage]</label><input type="number" id="hPrebrana" step="0.01" value="0" style="background:#e9ecef; font-weight:bold;"></div>
             <div class="form-group-col"><label>Otkupni list (kg) [Ručno]</label><input type="number" id="hOtkup" step="0.01" value="0"></div>
             <div class="form-group-col"><label>Cena otkupa (RSD) [Ručno]</label><input type="number" id="hCena" step="0.01" value="0"></div>
           </div>
