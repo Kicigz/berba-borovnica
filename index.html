@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistem Kontrole Berbe Borovnica</title>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 10px; font-size: 16px; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 10px; font-size: 18px; box-sizing: border-box; }
     
     #loginScreen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -14,24 +14,24 @@
       justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;
     }
     .login-box {
-      background: white; padding: 20px; border-radius: 14px;
-      width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      background: white; padding: 24px; border-radius: 14px;
+      width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
-    .login-box h2 { margin-top: 0; color: #2c3e50; font-size: 20px; }
+    .login-box h2 { margin-top: 0; color: #2c3e50; font-size: 22px; }
     #pinDisplay {
-      font-size: 28px; font-weight: bold; letter-spacing: 6px;
-      background: #f1f2f6; padding: 10px; border-radius: 8px; margin-bottom: 15px;
-      border: 2px solid #bdc3c7; height: 36px; line-height: 36px; color: #333;
+      font-size: 34px; font-weight: bold; letter-spacing: 8px;
+      background: #f1f2f6; padding: 12px; border-radius: 8px; margin-bottom: 15px;
+      border: 2px solid #bdc3c7; height: 44px; line-height: 44px; color: #333;
     }
     .numpad-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;
     }
     .num-btn {
-      background: #34495e; color: white; border: none; font-size: 22px; font-weight: bold;
-      padding: 14px; border-radius: 8px; cursor: pointer; transition: background 0.1s;
+      background: #34495e; color: white; border: none; font-size: 26px; font-weight: bold;
+      padding: 16px; border-radius: 8px; cursor: pointer; transition: background 0.1s;
     }
     .num-btn:hover { background: #415b76; }
-    .num-btn.enter { background: #27ae60; grid-column: span 3; }
+    .num-btn.enter { background: #27ae60; grid-column: span 3; padding: 18px; font-size: 24px; }
     .num-btn.enter:hover { background: #219653; }
     .num-btn.clear { background: #e74c3c; }
 
@@ -41,136 +41,139 @@
     }
     .setup-card { background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 12px; text-align: left; }
     .setup-card h3 { margin-top: 0; color: #2c3e50; }
-    .setup-card label { display: block; margin-top: 10px; font-size: 14px; font-weight: bold; color: #333; }
-    .setup-card input { width: 100%; padding: 10px; font-size: 16px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    .setup-card label { display: block; margin-top: 10px; font-size: 15px; font-weight: bold; color: #333; }
+    .setup-card input { width: 100%; padding: 12px; font-size: 18px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
 
     #mainApp { display: none; }
     
     .top-bar {
-      background: #2c3e50; color: white; border-radius: 10px; padding: 10px 14px;
-      margin: 0 auto 12px auto; max-width: 960px; display: flex;
-      justify-content: space-between; align-items: center; font-size: 14px; font-weight: bold;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.15); flex-wrap: wrap; gap: 8px;
+      background: #2c3e50; color: white; border-radius: 10px; padding: 12px 16px;
+      margin: 0 auto 15px auto; max-width: 1024px; display: flex;
+      justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15); flex-wrap: wrap; gap: 10px;
     }
     .top-bar span { color: #f39c12; }
 
-    .main-container { display: flex; flex-direction: column; gap: 12px; max-width: 960px; margin: 0 auto; }
+    .main-container { display: flex; flex-direction: column; gap: 15px; max-width: 1024px; margin: 0 auto; }
     @media (min-width: 768px) {
       .main-container { flex-direction: row; }
     }
     .panel {
-      flex: 1; background: white; padding: 14px; border-radius: 12px;
+      flex: 1; background: white; padding: 18px; border-radius: 14px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; position: relative;
     }
-    .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 12px; }
-    h3 { margin: 0; color: #333; font-size: 18px; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+    h3 { margin: 0; color: #333; font-size: 20px; }
 
-    .info-content { font-size: 15px; line-height: 1.6; text-align: left; background: #f8f9fa; padding: 12px; border-radius: 10px; border: 1px solid #e9ecef; }
-    .highlight-picker { font-size: 22px; color: #c0392b; font-weight: bold; }
-    .highlight-total { font-size: 17px; color: #27ae60; font-weight: bold; }
-    .rank-badge { font-size: 14px; color: #2980b9; font-weight: bold; background: #eaf2f8; padding: 4px 8px; border-radius: 6px; display: inline-block; }
+    .info-content { font-size: 18px; line-height: 1.8; text-align: left; background: #f8f9fa; padding: 16px; border-radius: 12px; border: 1px solid #e9ecef; }
+    .highlight-picker { font-size: 28px; color: #c0392b; font-weight: bold; }
+    .highlight-total { font-size: 22px; color: #27ae60; font-weight: bold; }
+    .rank-badge { font-size: 16px; color: #2980b9; font-weight: bold; background: #eaf2f8; padding: 6px 10px; border-radius: 6px; display: inline-block; margin-top: 4px; }
 
-    .weight-box { background: #34495e; color: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
-    .weight-box .label { font-size: 13px; text-transform: uppercase; color: #bdc3c7; letter-spacing: 1px; }
-    .weight-box .value { font-size: 42px; font-weight: bold; margin-top: 4px; }
+    .weight-box { background: #34495e; color: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; text-align: center; }
+    .weight-box .label { font-size: 15px; text-transform: uppercase; color: #bdc3c7; letter-spacing: 1px; }
+    .weight-box .value { font-size: 52px; font-weight: bold; margin-top: 6px; }
 
-    .split-bottom-boxes { display: flex; gap: 8px; margin-bottom: 8px; }
-    .sub-box { flex: 1; padding: 10px; border-radius: 10px; text-align: center; color: white; }
+    .split-bottom-boxes { display: flex; gap: 10px; margin-bottom: 12px; }
+    .sub-box { flex: 1; padding: 12px; border-radius: 12px; text-align: center; color: white; }
     .box-input-weight { background: #2980b9; }
     .box-kalo { background: #e74c3c; }
-    .sub-box .label { font-size: 11px; text-transform: uppercase; opacity: 0.9; }
-    .sub-box .value { font-size: 22px; font-weight: bold; margin-top: 4px; }
+    .sub-box .label { font-size: 13px; text-transform: uppercase; opacity: 0.9; }
+    .sub-box .value { font-size: 26px; font-weight: bold; margin-top: 6px; }
 
     .inline-prompt-box {
-      background: #fff; border: 2px dashed #2980b9; padding: 10px; border-radius: 8px;
-      margin-top: 8px; text-align: center; display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background: #fff; border: 3px dashed #2980b9; padding: 16px; border-radius: 12px;
+      margin-top: 12px; text-align: center; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    .btn-massive {
+      display: block; width: 100%; padding: 20px; font-size: 20px; font-weight: bold; color: white; border: none; border-radius: 10px; cursor: pointer; text-align: center; box-sizing: border-box;
     }
 
-    .btn { display: block; width: 100%; padding: 12px; font-size: 15px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; text-align: center; box-sizing: border-box; }
-    .btn-tare { background-color: #e67e22; padding: 8px 12px; font-size: 13px; width: auto; margin: 0; }
+    .btn { display: block; width: 100%; padding: 14px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; text-align: center; box-sizing: border-box; }
+    .btn-tare { background-color: #e67e22; padding: 10px 16px; font-size: 15px; width: auto; margin: 0; }
     
-    .bottom-status-container { display: flex; flex-direction: column; gap: 10px; max-width: 960px; margin: 12px auto 0 auto; }
+    .bottom-status-container { display: flex; flex-direction: column; gap: 12px; max-width: 1024px; margin: 15px auto 0 auto; }
     @media (min-width: 600px) {
       .bottom-status-container { flex-direction: row; }
     }
-    #status { flex: 1; font-size: 13px; font-weight: bold; background: #fadbd8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-    .debug-box { flex: 1; font-family: monospace; font-size: 11px; background: #1e1e1e; color: #00ff00; padding: 10px; border-radius: 8px; display: flex; align-items: center; overflow: hidden; white-space: nowrap; }
-    .btn-menu-nav { flex: 1; background-color: #8e44ad; color: white; border: none; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; padding: 12px; }
+    #status { flex: 1; font-size: 15px; font-weight: bold; background: #fadbd8; color: #c0392b; padding: 14px; border-radius: 10px; text-align: center; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .debug-box { flex: 1; font-family: monospace; font-size: 13px; background: #1e1e1e; color: #00ff00; padding: 14px; border-radius: 10px; display: flex; align-items: center; overflow: hidden; white-space: nowrap; }
+    .btn-menu-nav { flex: 1; background-color: #8e44ad; color: white; border: none; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; padding: 14px; }
 
-    .leader-dashboard { max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
-    .leader-card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border-top: 5px solid #2980b9; }
+    .leader-dashboard { max-width: 1024px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+    .leader-card { background: white; padding: 20px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border-top: 6px solid #2980b9; }
     .leader-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
-    .leader-card h3 { color: #2c3e50; margin-top: 0; font-size: 17px; }
-    .leader-card p { color: #7f8c8d; font-size: 13px; margin-bottom: 0; }
+    .leader-card h3 { color: #2c3e50; margin-top: 0; font-size: 19px; }
+    .leader-card p { color: #7f8c8d; font-size: 15px; margin-bottom: 0; }
 
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box; }
-    .modal-card { background: white; width: 100%; max-width: 900px; height: 92vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-    .modal-header { background: #2c3e50; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
-    .modal-body { padding: 12px; overflow-y: auto; flex: 1; background: #f8f9fa; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 12px; box-sizing: border-box; }
+    .modal-card { background: white; width: 100%; max-width: 950px; height: 94vh; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .modal-header { background: #2c3e50; color: white; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 16px; overflow-y: auto; flex: 1; background: #f8f9fa; }
     
-    .section-card { background: white; padding: 12px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-    .section-card h4 { margin-top: 0; color: #2c3e50; font-size: 15px; border-bottom: 2px solid #f1f2f6; padding-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-    .form-group-col { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 100px; }
-    .form-group-col label { font-size: 11px; font-weight: bold; color: #34495e; text-transform: uppercase; }
-    .form-group-col input, .form-group-col select { padding: 10px; font-size: 15px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; width: 100%; }
-    .form-row { display: flex; gap: 8px; margin-top: 8px; align-items: flex-end; flex-wrap: wrap; }
+    .section-card { background: white; padding: 14px; border-radius: 12px; margin-bottom: 14px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .section-card h4 { margin-top: 0; color: #2c3e50; font-size: 17px; border-bottom: 2px solid #f1f2f6; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .form-group-col { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 120px; }
+    .form-group-col label { font-size: 13px; font-weight: bold; color: #34495e; text-transform: uppercase; }
+    .form-group-col input, .form-group-col select { padding: 12px; font-size: 17px; border: 1px solid #bdc3c7; border-radius: 8px; box-sizing: border-box; width: 100%; }
+    .form-row { display: flex; gap: 10px; margin-top: 10px; align-items: flex-end; flex-wrap: wrap; }
     
-    .pickers-grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 4px; margin-top: 10px; max-height: 280px; overflow-y: auto; padding: 4px; }
+    .pickers-grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 6px; margin-top: 12px; max-height: 300px; overflow-y: auto; padding: 6px; }
     .picker-box-item {
-      background-color: #e74c3c; color: white; border-radius: 5px; padding: 2px 1px; text-align: center;
-      cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.15); transition: transform 0.1s; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 38px;
+      background-color: #e74c3c; color: white; border-radius: 6px; padding: 4px 2px; text-align: center;
+      cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.15); transition: transform 0.1s; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 42px;
     }
     .picker-box-item:hover { transform: scale(1.05); }
     .picker-box-item.selected { background-color: #27ae60; border: 2px solid #ffeaa7; }
-    .picker-box-label { font-size: 7px; font-weight: bold; background: rgba(0,0,0,0.2); width: 100%; border-radius: 2px; margin-bottom: 1px; padding: 1px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .picker-box-num { font-size: 13px; font-weight: bold; }
+    .picker-box-label { font-size: 8px; font-weight: bold; background: rgba(0,0,0,0.2); width: 100%; border-radius: 3px; margin-bottom: 2px; padding: 1px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .picker-box-num { font-size: 15px; font-weight: bold; }
 
-    .picker-chip { background: #eaf2f8; color: #2980b9; border: 2px solid #b9d7ea; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; user-select: none; }
+    .picker-chip { background: #eaf2f8; color: #2980b9; border: 2px solid #b9d7ea; padding: 8px 12px; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; user-select: none; }
     .picker-chip:hover { background: #d4e6f1; }
     .picker-chip.to-delete { background: #fadbd8; color: #c0392b; border-color: #e74c3c; text-decoration: line-through; }
 
-    .checkbox-group { display: grid; grid-template-columns: repeat(1, 1fr); gap: 6px; margin-top: 8px; background: #fdfefe; padding: 8px; border-radius: 8px; border: 1px solid #e1e8ed; }
+    .checkbox-group { display: grid; grid-template-columns: repeat(1, 1fr); gap: 8px; margin-top: 10px; background: #fdfefe; padding: 10px; border-radius: 10px; border: 1px solid #e1e8ed; }
     @media (min-width: 500px) { .checkbox-group { grid-template-columns: repeat(2, 1fr); } }
-    .checkbox-group label { font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; color: #34495e; }
-    .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
-    .tab-header { display: flex; gap: 6px; margin-bottom: 10px; border-bottom: 2px solid #e1e8ed; padding-bottom: 6px; overflow-x: auto; }
-    .tab-btn { background: #bdc3c7; color: #2c3e50; border: none; padding: 8px 12px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+    .checkbox-group label { font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; color: #34495e; }
+    .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+    .tab-header { display: flex; gap: 8px; margin-bottom: 12px; border-bottom: 2px solid #e1e8ed; padding-bottom: 8px; overflow-x: auto; }
+    .tab-btn { background: #bdc3c7; color: #2c3e50; border: none; padding: 10px 14px; font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; white-space: nowrap; }
     .tab-btn.active { background: #2980b9; color: white; }
-    .mobile-card-item { background: white; border: 1px solid #dcdde1; border-radius: 8px; padding: 12px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 6px; }
-    .mobile-card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #2c3e50; font-size: 15px; }
-    .mobile-card-actions { display: flex; gap: 8px; margin-top: 6px; justify-content: flex-end; border-top: 1px solid #f1f2f6; padding-top: 8px; }
-    .btn-action { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; color: white; }
+    .mobile-card-item { background: white; border: 1px solid #dcdde1; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 8px; }
+    .mobile-card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #2c3e50; font-size: 17px; }
+    .mobile-card-actions { display: flex; gap: 10px; margin-top: 8px; justify-content: flex-end; border-top: 1px solid #f1f2f6; padding-top: 10px; }
+    .btn-action { padding: 8px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; color: white; }
     .btn-del { background: #e74c3c; }
     .btn-edit { background: #f39c12; }
-    .group-section { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd; }
-    .group-section h5 { margin: 0 0 6px 0; color: #2c3e50; font-size: 14px; border-bottom: 1px dashed #eee; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
-    .picker-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .group-section { background: white; padding: 12px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #ddd; }
+    .group-section h5 { margin: 0 0 8px 0; color: #2c3e50; font-size: 16px; border-bottom: 1px dashed #eee; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .picker-grid { display: flex; flex-wrap: wrap; gap: 8px; }
     
-    .map-container { display: flex; flex-direction: column; gap: 10px; }
-    .field-box-card { background: white; padding: 12px; border-radius: 8px; border: 1px solid #dcdde1; position: relative; }
-    .rows-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .map-container { display: flex; flex-direction: column; gap: 12px; }
+    .field-box-card { background: white; padding: 14px; border-radius: 10px; border: 1px solid #dcdde1; position: relative; }
+    .rows-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
     .map-square {
-      width: 48px; height: 48px; border-radius: 8px; display: flex;
-      flex-direction: column; justify-content: center; align-items: center; font-weight: bold; font-size: 13px;
-      cursor: pointer; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.15); transition: transform 0.1s;
+      width: 52px; height: 52px; border-radius: 10px; display: flex;
+      flex-direction: column; justify-content: center; align-items: center; font-weight: bold; font-size: 15px;
+      cursor: pointer; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: transform 0.1s;
     }
     .map-square:hover { transform: scale(1.05); }
     .sq-purple { background-color: #8e44ad; border: 2px solid #6c3483; }
     .sq-green { background-color: #27ae60; border: 2px solid #1e8449; }
     
     .fields-detail-container {
-      background: #f8f9fa; border: 1px dashed #bdc3c7; border-radius: 6px; padding: 10px; margin-top: 8px;
-      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      background: #f8f9fa; border: 1px dashed #bdc3c7; border-radius: 8px; padding: 12px; margin-top: 10px;
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
     }
     .field-sub-square {
-      width: 36px; height: 36px; border-radius: 6px; display: flex; justify-content: center; align-items: center;
-      font-size: 11px; font-weight: bold; color: white; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      width: 40px; height: 40px; border-radius: 8px; display: flex; justify-content: center; align-items: center;
+      font-size: 13px; font-weight: bold; color: white; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     
-    .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-    .report-group-card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #b2bec3; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; border-left: 8px solid #2980b9; transition: transform 0.1s; }
+    .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+    .report-group-card { background: white; border-radius: 14px; padding: 18px; border: 1px solid #b2bec3; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; border-left: 8px solid #2980b9; transition: transform 0.1s; }
     .report-group-card:hover { transform: translateY(-2px); border-color: #0984e3; }
-    .picker-detail-row { background: white; border: 1px solid #b2bec3; border-radius: 8px; padding: 12px; margin-bottom: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.06); border-left: 5px solid #0984e3; }
+    .picker-detail-row { background: white; border: 1px solid #b2bec3; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.06); border-left: 6px solid #0984e3; }
   </style>
 </head>
 <body>
@@ -194,19 +197,19 @@
         <button class="num-btn" onclick="backspacePin()">⌫</button>
         <button class="num-btn enter" onclick="submitLogin()">OK / ENTER</button>
       </div>
-      <div style="font-size: 12px; color: #7f8c8d;">Prvo pokretanje: unesite <b>1234</b></div>
+      <div style="font-size: 13px; color: #7f8c8d;">Prvo pokretanje: unesite <b>1234</b></div>
     </div>
   </div>
 
   <div id="setupModal">
     <div class="setup-card">
       <h3>Inicijalno podešavanje Admina</h3>
-      <p style="font-size: 13px; color: #666;">Unesite svoje podatke i novu četvorocifrenu šifru.</p>
+      <p style="font-size: 14px; color: #666;">Unesite svoje podatke i novu četvorocifrenu šifru.</p>
       <label>Vaše Ime:</label>
       <input type="text" id="setupAdminName" placeholder="npr. Aleksandar">
       <label>Nova administrativna šifra (PIN):</label>
       <input type="password" id="setupAdminPin" placeholder="npr. 5678" maxlength="10">
-      <button class="btn" style="background:#27ae60; margin-top:15px;" onclick="saveFirstAdmin()">SAČUVAJ I NASTAVI</button>
+      <button class="btn" style="background:#27ae60; margin-top:15px; padding:14px; font-size:18px;" onclick="saveFirstAdmin()">SAČUVAJ I NASTAVI</button>
     </div>
   </div>
 
@@ -216,9 +219,9 @@
       <div>👤 <span id="hdrUser" style="color: #2ecc71;">-</span></div>
       <div>👥 Berača: <span id="hdrTotalPickers" style="color: #3498db;">0</span></div>
       <div>⚖️ Dan: <span id="hdrTotalKg">0.00</span> kg</div>
-      <div style="display: flex; gap: 6px;">
-        <button class="btn" style="background:#2980b9; padding:4px 8px; font-size:12px;" onclick="toggleFullScreen()">🖥️ Full</button>
-        <button class="btn" style="background:#e74c3c; padding:4px 8px; font-size:12px;" onclick="logout()">Izlaz</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn" style="background:#2980b9; padding:6px 12px; font-size:14px;" onclick="toggleFullScreen()">🖥️ Full</button>
+        <button class="btn" style="background:#e74c3c; padding:6px 12px; font-size:14px;" onclick="logout()">Izlaz</button>
       </div>
     </div>
 
@@ -226,7 +229,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 2.0)</h3>
+            <h3>Vaga i Kontrola (ver 3.0)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -244,22 +247,22 @@
             </div>
           </div>
 
+          <!-- MASIVNA DUGMAD ZA POTVRDU NA VAGI -->
           <div id="inlinePromptBox1" class="inline-prompt-box">
-            <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">1. Potvrda ubrane količine (Berač #<span id="promptPickerNum1" style="color:#c0392b;">-</span> | Gajbica: <span id="promptCrateNum1" style="color:#d35400;">-</span>)</div>
-            <div style="font-size:12px; color:#555; margin-bottom:6px;">Uživo: <b id="promptWeightVal1">0.00 kg</b></div>
-            <div style="display:flex; gap:6px;">
-              <button class="btn" style="background:#e74c3c; padding:6px; font-size:12px;" onclick="cancelWorkflow()">Otkaži</button>
-              <button class="btn" style="background:#27ae60; padding:6px; font-size:12px;" onclick="confirmInputWeight()">Potvrdi ubrano</button>
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">1. Potvrda ubrane količine (Berač #<span id="promptPickerNum1" style="color:#c0392b;">-</span> | Gajbica: <span id="promptCrateNum1" style="color:#d35400;">-</span>)</div>
+            <div style="font-size:14px; color:#555; margin-bottom:10px;">Uživo: <b id="promptWeightVal1" style="font-size:18px;">0.00 kg</b></div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn-massive" style="background:#e74c3c; flex:1;" onclick="cancelWorkflow()">Otkaži</button>
+              <button class="btn-massive" style="background:#27ae60; flex:2;" onclick="confirmInputWeight()">Potvrdi ubrano ✓</button>
             </div>
           </div>
 
           <div id="inlinePromptBox2" class="inline-prompt-box">
-            <div style="font-size:13px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">2. Potvrda prebranog i kala</div>
-            <div style="font-size:12px; color:#555; margin-bottom:4px;">Prebrana uživo: <b id="promptPrebranaVal">0.00 kg</b></div>
-            <div style="font-size:12px; color:#555; margin-bottom:6px;">Kalo uživo: <b id="promptKaloVal">0.00 kg</b></div>
-            <div style="display:flex; gap:6px;">
-              <button class="btn" style="background:#e74c3c; padding:6px; font-size:12px;" onclick="cancelWorkflow()">Otkaži</button>
-              <button class="btn" style="background:#27ae60; padding:6px; font-size:12px;" onclick="confirmFinalSave()">Sačuvaj merenje</button>
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; margin-bottom:6px;">2. Potvrda prebranog i kala</div>
+            <div style="font-size:14px; color:#555; margin-bottom:6px;">Prebrana: <b id="promptPrebranaVal" style="font-size:16px;">0.00 kg</b> | Kalo: <b id="promptKaloVal" style="font-size:16px;">0.00 kg</b></div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn-massive" style="background:#e74c3c; flex:1;" onclick="cancelWorkflow()">Otkaži</button>
+              <button class="btn-massive" style="background:#27ae60; flex:2;" onclick="confirmFinalSave()">Sačuvaj merenje ✓</button>
             </div>
           </div>
 
@@ -273,16 +276,17 @@
           <div><b>Broj gajbice:</b> <span id="valCrate" style="color: #d35400;">-</span></div>
           <div><b>Vođa grupe:</b> <span id="valLeader">-</span></div>
           <div><b>Deo zasada:</b> <span id="valSector">-</span></div>
-          <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
+          <hr style="border: 0; border-top: 1px solid #ddd; margin: 10px 0;">
           <div><b>Danas ubrao:</b> <span id="valPickerTotalKg" class="highlight-total">0.00 kg</span></div>
-          <div><b>Plasman:</b><br><div id="valPickerRank" class="rank-badge">-</div></div>
+          <div><b>Danas kalo:</b> <span id="valPickerTotalKalo" style="color: #e74c3c; font-weight: bold; font-size: 20px;">0.00 kg</span></div>
+          <div><b>Plasman (Ukupno kg i kalo):</b><br><div id="valPickerRank" class="rank-badge">-</div></div>
         </div>
-        <div id="noPickerMsg" style="color: #7f8c8d; text-align: center; margin-top: 12px; font-size: 14px;">Skenirajte QR kod berača.</div>
+        <div id="noPickerMsg" style="color: #7f8c8d; text-align: center; margin-top: 15px; font-size: 16px;">Skenirajte QR kod berača.</div>
       </div>
     </div>
 
     <div id="leaderDashboardSection" style="display: none; padding: 10px 0;">
-      <h2 style="text-align: center; color: #2c3e50; margin-bottom: 15px; font-size: 20px;">Kontrolna Tabla Grupovođe</h2>
+      <h2 style="text-align: center; color: #2c3e50; margin-bottom: 15px; font-size: 22px;">Kontrolna Tabla Grupovođe</h2>
       <div class="leader-dashboard" id="leaderCardsContainer"></div>
     </div>
 
@@ -296,8 +300,8 @@
   <div id="menuModal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
-        <h2 id="modalTitle" style="font-size: 18px; margin: 0;">Administracija</h2>
-        <button class="btn" style="background:#e74c3c; width:auto; padding:4px 10px; font-size: 14px;" onclick="closeModal()">Zatvori ✕</button>
+        <h2 id="modalTitle" style="font-size: 20px; margin: 0;">Administracija</h2>
+        <button class="btn" style="background:#e74c3c; width:auto; padding:6px 14px; font-size: 15px;" onclick="closeModal()">Zatvori ✕</button>
       </div>
       <div class="modal-body" id="modalBodyContent"></div>
     </div>
@@ -437,6 +441,7 @@
           document.getElementById('valLeader').innerText = res.leaderName || "-";
           document.getElementById('valSector').innerText = "Zasad 1";
           document.getElementById('valPickerTotalKg').innerText = (res.pickerTotalKg || finalPrebranaKg).toFixed(2) + " kg";
+          document.getElementById('valPickerTotalKalo').innerText = (res.pickerTotalKalo || finalKaloKg).toFixed(2) + " kg";
           document.getElementById('valPickerRank').innerText = res.rankText || "Uspešno sačuvano";
           
           loadGlobalStats();
@@ -471,23 +476,24 @@
     }
 
     function openMenuModal() {
-      let html = `<h3 style="margin-bottom:12px; font-size:16px;">Izaberite opciju administracije:</h3>
-        <div style="display: flex; flex-direction: column; gap: 8px;">`;
+      let html = `<h3 style="margin-bottom:14px; font-size:18px;">Izaberite opciju administracije:</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;">`;
 
       const menuItems = [
         { id: "1", label: "1. Dodaj berača u grupu" },
         { id: "2", label: "2. Radnici na vagi i Grupovođe" },
-        { id: "3", label: "3. Izveštaj o branju" },
+        { id: "3", label: "3. Izveštaj o branju (sa kalom)" },
         { id: "4", label: "4. Zasad i mapa" },
         { id: "5", label: "5. Izmene merenja na vagi" },
-        { id: "6", label: "6. Obračun dana" }
+        { id: "6", label: "6. Obračun dana (sa cenom)" },
+        { id: "7", label: "7. Obračun za hladnjaču" }
       ];
 
       menuItems.forEach(item => {
         let hasAccess = checkUserAccess(item.id);
         let bgStyle = hasAccess ? "#2980b9" : "#bdc3c7";
         let clickAction = hasAccess ? `openWindow('${item.id}')` : `alert('Nemate dozvolu!')`;
-        html += `<button class="btn" style="background:${bgStyle}; padding: 12px; text-align:left;" onclick="${clickAction}">${item.label}</button>`;
+        html += `<button class="btn" style="background:${bgStyle}; padding: 14px; text-align:left; font-size:16px;" onclick="${clickAction}">${item.label}</button>`;
       });
 
       html += `</div>`;
@@ -523,6 +529,7 @@
       if (num === '4') { loadWindow4SubMenu(); return; }
       if (num === '5') { loadWindow5(); return; }
       if (num === '6') { loadWindow6(); return; }
+      if (num === '7') { loadWindow7(); return; }
     }
 
     let selectedPickersCache = new Set();
@@ -547,23 +554,23 @@
         if (!isGroupLeader) {
           let options = `<option value="">-- Izaberi grupu --</option>`;
           groups.forEach(g => { options += `<option value="${g.extra}" data-name="${g.name}">Grupa ${g.extra} (${g.name})</option>`; });
-          groupSelectHtml = `<div class="form-group-col" style="flex:2;"><label>Grupa</label><select id="pickerGroupSelect" style="flex:1; padding:10px; border-radius:6px; border:1px solid #bdc3c7; font-size:15px;">${options}</select></div>`;
+          groupSelectHtml = `<div class="form-group-col" style="flex:2;"><label>Grupa</label><select id="pickerGroupSelect" style="flex:1; padding:12px; border-radius:8px; border:1px solid #bdc3c7; font-size:16px;">${options}</select></div>`;
         } else {
           let myGroupObj = groups.find(g => String(g.extra) === String(currentLeaderGroupNum));
           let myGroupName = myGroupObj ? myGroupObj.name : 'Moja Grupa';
           groupSelectHtml = `<div class="form-group-col"><label>Grupa</label><input type="text" value="Grupa ${currentLeaderGroupNum} (${myGroupName})" disabled style="background:#e9ecef; font-weight:bold;"></div>`;
         }
 
-        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="margin:0; font-size:16px;">➕ Dodavanje berača (${isGroupLeader ? 'Grupovođa: Grupa ' + currentLeaderGroupNum : 'Admin / Vaga'})</h3>
-          <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin:0; font-size:18px;">➕ Dodavanje berača</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
         </div>
         
         <div class="section-card">
           <h4>Unesite ukupan broj berača za danas</h4>
           <div class="form-row">
             <div class="form-group-col"><label>Ukupno berača</label><input type="number" id="totalPickersCountInput" min="1" max="400" value="${currentTotalPickersLimit}"></div>
-            <div style="flex:0 0 auto;"><button class="btn" style="background:#2980b9; padding:10px 18px;" onclick="applyTotalPickersCount()">OK</button></div>
+            <div style="flex:0 0 auto;"><button class="btn" style="background:#2980b9; padding:12px 20px;" onclick="applyTotalPickersCount()">OK</button></div>
             ${groupSelectHtml}
           </div>
         </div>
@@ -587,15 +594,15 @@
           let groupData = groupedPickers[gNum];
           groupData.list.sort((a, b) => parseInt(a) - parseInt(b));
 
-          let deleteBtnHeader = groupData.list.length > 0 ? `<button class="btn-action btn-del" style="padding:2px 8px; font-size:11px;" onclick="saveBatchDeletePickers([${groupData.list.map(n => "'" + n + "'").join(',')}])">🗑️ Obriši celu grupu</button>` : '';
+          let deleteBtnHeader = groupData.list.length > 0 ? `<button class="btn-action btn-del" style="padding:4px 10px; font-size:12px;" onclick="saveBatchDeletePickers([${groupData.list.map(n => "'" + n + "'").join(',')}])">🗑️ Obriši celu grupu</button>` : '';
 
           html += `<div class="group-section">
             <h5><span>Grupa ${gNum} (${groupData.leader}) - ${groupData.list.length} berača</span> ${deleteBtnHeader}</h5>
-            <p style="font-size:11px; color:#666; margin:2px 0 6px 0;">Klikni na berača da ga obeležiš za brisanje:</p>
+            <p style="font-size:12px; color:#666; margin:2px 0 8px 0;">Klikni na berača da ga obeležiš za brisanje:</p>
             <div class="picker-grid" id="groupPickersGrid_${gNum}">`;
 
           if (groupData.list.length === 0) {
-            html += `<span style="font-size:12px; color:#95a5a6;">Nema berača.</span>`;
+            html += `<span style="font-size:13px; color:#95a5a6;">Nema berača.</span>`;
           } else {
             groupData.list.forEach(num => {
               html += `<div class="picker-chip" id="chip_${num}" onclick="toggleDeleteChip('${num}')">${num}</div>`;
@@ -604,7 +611,7 @@
           html += `</div>`;
           
           if (groupData.list.length > 0) {
-            html += `<button class="btn" style="background:#e74c3c; margin-top:8px; padding:8px; font-size:13px;" onclick="executeBatchDelete('${gNum}')">🗑️ Ukloni obeležene iz grupe</button>`;
+            html += `<button class="btn" style="background:#e74c3c; margin-top:10px; padding:10px; font-size:14px;" onclick="executeBatchDelete('${gNum}')">🗑️ Ukloni obeležene iz grupe</button>`;
           }
 
           html += `</div>`;
@@ -631,10 +638,10 @@
       let html = `<div class="section-card">
         <h4 style="color:#27ae60; display:flex; justify-content:space-between; align-items:center;">
           <span>Slobodni brojevi (kliknite da obeležite):</span>
-          <span id="selectedCountBadge" style="font-size:12px; background:#2980b9; color:white; padding:3px 8px; border-radius:4px;">Izabrano: 0</span>
+          <span id="selectedCountBadge" style="font-size:13px; background:#2980b9; color:white; padding:4px 10px; border-radius:6px;">Izabrano: 0</span>
         </h4>
         
-        <button class="btn" style="background:#27ae60; margin-bottom:10px;" onclick="saveBatchPickers()">💾 Sačuvaj obeležene berače u grupu</button>
+        <button class="btn" style="background:#27ae60; margin-bottom:12px;" onclick="saveBatchPickers()">💾 Sačuvaj obeležene berače u grupu</button>
 
         <div class="pickers-grid-container">`;
 
@@ -657,7 +664,7 @@
       }
 
       if (unassignedCount === 0) {
-        html += `<div style="grid-column: 1 / -1; text-align:center; color:#7f8c8d; padding:15px; font-size:14px;">Svi generisani brojevi su raspoređeni u grupe!</div>`;
+        html += `<div style="grid-column: 1 / -1; text-align:center; color:#7f8c8d; padding:20px; font-size:15px;">Svi generisani brojevi su raspoređeni u grupe!</div>`;
       }
 
       html += `</div></div>`;
@@ -788,9 +795,9 @@
         let workers = res.workers || [];
         let groups = res.groups || [];
 
-        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="margin:0; font-size:16px;">👥 Registracija i Dozvole</h3>
-          <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin:0; font-size:18px;">👥 Registracija i Dozvole</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
         </div>
         <div class="tab-header">
           <button class="tab-btn ${activeTab === 'vaga' ? 'active' : ''}" onclick="loadWindow2('vaga')">⚖️ Radnici na vagi</button>
@@ -802,16 +809,17 @@
           { id: "2", label: "2. Radnici i vođe" },
           { id: "3", label: "3. Izveštaj berbe" },
           { id: "4a", label: "4a. Pregled mape" },
-          { id: "4b", label: "4b. Vođenje mape (promena polja)" },
+          { id: "4b", label: "4b. Vođenje mape" },
           { id: "4c", label: "4c. Predefinisanje mapa" },
           { id: "5", label: "5. Izmene merenja" },
-          { id: "6", label: "6. Obračun dana" }
+          { id: "6", label: "6. Obračun dana" },
+          { id: "7", label: "7. Obračun za hladnjaču" }
         ];
 
         if (activeTab === 'vaga') {
           let checkboxesHtml = `<div class="checkbox-group">`;
           permOptions.forEach(p => {
-            let checked = (p.id === '1' || p.id === '3' || p.id === '4a' || p.id === '4b' || p.id === '5') ? 'checked' : '';
+            let checked = (p.id === '1' || p.id === '3' || p.id === '4a' || p.id === '4b' || p.id === '5' || p.id === '6' || p.id === '7') ? 'checked' : '';
             checkboxesHtml += `<label><input type="checkbox" class="worker-perm-chk" value="${p.id}" ${checked}> ${p.label}</label>`;
           });
           checkboxesHtml += `</div>`;
@@ -821,10 +829,10 @@
             <div class="form-row">
               <div class="form-group-col"><label>Ime i Prezime</label><input type="text" id="workerNameInput" placeholder="npr. Marko"></div>
               <div class="form-group-col"><label>Broj vage</label><input type="number" id="workerScaleInput" min="1" value="1"></div>
-              <div class="form-group-col"><label>PIN (2-4 cifre)</label><input type="password" id="workerPinInput" placeholder="PIN" maxlength="6"></div>
+              <div class="form-group-col"><label>PIN</label><input type="password" id="workerPinInput" placeholder="PIN" maxlength="6"></div>
             </div>
-            <div style="margin-top:8px;"><label style="font-size:11px; font-weight:bold; color:#34495e;">DOZVOLE ZA PROZORE:</label>${checkboxesHtml}</div>
-            <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="saveWorker('vaga')">Sačuvaj radnika</button>
+            <div style="margin-top:10px;"><label style="font-size:13px; font-weight:bold; color:#34495e;">DOZVOLE ZA PROZORE:</label>${checkboxesHtml}</div>
+            <button class="btn" style="background:#27ae60; margin-top:12px;" onclick="saveWorker('vaga')">Sačuvaj radnika</button>
           </div>
           <div class="section-card">
             <h4>Postojeći radnici (${workers.length})</h4>`;
@@ -834,7 +842,7 @@
                 <span>👤 ${w.name} (Vaga ${w.extra}) [PIN: ${w.pin}]</span>
                 <button class="btn-action btn-del" onclick="deleteWorkerRecord('${w.pin}')">Obriši</button>
               </div>
-              <div style="font-size:12px; color:#666;">Dozvole: ${w.permissions ? w.permissions.join(', ') : 'Nema'}</div>
+              <div style="font-size:13px; color:#666;">Dozvole: ${w.permissions ? w.permissions.join(', ') : 'Nema'}</div>
             </div>`;
           });
           html += `</div>`;
@@ -851,10 +859,10 @@
             <div class="form-row">
               <div class="form-group-col"><label>Ime i Prezime</label><input type="text" id="groupLeaderNameInput" placeholder="npr. Petar"></div>
               <div class="form-group-col"><label>Broj grupe</label><input type="number" id="groupNumberInput" min="1" value="1"></div>
-              <div class="form-group-col"><label>PIN (3-4 cifre)</label><input type="password" id="groupLeaderPinInput" placeholder="PIN" maxlength="6"></div>
+              <div class="form-group-col"><label>PIN</label><input type="password" id="groupLeaderPinInput" placeholder="PIN" maxlength="6"></div>
             </div>
-            <div style="margin-top:8px;"><label style="font-size:11px; font-weight:bold; color:#34495e;">DOZVOLE ZA PROZORE:</label>${checkboxesHtml}</div>
-            <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="saveWorker('grupovoda')">Sačuvaj grupovođu</button>
+            <div style="margin-top:10px;"><label style="font-size:13px; font-weight:bold; color:#34495e;">DOZVOLE ZA PROZORE:</label>${checkboxesHtml}</div>
+            <button class="btn" style="background:#27ae60; margin-top:12px;" onclick="saveWorker('grupovoda')">Sačuvaj grupovođu</button>
           </div>
           <div class="section-card">
             <h4>Postojeće grupe (${groups.length})</h4>`;
@@ -864,7 +872,7 @@
                 <span>👥 Grupa ${g.extra} — ${g.name} [PIN: ${g.pin}]</span>
                 <button class="btn-action btn-del" onclick="deleteWorkerRecord('${g.pin}')">Obriši</button>
               </div>
-              <div style="font-size:12px; color:#666;">Dozvole: ${g.permissions ? g.permissions.join(', ') : 'Nema'}</div>
+              <div style="font-size:13px; color:#666;">Dozvole: ${g.permissions ? g.permissions.join(', ') : 'Nema'}</div>
             </div>`;
           });
           html += `</div>`;
@@ -910,6 +918,7 @@
       });
     }
 
+    // --- MODUL 3: Izveštaj o branju sa prikazom kala po beračima ---
     function loadWindow3(selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -930,34 +939,39 @@
           let pickerNums = groupPickers.map(p => p.pickerNum);
           let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
           let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+          let totalGroupKalo = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.kalo) || 0), 0);
 
           let pickerStats = {};
-          groupPickers.forEach(p => { pickerStats[p.pickerNum] = { kg: 0, crates: 0 }; });
+          groupPickers.forEach(p => { pickerStats[p.pickerNum] = { kg: 0, kalo: 0, crates: 0 }; });
           groupMeasurements.forEach(m => {
             if (pickerStats[m.pickerNum]) {
               pickerStats[m.pickerNum].kg += parseFloat(m.weight) || 0;
+              pickerStats[m.pickerNum].kalo += parseFloat(m.kalo) || 0;
               pickerStats[m.pickerNum].crates++;
             }
           });
 
-          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <h3 style="margin:0; font-size:16px;">📊 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})</h3>
-            <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="loadWindow3(null)">← Nazad na grupe</button>
+          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 style="margin:0; font-size:18px;">📊 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})</h3>
+            <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow3(null)">← Nazad na grupe</button>
           </div>
           <div class="section-card" style="border: 2px solid #2980b9;">
-            <div style="font-size:16px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Ukupno ubrano za grupu: <span style="color:#27ae60; font-size:18px;">${totalGroupKg.toFixed(2)} kg</span></div>
+            <div style="font-size:16px; font-weight:bold; color:#2c3e50; display:flex; justify-content:space-between;">
+              <span>Ukupno ubrano: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span></span>
+              <span>Ukupno kalo: <span style="color:#e74c3c;">${totalGroupKalo.toFixed(2)} kg</span></span>
+            </div>
           </div>
           <div class="section-card">
-            <h4>Učinak po beračima u grupi</h4>`;
+            <h4>Učinak i kalo po beračima</h4>`;
 
           groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
           groupPickers.forEach(p => {
-            let stats = pickerStats[p.pickerNum] || { kg: 0, crates: 0 };
+            let stats = pickerStats[p.pickerNum] || { kg: 0, kalo: 0, crates: 0 };
             html += `<div class="picker-detail-row" style="display:flex; justify-content:space-between; align-items:center;">
-              <div><b style="font-size:15px; color:#2c3e50;">Berač #${p.pickerNum}</b></div>
+              <div><b style="font-size:16px; color:#2c3e50;">Berač #${p.pickerNum}</b> <span style="font-size:13px; color:#666;">(${stats.crates}g)</span></div>
               <div style="text-align:right;">
-                <span style="color:#27ae60; font-weight:bold; font-size:16px;">${stats.kg.toFixed(2)} kg</span>
-                <span style="font-size:13px; color:#34495e; margin-left:8px; font-weight:bold;">(${stats.crates} gajbice)</span>
+                <span style="color:#27ae60; font-weight:bold; font-size:16px;">${stats.kg.toFixed(2)} kg</span><br>
+                <span style="color:#e74c3c; font-weight:bold; font-size:14px;">Kalo: ${stats.kalo.toFixed(2)} kg</span>
               </div>
             </div>`;
           });
@@ -966,11 +980,11 @@
           return;
         }
 
-        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="margin:0; font-size:16px;">📊 Izveštaj o branju po grupama</h3>
-          <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin:0; font-size:18px;">📊 Izveštaj o branju po grupama</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
         </div>
-        <p style="font-size:13px; color:#666; margin-bottom:10px;">Izaberite grupu da vidite učinak pojedinačnih berača:</p>
+        <p style="font-size:14px; color:#666; margin-bottom:12px;">Izaberite grupu da vidite učinak i kalo pojedinačnih berača:</p>
         <div class="report-card-grid">`;
 
         groups.forEach(g => {
@@ -980,14 +994,16 @@
           let pickerNums = groupPickers.map(p => p.pickerNum);
           let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
           let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+          let totalGroupKalo = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.kalo) || 0), 0);
 
           html += `<div class="report-group-card" onclick="loadWindow3('${groupNum}')">
-            <div style="font-size:17px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
-            <div style="font-size:14px; color:#333; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
+            <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
+            <div style="font-size:15px; color:#333; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
             <div style="display:flex; justify-content:space-between; font-size:14px; border-top:2px solid #dfe6e9; padding-top:8px; color:#2c3e50;">
               <span>👥 Berača: <b>${groupPickers.length}</b></span>
-              <span style="color:#27ae60; font-weight:bold; font-size:15px;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+              <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
             </div>
+            <div style="font-size:13px; color:#e74c3c; margin-top:4px; font-weight:bold;">Kalo: ${totalGroupKalo.toFixed(2)} kg</div>
           </div>`;
         });
         html += `</div>`;
@@ -1008,17 +1024,17 @@
         return;
       }
 
-      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h3 style="margin:0; font-size:16px;">🌱 Zasad i Mapa</h3>
-        <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0; font-size:18px;">🌱 Zasad i Mapa</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
       </div>
-      <div style="display: flex; flex-direction: column; gap: 10px; margin-top:10px;">`;
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top:12px;">`;
 
       if (canView || canManage) {
-        html += `<button class="btn" style="background:#2980b9; text-align:left; padding:12px;" onclick="loadHarvestMap('preview')">🌱 Pregled i vođenje berbe ${canManage ? '(Omogućeno menjanje statusa)' : '(Samo pregled)'}</button>`;
+        html += `<button class="btn" style="background:#2980b9; text-align:left; padding:14px; font-size:16px;" onclick="loadHarvestMap('preview')">🌱 Pregled i vođenje berbe ${canManage ? '(Omogućeno menjanje statusa)' : '(Samo pregled)'}</button>`;
       }
       if (canAdminMap) {
-        html += `<button class="btn" style="background:#8e44ad; text-align:left; padding:12px;" onclick="loadHarvestMap('admin')">⚙️ Predefinisanje mape zasada</button>`;
+        html += `<button class="btn" style="background:#8e44ad; text-align:left; padding:14px; font-size:16px;" onclick="loadHarvestMap('admin')">⚙️ Predefinisanje mape zasada</button>`;
       }
 
       html += `</div>`;
@@ -1047,9 +1063,9 @@
       let isAdminMode = (mode === 'admin');
       let titleText = isAdminMode ? "Predefinisanje mape zasada" : "Pregled i vođenje berbe";
 
-      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h3 style="margin:0; font-size:16px;">🌱 ${titleText}</h3>
-        <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="loadWindow4SubMenu()">← Nazad</button>
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0; font-size:18px;">🌱 ${titleText}</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow4SubMenu()">← Nazad</button>
       </div>`;
 
       if (isAdminMode) {
@@ -1060,13 +1076,13 @@
             <div class="form-group-col"><label>Broj redova</label><input type="number" id="mapFieldRows" min="1" value="5"></div>
             <div class="form-group-col"><label>Broj polja po redu</label><input type="number" id="mapFieldsPerRow" min="1" value="10"></div>
           </div>
-          <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="addNewFieldToMap()">Dodaj njivu</button>
+          <button class="btn" style="background:#27ae60; margin-top:12px;" onclick="addNewFieldToMap()">Dodaj njivu</button>
         </div>`;
       }
 
       html += `<div class="map-container" id="mapListContainer">${renderMapHtml(isAdminMode)}</div>`;
       if (isAdminMode) {
-        html += `<button class="btn" style="background:#27ae60; margin-top:12px;" onclick="saveMapToCloud()">Sačuvaj izmene na mapi</button>`;
+        html += `<button class="btn" style="background:#27ae60; margin-top:14px;" onclick="saveMapToCloud()">Sačuvaj izmene na mapi</button>`;
       }
 
       document.getElementById('modalBodyContent').innerHTML = html;
@@ -1078,28 +1094,28 @@
       plantationMap.forEach((field, fIdx) => {
         let fieldName = field.fieldId || "Njiva";
         html += `<div class="field-box-card">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <h4 style="margin:0; display:flex; align-items:center; gap:6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h4 style="margin:0; display:flex; align-items:center; gap:8px;">
               🌱 <span>${fieldName}</span>
-              ${isAdminMode ? `<button class="btn-action btn-edit" style="padding:2px 6px; font-size:11px;" onclick="editFieldName(${fIdx})">✏️</button>` : ''}
+              ${isAdminMode ? `<button class="btn-action btn-edit" style="padding:4px 8px; font-size:12px;" onclick="editFieldName(${fIdx})">✏️</button>` : ''}
             </h4>
-            <div style="display:flex; gap:6px;">
+            <div style="display:flex; gap:8px;">
               ${isAdminMode ? `<button class="btn-action btn-edit" style="background:#2980b9;" onclick="addNewRowToField(${fIdx})">➕ Dodaj red</button><button class="btn-action btn-del" onclick="deleteField(${fIdx})">Obriši njivu</button>` : ''}
             </div>
           </div>
           <div class="rows-grid">`;
 
         if (!field.rows || field.rows.length === 0) {
-          html += `<span style="font-size:12px; color:#95a5a6;">Nema redova.</span>`;
+          html += `<span style="font-size:13px; color:#95a5a6;">Nema redova.</span>`;
         } else {
           field.rows.forEach((row, rIdx) => {
             let rowBgClass = (isAdminMode) ? 'sq-purple' : (row.status === 'green' ? 'sq-green' : 'sq-purple');
             let clickAttr = `onclick="selectRowForPreview(${fIdx}, ${rIdx})" title="Klikni da prikažeš polja reda"`;
-            let rowDeleteBtn = isAdminMode ? `<button class="btn-action btn-del" style="padding:1px 4px; font-size:9px; margin-top:2px;" onclick="event.stopPropagation(); deleteRowFromField(${fIdx}, ${rIdx})">- Obriši</button>` : '';
+            let rowDeleteBtn = isAdminMode ? `<button class="btn-action btn-del" style="padding:2px 6px; font-size:10px; margin-top:3px;" onclick="event.stopPropagation(); deleteRowFromField(${fIdx}, ${rIdx})">- Obriši</button>` : '';
 
             html += `<div class="map-square ${rowBgClass}" ${clickAttr}>
               <span>${row.rowNum}</span>
-              <span style="font-size:9px; opacity:0.8;">${(row.fieldStatusList ? row.fieldStatusList.length : row.fieldsCount || 0)}p</span>
+              <span style="font-size:10px; opacity:0.8;">${(row.fieldStatusList ? row.fieldStatusList.length : row.fieldsCount || 0)}p</span>
               ${rowDeleteBtn}
             </div>`;
           });
@@ -1117,9 +1133,9 @@
             let canModifySubFields = !isAdminMode && checkUserAccess('4b');
 
             html += `<div class="fields-detail-container">
-              <div style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <span style="font-size:13px; font-weight:bold; color:#2c3e50;">Polja u redu ${activeRow.rowNum} ${canModifySubFields ? '(Klikni na polje da promeniš status):' : '(Pregled polja):'}</span>
-                ${isAdminMode ? `<div style="display:flex; gap:6px;"><button class="btn-action btn-edit" style="background:#27ae60; padding:2px 6px; font-size:11px;" onclick="addSubField(${fIdx}, ${selectedRowForPreview.rIdx})">➕ Dodaj polje</button><button class="btn-action btn-del" style="padding:2px 6px; font-size:11px;" onclick="removeSubField(${fIdx}, ${selectedRowForPreview.rIdx})">➖ Obriši polje</button></div>` : ''}
+              <div style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:14px; font-weight:bold; color:#2c3e50;">Polja u redu ${activeRow.rowNum} ${canModifySubFields ? '(Klikni na polje da promeniš status):' : '(Pregled polja):'}</span>
+                ${isAdminMode ? `<div style="display:flex; gap:8px;"><button class="btn-action btn-edit" style="background:#27ae60; padding:4px 8px; font-size:12px;" onclick="addSubField(${fIdx}, ${selectedRowForPreview.rIdx})">➕ Dodaj polje</button><button class="btn-action btn-del" style="padding:4px 8px; font-size:12px;" onclick="removeSubField(${fIdx}, ${selectedRowForPreview.rIdx})">➖ Obriši polje</button></div>` : ''}
               </div>`;
 
             for (let p = 0; p < activeRow.fieldStatusList.length; p++) {
@@ -1253,9 +1269,9 @@
       ])
       .then(([resWorkers, resMeas]) => {
         let measurements = (resMeas.success && resMeas.measurements) ? resMeas.measurements : [];
-        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="margin:0; font-size:16px;">⚙️ Izmene i pregled merenja</h3>
-          <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin:0; font-size:18px;">⚙️ Izmene i pregled merenja</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
         </div>`;
 
         if (measurements.length === 0) {
@@ -1265,9 +1281,9 @@
             html += `<div class="mobile-card-item">
               <div class="mobile-card-header">
                 <span>⏰ Vreme: ${item.time || '-'} | Berač #${item.pickerNum || '-'} (${item.crateId || '-'})</span>
-                <span style="color:#27ae60; font-size:15px;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</span>
+                <span style="color:#27ae60; font-size:16px;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</span>
               </div>
-              <div style="font-size:13px; color:#555;">Kalo: <b>${(parseFloat(item.kalo) || 0).toFixed(2)} kg</b></div>
+              <div style="font-size:14px; color:#555;">Kalo: <b>${(parseFloat(item.kalo) || 0).toFixed(2)} kg</b></div>
               <div class="mobile-card-actions">
                 <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')">Izmeni težinu</button>
                 <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši merenje</button>
@@ -1300,6 +1316,7 @@
       });
     }
 
+    // --- MODUL 6: Obračun dana sa unetom cenom po kg ---
     function loadWindow6(selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -1313,7 +1330,7 @@
         let groups = resGroups.success ? resGroups.groups : [];
         let pickers = resPickers.success ? resPickers.pickers : [];
         let measurements = resMeas.success ? resMeas.measurements : [];
-        let defaultPricePerKg = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
+        let currentPricePerKg = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
 
         if (selectedGroupNum !== null) {
           let targetGroup = groups.find(g => String(g.extra) === String(selectedGroupNum));
@@ -1321,7 +1338,7 @@
           let pickerNums = groupPickers.map(p => p.pickerNum);
           let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
           let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
-          let totalGroupPay = totalGroupKg * defaultPricePerKg;
+          let totalGroupPay = totalGroupKg * currentPricePerKg;
 
           let pickerStats = {};
           groupPickers.forEach(p => { pickerStats[p.pickerNum] = { kg: 0, crates: 0 }; });
@@ -1338,30 +1355,30 @@
                           `Broj berača: ${groupPickers.length}`;
           let viberUrl = `viber://forward?text=` + encodeURIComponent(viberText);
 
-          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <h3 style="margin:0; font-size:15px;">💰 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})</h3>
-              <a href="${viberUrl}" class="btn-action" style="background:#7360f2; padding:5px 10px; font-size:11px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">💬 Viber</a>
+          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <h3 style="margin:0; font-size:16px;">💰 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})</h3>
+              <a href="${viberUrl}" class="btn-action" style="background:#7360f2; padding:6px 12px; font-size:12px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">💬 Viber</a>
             </div>
-            <button class="btn" style="background:#34495e; width:auto; padding:5px 10px; font-size:11px;" onclick="loadWindow6(null)">← Nazad</button>
+            <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:12px;" onclick="loadWindow6(null)">← Nazad</button>
           </div>
           
-          <div class="section-card" style="padding:8px 12px; margin-bottom:8px; border: 2px solid #2980b9;">
-            <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:bold; color:#2c3e50;">
+          <div class="section-card" style="padding:10px 14px; margin-bottom:10px; border: 2px solid #2980b9;">
+            <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:bold; color:#2c3e50;">
               <span>Ukupno: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span></span>
-              <span style="color:#2980b9;">Isplata: ${totalGroupPay.toFixed(2)} RSD</span>
+              <span style="color:#2980b9;">Isplata (${currentPricePerKg} din/kg): ${totalGroupPay.toFixed(2)} RSD</span>
             </div>
           </div>
-          <div class="section-card" style="padding:8px;">
-            <h4 style="margin:0 0 6px 0; font-size:13px;">Berači u grupi</h4>`;
+          <div class="section-card" style="padding:10px;">
+            <h4 style="margin:0 0 8px 0; font-size:14px;">Berači u grupi</h4>`;
 
           groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
           groupPickers.forEach(p => {
             let stats = pickerStats[p.pickerNum] || { kg: 0, crates: 0 };
-            let pay = stats.kg * defaultPricePerKg;
+            let pay = stats.kg * currentPricePerKg;
             
-            html += `<div style="background:white; border:1px solid #dcdde1; border-radius:5px; padding:6px 10px; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
-              <div><b>#${p.pickerNum}</b> <span style="font-size:11px; color:#666;">(${stats.crates}g)</span></div>
+            html += `<div style="background:white; border:1px solid #dcdde1; border-radius:6px; padding:8px 12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; font-size:14px;">
+              <div><b>#${p.pickerNum}</b> <span style="font-size:12px; color:#666;">(${stats.crates}g)</span></div>
               <div style="text-align:right;">
                 <span style="color:#27ae60; font-weight:bold;">${stats.kg.toFixed(2)} kg</span> | 
                 <span style="color:#2980b9; font-weight:bold;">${pay.toFixed(2)} RSD</span>
@@ -1373,10 +1390,19 @@
           return;
         }
 
-        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="margin:0; font-size:16px;">💰 Obračun dana - Izaberite grupu</h3>
-          <button class="btn" style="background:#34495e; width:auto; padding:6px 10px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin:0; font-size:18px;">💰 Obračun dana - Unos cene i izaberite grupu</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
         </div>
+
+        <div class="section-card" style="border: 2px solid #27ae60; background:#f4f6f9;">
+          <h4 style="color:#27ae60;">Cena branja po kilogramu</h4>
+          <div class="form-row">
+            <div class="form-group-col"><label>Cena (RSD / kg)</label><input type="number" id="globalPricePerKgInput" step="0.5" value="${currentPricePerKg}"></div>
+            <div style="flex:0 0 auto;"><button class="btn" style="background:#27ae60; padding:12px 20px;" onclick="saveGlobalPrice()">Sačuvaj cenu</button></div>
+          </div>
+        </div>
+
         <div class="report-card-grid">`;
 
         groups.forEach(g => {
@@ -1386,16 +1412,16 @@
           let pickerNums = groupPickers.map(p => p.pickerNum);
           let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
           let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
-          let totalGroupPay = totalGroupKg * defaultPricePerKg;
+          let totalGroupPay = totalGroupKg * currentPricePerKg;
 
           html += `<div class="report-group-card" onclick="loadWindow6('${groupNum}')">
-            <div style="font-size:17px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
-            <div style="font-size:14px; color:#333; margin-bottom:6px;">Vođa: <b>${leaderName}</b></div>
-            <div style="display:flex; justify-content:space-between; font-size:14px; border-top:2px solid #dfe6e9; padding-top:6px; color:#2c3e50;">
+            <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
+            <div style="font-size:15px; color:#333; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
+            <div style="display:flex; justify-content:space-between; font-size:14px; border-top:2px solid #dfe6e9; padding-top:8px; color:#2c3e50;">
               <span>👥 Berača: <b>${groupPickers.length}</b></span>
               <span style="color:#27ae60; font-weight:bold; font-size:15px;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:15px; margin-top:6px; color:#2980b9; font-weight:bold; border-top:1px dashed #b2bec3; padding-top:4px;">
+            <div style="display:flex; justify-content:space-between; font-size:16px; margin-top:8px; color:#2980b9; font-weight:bold; border-top:1px dashed #b2bec3; padding-top:6px;">
               <span>Isplata:</span><span>${totalGroupPay.toFixed(2)} RSD</span>
             </div>
           </div>`;
@@ -1403,6 +1429,109 @@
         html += `</div>`;
         document.getElementById('modalBodyContent').innerHTML = html;
       });
+    }
+
+    function saveGlobalPrice() {
+      let val = parseFloat(document.getElementById('globalPricePerKgInput').value);
+      if (isNaN(val) || val <= 0) { alert("Unesite validnu cenu!"); return; }
+      localStorage.setItem('savedPricePerKg', val);
+      alert("Cena od " + val + " RSD/kg je uspešno sačuvana!");
+      loadWindow6(null);
+    }
+
+    // --- MODUL 7: Obračun za hladnjaču ---
+    function loadWindow7() {
+      let storedDays = JSON.parse(localStorage.getItem('hladnjacaDaysData')) || [];
+      
+      let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0; font-size:18px;">❄️ Obračun za hladnjaču</h3>
+        <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
+      </div>
+
+      <div class="section-card">
+        <h4>Unos podataka po danima</h4>
+        <div class="form-row">
+          <div class="form-group-col"><label>Datum</label><input type="date" id="hDate" value="${new Date().toISOString().split('T')[0]}"></div>
+          <div class="form-group-col"><label>Prebrana količina (kg)</label><input type="number" id="hPrebrana" step="0.01" value="0"></div>
+          <div class="form-group-col"><label>Otkupni list (kg)</label><input type="number" id="hOtkup" step="0.01" value="0"></div>
+          <div class="form-group-col"><label>Cena otkupa (RSD)</label><input type="number" id="hCena" step="0.01" value="0"></div>
+        </div>
+        <button class="btn" style="background:#27ae60; margin-top:12px;" onclick="addHladnjacaDay()">Dodaj dan ✓</button>
+      </div>`;
+
+      let totalPrebranaAll = 0;
+      let totalOtkupAll = 0;
+      let totalZaradaAll = 0;
+
+      storedDays.forEach(d => {
+        let pKg = parseFloat(d.prebrana) || 0;
+        let oKg = parseFloat(d.otkup) || 0;
+        let cRsd = parseFloat(d.cena) || 0;
+        let dnevnaZarada = oKg * cRsd;
+
+        totalPrebranaAll += pKg;
+        totalOtkupAll += oKg;
+        totalZaradaAll += dnevnaZarada;
+      });
+
+      html += `<div class="section-card" style="border: 2px solid #2980b9; background:#eaf2f8;">
+        <h4 style="color:#2980b9;">Zbirni rezultati cele berbe</h4>
+        <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; flex-direction:column; gap:6px;">
+          <div>Ukupna prebrana količina: <span style="color:#27ae60;">${totalPrebranaAll.toFixed(2)} kg</span></div>
+          <div>Ukupna količina iz otkupnog lista: <span style="color:#27ae60;">${totalOtkupAll.toFixed(2)} kg</span></div>
+          <div>Ukupna zarada (otkup x cena): <span style="color:#2980b9; font-size:18px;">${totalZaradaAll.toFixed(2)} RSD</span></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h4>Evidentirani dani (${storedDays.length})</h4>`;
+
+      if (storedDays.length === 0) {
+        html += `<p style="text-align:center; color:#7f8c8d; font-size:14px;">Nema unetih dana za hladnjaču.</p>`;
+      } else {
+        storedDays.forEach((d, idx) => {
+          let dnevnaZarada = (parseFloat(d.otkup) || 0) * (parseFloat(d.cena) || 0);
+          html += `<div class="mobile-card-item">
+            <div class="mobile-card-header">
+              <span>📅 Datum: ${d.datum}</span>
+              <button class="btn-action btn-del" onclick="deleteHladnjacaDay(${idx})">Obriši</button>
+            </div>
+            <div style="font-size:14px; color:#444; display:flex; flex-direction:column; gap:4px;">
+              <div>Prebrana količina: <b>${parseFloat(d.prebrana).toFixed(2)} kg</b></div>
+              <div>Količina sa otkupnog lista: <b>${parseFloat(d.otkup).toFixed(2)} kg</b></div>
+              <div>Cena otkupa: <b>${parseFloat(d.cena).toFixed(2)} RSD</b></div>
+              <div style="color:#2980b9; font-weight:bold;">Dnevna zarada: ${dnevnaZarada.toFixed(2)} RSD</div>
+            </div>
+          </div>`;
+        });
+      }
+      html += `</div>`;
+
+      document.getElementById('modalBodyContent').innerHTML = html;
+      document.getElementById('menuModal').style.display = 'flex';
+    }
+
+    function addHladnjacaDay() {
+      let datum = document.getElementById('hDate').value;
+      let prebrana = document.getElementById('hPrebrana').value;
+      let otkup = document.getElementById('hOtkup').value;
+      let cena = document.getElementById('hCena').value;
+
+      if (!datum) { alert("Unesite datum!"); return; }
+
+      let storedDays = JSON.parse(localStorage.getItem('hladnjacaDaysData')) || [];
+      storedDays.push({ datum, prebrana, otkup, cena });
+      localStorage.setItem('hladnjacaDaysData', JSON.stringify(storedDays));
+
+      loadWindow7();
+    }
+
+    function deleteHladnjacaDay(index) {
+      if (!confirm("Obrisati zapis za ovaj dan?")) return;
+      let storedDays = JSON.parse(localStorage.getItem('hladnjacaDaysData')) || [];
+      storedDays.splice(index, 1);
+      localStorage.setItem('hladnjacaDaysData', JSON.stringify(storedDays));
+      loadWindow7();
     }
 
     window.onload = function() {
@@ -1486,10 +1615,11 @@
       const menuItems = [
         { id: "1", label: "1. Dodaj berača u grupu", desc: "Dodeljivanje brojeva beračima" },
         { id: "2", label: "2. Radnici na vagi i Grupovođe", desc: "Pregled i dodavanje lica" },
-        { id: "3", label: "3. Izveštaj o branju", desc: "Pregled količina i učinka" },
+        { id: "3", label: "3. Izveštaj o branju", desc: "Pregled količina, učinka i kala" },
         { id: "4", label: "4. Zasad i mapa", desc: "Pregled, vođenje berbe i mape" },
         { id: "5", label: "5. Izmene merenja na vagi", desc: "Korekcija eventualnih grešaka" },
-        { id: "6", label: "6. Obračun dana", desc: "Završni obračun dnevnica i isplata" }
+        { id: "6", label: "6. Obračun dana", desc: "Završni obračun dnevnica i isplata" },
+        { id: "7", label: "7. Obračun za hladnjaču", desc: "Evidencija otkupnih lista i zarade" }
       ];
 
       let html = "";
