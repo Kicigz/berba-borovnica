@@ -28,11 +28,12 @@
     }
     .num-btn {
       background: #34495e; color: white; border: none; font-size: 26px; font-weight: bold;
-      padding: 16px; border-radius: 8px; cursor: pointer; transition: background 0.1s;
+      padding: 18px 10px; border-radius: 8px; cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent; z-index: 5; position: relative;
     }
-    .num-btn:hover { background: #415b76; }
+    .num-btn:active { background: #2c3e50; transform: scale(0.96); }
     .num-btn.enter { background: #27ae60; grid-column: span 3; padding: 18px; font-size: 24px; }
-    .num-btn.enter:hover { background: #219653; }
+    .num-btn.enter:active { background: #219653; }
     .num-btn.clear { background: #e74c3c; }
 
     #setupModal {
@@ -183,19 +184,19 @@
       <h2>Unesite PIN (Brojčanik)</h2>
       <div id="pinDisplay">_</div>
       <div class="numpad-grid">
-        <button class="num-btn" onclick="pressNum('1')">1</button>
-        <button class="num-btn" onclick="pressNum('2')">2</button>
-        <button class="num-btn" onclick="pressNum('3')">3</button>
-        <button class="num-btn" onclick="pressNum('4')">4</button>
-        <button class="num-btn" onclick="pressNum('5')">5</button>
-        <button class="num-btn" onclick="pressNum('6')">6</button>
-        <button class="num-btn" onclick="pressNum('7')">7</button>
-        <button class="num-btn" onclick="pressNum('8')">8</button>
-        <button class="num-btn" onclick="pressNum('9')">9</button>
-        <button class="num-btn clear" onclick="clearPin()">C</button>
-        <button class="num-btn" onclick="pressNum('0')">0</button>
-        <button class="num-btn" onclick="backspacePin()">⌫</button>
-        <button class="num-btn enter" onclick="submitLogin()">OK / ENTER</button>
+        <button type="button" class="num-btn" onclick="pressNum('1')">1</button>
+        <button type="button" class="num-btn" onclick="pressNum('2')">2</button>
+        <button type="button" class="num-btn" onclick="pressNum('3')">3</button>
+        <button type="button" class="num-btn" onclick="pressNum('4')">4</button>
+        <button type="button" class="num-btn" onclick="pressNum('5')">5</button>
+        <button type="button" class="num-btn" onclick="pressNum('6')">6</button>
+        <button type="button" class="num-btn" onclick="pressNum('7')">7</button>
+        <button type="button" class="num-btn" onclick="pressNum('8')">8</button>
+        <button type="button" class="num-btn" onclick="pressNum('9')">9</button>
+        <button type="button" class="num-btn clear" onclick="clearPin()">C</button>
+        <button type="button" class="num-btn" onclick="pressNum('0')">0</button>
+        <button type="button" class="num-btn" onclick="backspacePin()">⌫</button>
+        <button type="button" class="num-btn enter" onclick="submitLogin()">OK / ENTER</button>
       </div>
       <div style="font-size: 13px; color: #7f8c8d;">Prvo pokretanje: unesite <b>1234</b></div>
     </div>
@@ -229,7 +230,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 3.1)</h3>
+            <h3>Vaga i Kontrola (ver 3.2)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -1436,12 +1437,10 @@
       loadWindow6(null);
     }
 
-    // --- MODUL 7: Obračun za hladnjaču sa automatskom prebranom količinom ---
     function loadWindow7() {
       let storedDays = JSON.parse(localStorage.getItem('hladnjacaDaysData')) || [];
       let todayStr = new Date().toISOString().split('T')[0];
 
-      // Dohvati merenja sa vage iz oblaka da izračunamo prebranu količinu za izabrani datum (ili danas)
       fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) })
       .then(r => r.json())
       .catch(() => ({ success: true, measurements: [] }))
@@ -1515,7 +1514,6 @@
         document.getElementById('modalBodyContent').innerHTML = html;
         document.getElementById('menuModal').style.display = 'flex';
 
-        // Sačuvaj merenja globalno da funkcija za automatsko preuzimanje može da ih čita
         window._cachedMeasurementsForHladnjaca = measurements;
         updateAutoPrebranaKg();
       });
@@ -1636,7 +1634,7 @@
       })
       .catch(err => {
         alert("Serverska greška: " + err.message);
-        clearPin();
+        clearPanelPin = clearPin();
       });
     }
 
