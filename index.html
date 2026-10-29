@@ -242,7 +242,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 3.8)</h3>
+            <h3>Vaga i Kontrola (ver 3.9)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -596,10 +596,9 @@
         groups.forEach(g => { groupedPickers[g.extra] = { leader: g.name, list: [] }; });
         cachedPickersGlobal.forEach(p => {
           let gNum = String(p.groupNum);
-          if (!groupedPickers[gNum]) {
-            groupedPickers[gNum] = { leader: p.leaderName || 'Grupa', list: [] };
+          if (groupedPickers[gNum]) {
+            groupedPickers[gNum].list.push(p.pickerNum);
           }
-          groupedPickers[gNum].list.push(p.pickerNum);
         });
 
         for (let gNum in groupedPickers) {
@@ -1595,7 +1594,7 @@
       let prebranaInput = document.getElementById('hPrebrana');
       if (!dateInput || !prebranaInput) return;
 
-      let selectedDate = dateInput.value; // format YYYY-MM-DD
+      let selectedDate = dateInput.value;
       let measurements = window._cachedMeasurementsForHladnjaca || [];
       
       let sumForDate = 0;
@@ -1604,10 +1603,9 @@
         if (m.date) {
           mDate = m.date;
         } else if (m.time) {
-          // Pokušaj parsiranja iz stringa vremena
           let rawTime = String(m.time).trim();
           if (rawTime.includes('/')) {
-            let datePart = rawTime.split(' ')[0]; // npr 29/10/2026 ili slično
+            let datePart = rawTime.split(' ')[0];
             let parts = datePart.split('/');
             if (parts.length === 3) {
               mDate = parts[2] + "-" + parts[1].padStart(2, '0') + "-" + parts[0].padStart(2, '0');
@@ -1617,7 +1615,6 @@
           }
         }
 
-        // Ako datum iz merenja odgovara izabranom datumu ili datum nije definisan (uzimamo sve za danas)
         if (mDate === selectedDate || !mDate) {
           sumForDate += parseFloat(m.weight) || 0;
         }
