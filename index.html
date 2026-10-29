@@ -16,6 +16,7 @@
     .login-box {
       background: white; padding: 20px; border-radius: 14px;
       width: 100%; max-width: 340px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      position: relative; z-index: 10002;
     }
     .login-box h2 { margin-top: 0; color: #2c3e50; font-size: 20px; }
     #pinDisplay {
@@ -24,18 +25,21 @@
       border: 2px solid #bdc3c7; height: 40px; line-height: 40px; color: #333;
     }
     
-    /* FLEKSIBILNA GRID MREŽA SA PUNIM OBLASTIMA ZA DODIR */
     .numpad-container {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
       margin-bottom: 12px;
+      position: relative;
+      z-index: 10003;
     }
     .num-btn {
       background: #34495e; color: white; border: none; font-size: 24px; font-weight: bold;
       padding: 16px 0; border-radius: 8px; cursor: pointer; text-align: center;
       user-select: none; -webkit-tap-highlight-color: transparent;
       width: 100%; display: flex; justify-content: center; align-items: center;
+      position: relative; z-index: 10004;
+      pointer-events: auto !important;
     }
     .num-btn:active { background: #2c3e50; transform: scale(0.96); }
     .num-btn.enter { background: #27ae60; grid-column: span 3; font-size: 22px; padding: 16px 0; }
@@ -190,7 +194,6 @@
       <h2>Unesite PIN (Brojčanik)</h2>
       <div id="pinDisplay">_</div>
       
-      <!-- SAVRŠENO ŠIROKA FLEX MREŽA ZA TASTERE -->
       <div class="numpad-container">
         <button type="button" class="num-btn" onclick="pressNum('1')">1</button>
         <button type="button" class="num-btn" onclick="pressNum('2')">2</button>
@@ -239,7 +242,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 3.4)</h3>
+            <h3>Vaga i Kontrola (ver 3.5)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
