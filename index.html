@@ -150,10 +150,10 @@
     .tab-header { display: flex; gap: 8px; margin-bottom: 12px; border-bottom: 2px solid #e1e8ed; padding-bottom: 8px; overflow-x: auto; }
     .tab-btn { background: #bdc3c7; color: #2c3e50; border: none; padding: 10px 14px; font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; white-space: nowrap; }
     .tab-btn.active { background: #2980b9; color: white; }
-    .mobile-card-item { background: white; border: 1px solid #dcdde1; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 8px; }
-    .mobile-card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #2c3e50; font-size: 17px; }
-    .mobile-card-actions { display: flex; gap: 10px; margin-top: 8px; justify-content: flex-end; border-top: 1px solid #f1f2f6; padding-top: 10px; }
-    .btn-action { padding: 8px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; color: white; }
+    .mobile-card-item { background: white; border: 1px solid #dcdde1; border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 6px; }
+    .mobile-card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #2c3e50; font-size: 16px; }
+    .mobile-card-actions { display: flex; gap: 8px; margin-top: 4px; justify-content: flex-end; border-top: 1px solid #f1f2f6; padding-top: 8px; }
+    .btn-action { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; color: white; }
     .btn-del { background: #e74c3c; }
     .btn-edit { background: #f39c12; }
     .group-section { background: white; padding: 12px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #ddd; }
@@ -184,7 +184,7 @@
     .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
     .report-group-card { background: white; border-radius: 14px; padding: 18px; border: 1px solid #b2bec3; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; border-left: 8px solid #2980b9; transition: transform 0.1s; }
     .report-group-card:hover { transform: translateY(-2px); border-color: #0984e3; }
-    .picker-detail-row { background: white; border: 1px solid #b2bec3; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.06); border-left: 6px solid #0984e3; }
+    .picker-detail-row { background: white; border: 1px solid #b2bec3; border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border-left: 5px solid #0984e3; }
   </style>
 </head>
 <body>
@@ -242,7 +242,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 3.6)</h3>
+            <h3>Vaga i Kontrola (ver 3.7)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -751,7 +751,7 @@
       });
     }
 
-    let deletePickersCacheMap = {}; // groupNum -> Set of pickerNums
+    let deletePickersCacheMap = {}; 
 
     function toggleDeleteChip(pickerNum, groupNum) {
       if (!deletePickersCacheMap[groupNum]) {
@@ -894,7 +894,7 @@
             html += `<div class="mobile-card-item">
               <div class="mobile-card-header">
                 <span>👥 Grupa ${g.extra} — ${g.name} [PIN: ${g.pin}]</span>
-                <button class="btn-action btn-del" onclick="deleteWorkerRecord('${g.pin}')">Obriši</button>
+                <button class="btn-action btn-del" onclick="deleteWorkerRecord('${g.pin}', '${g.extra}')">Obriši</button>
               </div>
               <div style="font-size:13px; color:#666;">Dozvole: ${g.permissions ? g.permissions.join(', ') : 'Nema'}</div>
             </div>`;
@@ -932,13 +932,22 @@
       });
     }
 
-    function deleteWorkerRecord(pin) {
-      if (!confirm("Obrisati ovo lice?")) return;
-      fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "deleteWorkerOrGroup", pin: pin }) })
-      .then(r => r.json()).then(res => { 
-        if (res.success) {
-          loadWindow2(currentAdminTab);
-        } 
+    function deleteWorkerRecord(pin, groupNum = null) {
+      if (!confirm("Obrisati ovo lice? (Ako je grupovođa, biće obrisana i cela grupa sa beračima!)")) return;
+      
+      let promises = [
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "deleteWorkerOrGroup", pin: pin }) }).then(r => r.json())
+      ];
+
+      if (groupNum !== null) {
+        promises.push(
+          fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "deleteGroupAndItsPickers", groupNum: groupNum }) }).then(r => r.json())
+        );
+      }
+
+      Promise.all(promises).then(() => {
+        loadWindow2(currentAdminTab);
+        loadGlobalStats();
       });
     }
 
@@ -962,14 +971,19 @@
           let pickerNums = groupPickers.map(p => p.pickerNum);
           let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
           let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+          let totalGroupInputKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.inputWeight) || (parseFloat(m.weight) + parseFloat(m.kalo || 0)) || 0), 0);
           let totalGroupKalo = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.kalo) || 0), 0);
 
           let pickerStats = {};
-          groupPickers.forEach(p => { pickerStats[p.pickerNum] = { kg: 0, kalo: 0, crates: 0 }; });
+          groupPickers.forEach(p => { pickerStats[p.pickerNum] = { inputKg: 0, kg: 0, kalo: 0, crates: 0 }; });
           groupMeasurements.forEach(m => {
             if (pickerStats[m.pickerNum]) {
-              pickerStats[m.pickerNum].kg += parseFloat(m.weight) || 0;
-              pickerStats[m.pickerNum].kalo += parseFloat(m.kalo) || 0;
+              let w = parseFloat(m.weight) || 0;
+              let k = parseFloat(m.kalo) || 0;
+              let inp = parseFloat(m.inputWeight) || (w + k);
+              pickerStats[m.pickerNum].inputKg += inp;
+              pickerStats[m.pickerNum].kg += w;
+              pickerStats[m.pickerNum].kalo += k;
               pickerStats[m.pickerNum].crates++;
             }
           });
@@ -979,22 +993,23 @@
             <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow3(null)">← Nazad na grupe</button>
           </div>
           <div class="section-card" style="border: 2px solid #2980b9;">
-            <div style="font-size:16px; font-weight:bold; color:#2c3e50; display:flex; justify-content:space-between;">
-              <span>Ukupno ubrano: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span></span>
-              <span>Ukupno kalo: <span style="color:#e74c3c;">${totalGroupKalo.toFixed(2)} kg</span></span>
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; flex-direction:column; gap:4px;">
+              <div>Ukupno ubrano: <span style="color:#2c3e50;">${totalGroupInputKg.toFixed(2)} kg</span></div>
+              <div>Prebrano: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span> | Kalo: <span style="color:#e74c3c;">${totalGroupKalo.toFixed(2)} kg</span></div>
             </div>
           </div>
           <div class="section-card">
-            <h4>Učinak i kalo po beračima</h4>`;
+            <h4>Učinak po beračima</h4>`;
 
           groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
           groupPickers.forEach(p => {
-            let stats = pickerStats[p.pickerNum] || { kg: 0, kalo: 0, crates: 0 };
+            let stats = pickerStats[p.pickerNum] || { inputKg: 0, kg: 0, kalo: 0, crates: 0 };
             html += `<div class="picker-detail-row" style="display:flex; justify-content:space-between; align-items:center;">
-              <div><b style="font-size:16px; color:#2c3e50;">Berač #${p.pickerNum}</b> <span style="font-size:13px; color:#666;">(${stats.crates}g)</span></div>
-              <div style="text-align:right;">
-                <span style="color:#27ae60; font-weight:bold; font-size:16px;">${stats.kg.toFixed(2)} kg</span><br>
-                <span style="color:#e74c3c; font-weight:bold; font-size:14px;">Kalo: ${stats.kalo.toFixed(2)} kg</span>
+              <div><b style="font-size:15px; color:#2c3e50;">#${p.pickerNum}</b> <span style="font-size:12px; color:#666;">(${stats.crates}g)</span></div>
+              <div style="text-align:right; font-size:14px;">
+                <span>Ukupno: <b>${stats.inputKg.toFixed(2)} kg</b></span> | 
+                <span style="color:#27ae60; font-weight:bold;">Prebrano: ${stats.kg.toFixed(2)} kg</span> | 
+                <span style="color:#e74c3c; font-weight:bold;">Kalo: ${stats.kalo.toFixed(2)} kg</span>
               </div>
             </div>`;
           });
@@ -1007,7 +1022,7 @@
           <h3 style="margin:0; font-size:18px;">📊 Izveštaj o branju po grupama</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
         </div>
-        <p style="font-size:14px; color:#666; margin-bottom:12px;">Izaberite grupu da vidite učinak i kalo pojedinačnih berača:</p>
+        <p style="font-size:14px; color:#666; margin-bottom:12px;">Izaberite grupu da vidite učinak pojedinačnih berača:</p>
         <div class="report-card-grid">`;
 
         groups.forEach(g => {
@@ -1017,16 +1032,16 @@
           let pickerNums = groupPickers.map(p => p.pickerNum);
           let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
           let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+          let totalGroupInputKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.inputWeight) || (parseFloat(m.weight) + parseFloat(m.kalo || 0)) || 0), 0);
           let totalGroupKalo = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.kalo) || 0), 0);
 
           html += `<div class="report-group-card" onclick="loadWindow3('${groupNum}')">
             <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
-            <div style="font-size:15px; color:#333; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
-            <div style="display:flex; justify-content:space-between; font-size:14px; border-top:2px solid #dfe6e9; padding-top:8px; color:#2c3e50;">
-              <span>👥 Berača: <b>${groupPickers.length}</b></span>
-              <span style="color:#27ae60; font-weight:bold;">⚖️ Prebrano: ${totalGroupKg.toFixed(2)} kg</span>
-            </div>
-            <div style="font-size:13px; color:#e74c3c; margin-top:4px; font-weight:bold;">Kalo: ${totalGroupKalo.toFixed(2)} kg</div>
+            <div style="font-size:15px; color:#333; margin-bottom:6px;">Vođa: <b>${leaderName}</b></div>
+            <div style="font-size:14px; color:#2c3e50; margin-bottom:4px;">👥 Berača: <b>${groupPickers.length}</b></div>
+            <div style="font-size:14px; color:#2c3e50; margin-bottom:2px;">Ukupno ubrano: <b>${totalGroupInputKg.toFixed(2)} kg</b></div>
+            <div style="font-size:14px; color:#27ae60; font-weight:bold;">Prebrano: ${totalGroupKg.toFixed(2)} kg</div>
+            <div style="font-size:13px; color:#e74c3c; font-weight:bold; margin-top:2px;">Kalo: ${totalGroupKalo.toFixed(2)} kg</div>
           </div>`;
         });
         html += `</div>`;
@@ -1307,15 +1322,22 @@
           html += `<p style="text-align:center; color:#7f8c8d; margin-top:20px;">Nema zabeleženih merenja za izmenu.</p>`;
         } else {
           measurements.forEach(item => {
+            let w = parseFloat(item.weight) || 0;
+            let k = parseFloat(item.kalo) || 0;
+            let inp = parseFloat(item.inputWeight) || (w + k);
+
             html += `<div class="mobile-card-item">
               <div class="mobile-card-header">
-                <span>⏰ Vreme: ${item.time || '-'} | Berač #${item.pickerNum || '-'} (${item.crateId || '-'})</span>
-                <span style="color:#27ae60; font-size:16px;">${(parseFloat(item.weight) || 0).toFixed(2)} kg</span>
+                <span>⏰ ${item.time || '-'} | Berač #${item.pickerNum || '-'} (${item.crateId || '-'})</span>
               </div>
-              <div style="font-size:14px; color:#555;">Kalo: <b>${(parseFloat(item.kalo) || 0).toFixed(2)} kg</b></div>
+              <div style="font-size:14px; color:#444; display:flex; gap:12px;">
+                <span>Ukupno: <b>${inp.toFixed(2)} kg</b></span>
+                <span style="color:#27ae60;">Prebrano: <b>${w.toFixed(2)} kg</b></span>
+                <span style="color:#e74c3c;">Kalo: <b>${k.toFixed(2)} kg</b></span>
+              </div>
               <div class="mobile-card-actions">
-                <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${item.weight}')">Izmeni težinu</button>
-                <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${item.weight}')">Obriši merenje</button>
+                <button class="btn-action btn-edit" onclick="promptAdminAction('edit', '${item.id}', '${item.pickerNum}', '${inp}', '${w}')">Izmeni merenje</button>
+                <button class="btn-action btn-del" onclick="promptAdminAction('delete', '${item.id}', '${item.pickerNum}', '${inp}', '${w}')">Obriši merenje</button>
               </div>
             </div>`;
           });
@@ -1324,9 +1346,27 @@
       });
     }
 
-    function promptAdminAction(actionType, measurementId, pickerNum, currentWeight) {
+    function promptAdminAction(actionType, measurementId, pickerNum, currentInputWeight, currentPrebranaWeight) {
       let adminPin = prompt(`Unesite ADMINISTRATIVNI PIN za potvrdu:`, "");
       if (adminPin === null || !adminPin.trim()) return;
+
+      let newInp = null;
+      let newPreb = null;
+
+      if (actionType === 'edit') {
+        let inputStr = prompt("Unesite novu UKUPNO ubranu količinu (kg):", currentInputWeight);
+        if (inputStr === null) return;
+        newInp = parseFloat(inputStr);
+
+        let prebStr = prompt("Unesite novu PREBRANU količinu (kg):", currentPrebranaWeight);
+        if (prebStr === null) return;
+        newPreb = parseFloat(prebStr);
+
+        if (isNaN(newInp) || isNaN(newPreb)) {
+          alert("Unesite validne brojeve!");
+          return;
+        }
+      }
 
       fetch(WEB_APP_URL, {
         method: "POST",
@@ -1335,7 +1375,8 @@
           adminPin: adminPin.trim(),
           measurementId: measurementId,
           actionType: actionType,
-          newWeight: (actionType === 'edit') ? prompt("Nova težina u kg:", currentWeight) : null
+          newInputWeight: newInp,
+          newWeight: newPreb
         })
       })
       .then(res => res.json())
@@ -1559,7 +1600,17 @@
       
       let sumForDate = 0;
       measurements.forEach(m => {
-        let mDate = m.date || (m.time ? m.time.split(' ')[0] : "");
+        let mDate = "";
+        if (m.time) {
+          let parts = m.time.split(' ')[0].split('/');
+          if (parts.length === 3) {
+            mDate = parts[2] + "-" + parts[1].padStart(2, '0') + "-" + parts[0].padStart(2, '0');
+          } else {
+            mDate = m.time.split(' ')[0];
+          }
+        }
+        if (m.date) mDate = m.date;
+
         if (mDate === selectedDate || !mDate) {
           sumForDate += parseFloat(m.weight) || 0;
         }
