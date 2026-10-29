@@ -14,27 +14,31 @@
       justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;
     }
     .login-box {
-      background: white; padding: 24px; border-radius: 14px;
-      width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      background: white; padding: 20px; border-radius: 14px;
+      width: 100%; max-width: 340px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
-    .login-box h2 { margin-top: 0; color: #2c3e50; font-size: 22px; }
+    .login-box h2 { margin-top: 0; color: #2c3e50; font-size: 20px; }
     #pinDisplay {
-      font-size: 34px; font-weight: bold; letter-spacing: 8px;
-      background: #f1f2f6; padding: 12px; border-radius: 8px; margin-bottom: 15px;
-      border: 2px solid #bdc3c7; height: 44px; line-height: 44px; color: #333;
+      font-size: 32px; font-weight: bold; letter-spacing: 8px;
+      background: #f1f2f6; padding: 10px; border-radius: 8px; margin-bottom: 12px;
+      border: 2px solid #bdc3c7; height: 40px; line-height: 40px; color: #333;
     }
     
-    /* UNIVERZALNA TABELA ZA BROJČANIK - GARANTOVANO RADI NA SVAKOM TELEFONU */
-    .numpad-table {
-      width: 100%; border-collapse: separate; border-spacing: 8px; margin-bottom: 15px;
+    /* FLEKSIBILNA GRID MREŽA SA PUNIM OBLASTIMA ZA DODIR */
+    .numpad-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
     }
     .num-btn {
-      background: #34495e; color: white; border: none; font-size: 26px; font-weight: bold;
-      width: 33%; padding: 16px 0; border-radius: 8px; cursor: pointer; text-align: center;
+      background: #34495e; color: white; border: none; font-size: 24px; font-weight: bold;
+      padding: 16px 0; border-radius: 8px; cursor: pointer; text-align: center;
       user-select: none; -webkit-tap-highlight-color: transparent;
+      width: 100%; display: flex; justify-content: center; align-items: center;
     }
     .num-btn:active { background: #2c3e50; transform: scale(0.96); }
-    .num-btn.enter { background: #27ae60; width: 100%; padding: 18px 0; font-size: 24px; }
+    .num-btn.enter { background: #27ae60; grid-column: span 3; font-size: 22px; padding: 16px 0; }
     .num-btn.enter:active { background: #219653; }
     .num-btn.clear { background: #e74c3c; }
 
@@ -186,32 +190,22 @@
       <h2>Unesite PIN (Brojčanik)</h2>
       <div id="pinDisplay">_</div>
       
-      <!-- ZAMENJENO SA TABLEOM ZA 100% POUZDANO KLIKANJE NA SVIM TELEFONIMA -->
-      <table class="numpad-table">
-        <tr>
-          <td><button type="button" class="num-btn" onclick="pressNum('1')">1</button></td>
-          <td><button type="button" class="num-btn" onclick="pressNum('2')">2</button></td>
-          <td><button type="button" class="num-btn" onclick="pressNum('3')">3</button></td>
-        </tr>
-        <tr>
-          <td><button type="button" class="num-btn" onclick="pressNum('4')">4</button></td>
-          <td><button type="button" class="num-btn" onclick="pressNum('5')">5</button></td>
-          <td><button type="button" class="num-btn" onclick="pressNum('6')">6</button></td>
-        </tr>
-        <tr>
-          <td><button type="button" class="num-btn" onclick="pressNum('7')">7</button></td>
-          <td><button type="button" class="num-btn" onclick="pressNum('8')">8</button></td>
-          <td><button type="button" class="num-btn" onclick="pressNum('9')">9</button></td>
-        </tr>
-        <tr>
-          <td><button type="button" class="num-btn clear" onclick="clearPin()">C</button></td>
-          <td><button type="button" class="num-btn" onclick="pressNum('0')">0</button></td>
-          <td><button type="button" class="num-btn" onclick="backspacePin()">⌫</button></td>
-        </tr>
-        <tr>
-          <td colspan="3"><button type="button" class="num-btn enter" onclick="submitLogin()">OK / ENTER</button></td>
-        </tr>
-      </table>
+      <!-- SAVRŠENO ŠIROKA FLEX MREŽA ZA TASTERE -->
+      <div class="numpad-container">
+        <button type="button" class="num-btn" onclick="pressNum('1')">1</button>
+        <button type="button" class="num-btn" onclick="pressNum('2')">2</button>
+        <button type="button" class="num-btn" onclick="pressNum('3')">3</button>
+        <button type="button" class="num-btn" onclick="pressNum('4')">4</button>
+        <button type="button" class="num-btn" onclick="pressNum('5')">5</button>
+        <button type="button" class="num-btn" onclick="pressNum('6')">6</button>
+        <button type="button" class="num-btn" onclick="pressNum('7')">7</button>
+        <button type="button" class="num-btn" onclick="pressNum('8')">8</button>
+        <button type="button" class="num-btn" onclick="pressNum('9')">9</button>
+        <button type="button" class="num-btn clear" onclick="clearPin()">C</button>
+        <button type="button" class="num-btn" onclick="pressNum('0')">0</button>
+        <button type="button" class="num-btn" onclick="backspacePin()">⌫</button>
+        <button type="button" class="num-btn enter" onclick="submitLogin()">OK / ENTER</button>
+      </div>
 
       <div style="font-size: 13px; color: #7f8c8d;">Prvo pokretanje: unesite <b>1234</b></div>
     </div>
@@ -245,7 +239,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 3.3)</h3>
+            <h3>Vaga i Kontrola (ver 3.4)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
