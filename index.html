@@ -1788,33 +1788,33 @@
       });
     }
 
-    function updateAutoPrebranaKg() {
+function updateAutoPrebranaKg() {
       let dateInput = document.getElementById('hDate');
       let prebranaInput = document.getElementById('hPrebrana');
       if (!dateInput || !prebranaInput) return;
 
-      let selectedDate = dateInput.value;
+      let selectedDateYMD = dateInput.value; // format "YYYY-MM-DD"
+      // Konvertujemo u format "DD.MM.YYYY" radi poređenja sa normalizedDate / dateStr
+      let parts = selectedDateYMD.split('-');
+      let selectedDateDDMMYYYY = "";
+      if (parts.length === 3) {
+        selectedDateDDMMYYYY = parts[2] + '.' + parts[1] + '.' + parts[0] + '.';
+      }
+
       let measurements = window._cachedMeasurementsForHladnjaca || [];
-      
       let sumForDate = 0;
+
       measurements.forEach(m => {
-        let mDate = "";
-        if (m.date) {
-          mDate = m.date;
-        } else if (m.time) {
+        let mDateStr = m.normalizedDate || m.dateStr || "";
+        if (!mDateStr && m.time) {
           let rawTime = String(m.time).trim();
-          if (rawTime.includes('/')) {
-            let datePart = rawTime.split(' ')[0];
-            let parts = datePart.split('/');
-            if (parts.length === 3) {
-              mDate = parts[2] + "-" + parts[1].padStart(2, '0') + "-" + parts[0].padStart(2, '0');
-            }
-          } else if (rawTime.includes('-')) {
-            mDate = rawTime.split(' ')[0];
+          if (rawTime.includes('.')) {
+            mDateStr = rawTime.split(' ')[0];
           }
         }
 
-        if (mDate === selectedDate || !mDate) {
+        // Upoređujemo tačan datum (npr. "30.10.2026")
+        if (mDateStr === selectedDateDDMMYYYY || mDateStr === selectedDateYMD || mDateStr.startsWith(parts[2] + '.' + parts[1] + '.' + parts[0])) {
           sumForDate += parseFloat(m.weight) || 0;
         }
       });
