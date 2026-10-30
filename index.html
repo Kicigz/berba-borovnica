@@ -231,7 +231,7 @@
       <div>📅 <span id="hdrDate">-</span></div>
       <div>👤 <span id="hdrUser" style="color: #2ecc71;">-</span></div>
       <div>👥 Berača: <span id="hdrTotalPickers" style="color: #3498db;">0</span></div>
-      <div>⚖️ Dan: <span id="hdrTotalKg">0.00</span> kg</div>
+      <div>⚖️ Prebrano Dan: <span id="hdrTotalKg">0.00</span> kg</div>
       <div style="display: flex; gap: 8px;">
         <button class="btn" style="background:#2980b9; padding:6px 12px; font-size:14px;" onclick="toggleFullScreen()">🖥️ Full</button>
         <button class="btn" style="background:#e74c3c; padding:6px 12px; font-size:14px;" onclick="logout()">Izlaz</button>
@@ -242,7 +242,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 3.9)</h3>
+            <h3>Vaga i Kontrola (ver 4.0)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -363,6 +363,28 @@
       }
     });
 
+    function getActiveSectorForLeader(leaderName) {
+      let plantationMap = JSON.parse(localStorage.getItem('savedPlantationMap')) || [];
+      if (!leaderName || leaderName === '-') return "";
+
+      for (let f of plantationMap) {
+        let fieldName = f.fieldId || "Zasad";
+        if (f.rows) {
+          for (let r of f.rows) {
+            let rowNum = r.rowNum || "R";
+            if (r.fieldStatusList) {
+              for (let pIdx = 0; pIdx < r.fieldStatusList.length; pIdx++) {
+                if (r.fieldStatusList[pIdx] === 'green') {
+                  return `${fieldName} / ${rowNum} / P${pIdx + 1}`;
+                }
+              }
+            }
+          }
+        }
+      }
+      return "";
+    }
+
     function handleBarcodeInput(code) {
       let pickerCleanNum = code.replace(/[^0-9]/g, '');
       if (!pickerCleanNum) {
@@ -382,9 +404,13 @@
           assignedCrateNumber = res.crateNumber;
           workflowState = 1;
 
+          let leaderNameStr = res.leaderName || "-";
+          let activeSector = getActiveSectorForLeader(leaderNameStr);
+
           document.getElementById('valPicker').innerText = pendingPickerNum;
           document.getElementById('valCrate').innerText = "#" + assignedCrateNumber;
-          document.getElementById('valLeader').innerText = res.leaderName || "-";
+          document.getElementById('valLeader').innerText = leaderNameStr;
+          document.getElementById('valSector').innerText = activeSector;
           
           document.getElementById('promptPickerNum1').innerText = pendingPickerNum;
           document.getElementById('promptCrateNum1').innerText = "#" + assignedCrateNumber;
@@ -436,7 +462,7 @@
         data: {
           picker: pendingPickerNum,
           crateId: "Gajbica #" + assignedCrateNumber,
-          sector: "Zasad 1",
+          sector: document.getElementById('valSector').innerText,
           netWeight: finalPrebranaKg,
           badFruit: finalKaloKg,
           inputWeight: lockedInputWeight
@@ -450,8 +476,9 @@
       .then(res => res.json())
       .then(res => {
         if (res.success) {
-          document.getElementById('valLeader').innerText = res.leaderName || "-";
-          document.getElementById('valSector').innerText = "Zasad 1";
+          let leaderNameStr = res.leaderName || "-";
+          document.getElementById('valLeader').innerText = leaderNameStr;
+          document.getElementById('valSector').innerText = getActiveSectorForLeader(leaderNameStr);
           document.getElementById('valPickerTotalKg').innerText = (res.pickerTotalKg || finalPrebranaKg).toFixed(2) + " kg";
           document.getElementById('valPickerTotalKalo').innerText = (res.pickerTotalKalo || finalKaloKg).toFixed(2) + " kg";
           document.getElementById('valPickerRank').innerText = res.rankText || "Uspešno sačuvano";
@@ -481,7 +508,7 @@
       }).then(r => r.json()).then(d => {
         if (d) {
           document.getElementById('hdrDate').innerText = d.date || "-";
-          document.getElementById('hdrTotalKg').innerText = (parseFloat(d.totalKg) || 0).toFixed(2);
+          document.getElementById('hdrTotalKg').innerText = (parseFloat(d.totalNetKg || d.totalKg) || 0).toFixed(2);
           document.getElementById('hdrTotalPickers').innerText = d.totalPickers || 0;
         }
       }).catch(err => console.error("Greška pri učitavanju statistike:", err));
@@ -1091,9 +1118,14 @@
       .then(res => {
         if (res.success) {
           plantationMap = res.mapData || [];
+          localStorage.setItem('savedPlantationMap', JSON.stringify(plantationMap));
           if (callback) callback();
         }
-      }).catch(() => { if (callback) callback(); });
+      }).catch(() => {
+        let local = localStorage.getItem('savedPlantationMap');
+        if (local) plantationMap = JSON.parse(local);
+        if (callback) callback();
+      });
     }
 
     function loadHarvestMap(mode) {
@@ -1290,12 +1322,15 @@
         method: "POST",
         body: JSON.stringify({ action: "saveMapToCloud", mapData: plantationMap })
       }).then(r => r.json()).then(res => {
-        if (res.success) alert("Mapa uspešno sačuvana u oblaku!");
-        else alert("Greška pri čuvanju mape.");
+        if (res.success) {
+          localStorage.setItem('savedPlantationMap', JSON.stringify(plantationMap));
+          alert("Mapa uspešno sačuvana u oblaku!");
+        } else { alert("Greška pri čuvanju mape."); }
       });
     }
 
     function saveMapToCloudSilent() {
+      localStorage.setItem('savedPlantationMap', JSON.stringify(plantationMap));
       fetch(WEB_APP_URL, {
         method: "POST",
         body: JSON.stringify({ action: "saveMapToCloud", mapData: plantationMap })
