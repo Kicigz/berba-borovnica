@@ -310,7 +310,7 @@
     </div>
 
     <div class="bottom-status-container" id="bottomNavContainer">
-      <div id="status" onclick="requestSerialPort()" title="Kliknite da povežete USB vagu">Poveži Vagu...</div>
+      <div id="status" onclick="connectScale()" title="Kliknite da povežete vagu (USB/Bluetooth)">Poveži Vagu...</div>
       <div class="debug-box" id="debugLog"> Čeka se port...</div>
       <button class="btn-menu-nav" onclick="openMenuModal()">📂 Administracija</button>
     </div>
@@ -2063,14 +2063,109 @@ function updateAutoPrebranaKg() {
       } catch (e) {}
     }
 
+
+    let bluetoothDevice;
+    let bleCharacteristicTx;
+    let bleCharacteristicRx;
+
+    async function connectScale() {
+      // Ako je na raspolaganju Bluetooth (npr. Android tablet), pokreni Bluetooth, inače USB
+      if (navigator.bluetooth && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        connectBluetooth();
+      } else if ("serial" in navigator) {
+        requestSerialPort();
+      } else if (navigator.bluetooth) {
+        connectBluetooth();
+      } else {
+        alert("Vaš pretraživač ne podržava ni Web Serial ni Web Bluetooth!");
+      }
+    }
+
+    async function connectBluetooth() {
+      if (!("bluetooth" in navigator)) {
+        alert("Vaš pretraživač ne podržava Web Bluetooth API!");
+        return;
+      }
+
+      try {
+        document.getElementById('status').innerText = "Tražim 'BiberVaga'...";
+        
+        bluetoothDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ name: 'BiberVaga' }],
+          optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
+        });
+
+        bluetoothDevice.addEventListener('gattserverdisconnected', onBluetoothDisconnected);
+
+        const server = await bluetoothDevice.gatt.connect();
+        const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+        
+        bleCharacteristicTx = await service.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e');
+        await bleCharacteristicTx.startNotifications();
+        bleCharacteristicTx.addEventListener('characteristicvaluechanged', handleBluetoothData);
+
+        bleCharacteristicRx = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+
+        let stat = document.getElementById('status');
+        stat.innerText = "Bluetooth Vaga povezana!";
+        stat.style.backgroundColor = "#e8f8f5";
+        stat.style.color = "#27ae60";
+        document.getElementById('debugLog').innerText = "BLE povezan!";
+
+      } catch (error) {
+        console.error("Bluetooth greška:", error);
+        document.getElementById('status').innerText = "Poveži Vagu";
+        alert("Greška pri Bluetooth povezivanju: " + error);
+      }
+    }
+
+    function onBluetoothDisconnected() {
+      let stat = document.getElementById('status');
+      stat.innerText = "Veza prekinuta. Klikni ponovo.";
+      stat.style.backgroundColor = "#fadbd8";
+      stat.style.color = "#c0392b";
+      document.getElementById('debugLog').innerText = "BLE diskonektovan.";
+    }
+
+    let bluetoothDataBuffer = "";
+    function handleBluetoothData(event) {
+      const value = event.target.value;
+      const decoder = new TextDecoder('utf-8');
+      const chunk = decoder.decode(value);
+      
+      bluetoothDataBuffer += chunk;
+      let lines = bluetoothDataBuffer.split('\n');
+      bluetoothDataBuffer = lines.pop();
+
+      for (let line of lines) {
+        let clean = line.trim();
+        if (clean) {
+          document.getElementById('debugLog').innerText = "BLE: " + clean;
+          parseWeightData(clean);
+        }
+      }
+    }
+
     async function tareScale() {
       cancelWorkflow();
       tareOffset = rawWeight;
       document.getElementById('weightVal').innerText = "0.00 kg";
-      if (port && port.writable) {
-        let writer = port.writable.getWriter();
-        await writer.write(new TextEncoder().encode("T\n"));
-        writer.releaseLock();
+      
+      if (bleCharacteristicRx) {
+        try {
+          const encoder = new TextEncoder();
+          await bleCharacteristicRx.writeValue(encoder.encode("T"));
+        } catch (err) {
+          console.error("Greška pri slanju Bluetooth Tare:", err);
+        }
+      } else if (port && port.writable) {
+        try {
+          let writer = port.writable.getWriter();
+          await writer.write(new TextEncoder().encode("T\n"));
+          writer.releaseLock();
+        } catch (err) {
+          console.error("Greška pri slanju USB Tare:", err);
+        }
       }
     }
   </script>
