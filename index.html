@@ -185,6 +185,13 @@
     .report-group-card { background: white; border-radius: 14px; padding: 18px; border: 1px solid #b2bec3; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; border-left: 8px solid #2980b9; transition: transform 0.1s; }
     .report-group-card:hover { transform: translateY(-2px); border-color: #0984e3; }
     .picker-detail-row { background: white; border: 1px solid #b2bec3; border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border-left: 5px solid #0984e3; }
+    
+    /* Novi stilovi za kockice dana */
+    .date-tiles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 12px; }
+    .date-tile { background: #2980b9; color: white; padding: 14px 10px; border-radius: 10px; text-align: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: transform 0.1s, background 0.1s; display: flex; flex-direction: column; gap: 4px; }
+    .date-tile:hover { transform: translateY(-2px); background: #2471a3; }
+    .date-tile .date-val { font-size: 16px; font-weight: bold; }
+    .date-tile .date-stats { font-size: 12px; opacity: 0.9; }
   </style>
 </head>
 <body>
@@ -242,7 +249,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 4.0)</h3>
+            <h3>Vaga i Kontrola (ver 4.1)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -977,7 +984,11 @@
       });
     }
 
-    function loadWindow3(selectedGroupNum = null) {
+    // ==========================================
+    // MODUL 3 I MODUL 6: PRIKAZ PO DANIMA (KOCKICE - NAJNOVIJI PRVI)
+    // ==========================================
+
+    function loadWindow3(selectedDate = null, selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
 
@@ -989,13 +1000,69 @@
       .then(([resWorkers, resPickers, resMeas]) => {
         let groups = resWorkers.success ? resWorkers.groups : [];
         let pickers = resPickers.success ? resPickers.pickers : [];
-        let measurements = resMeas.success ? resMeas.measurements : [];
+        let measurements = (resMeas.success && resMeas.measurements) ? resMeas.measurements : [];
 
-        if (selectedGroupNum !== null) {
+        // Mapiramo merenja sa datumima u formatu DD.MM.YYYY
+        measurements.forEach(m => {
+          if (!m.dateStr) {
+            let rawTime = String(m.time || m.date || "").trim();
+            // Ako je time npr. "30.10.2026 14:05" ili "2026-10-30" ili ISO
+            if (rawTime.includes('.')) {
+              m.dateStr = rawTime.split(' ')[0];
+            } else if (rawTime.includes('-')) {
+              let parts = rawTime.split(' ')[0].split('-');
+              if (parts.length === 3) m.dateStr = parts[2] + '.' + parts[1] + '.' + parts[0];
+              else m.dateStr = rawTime.split(' ')[0];
+            } else {
+              m.dateStr = UtilitiesFormatDate(new Date()) || "Danas";
+            }
+          }
+        });
+
+        // 1. Ako imamo izabran datum, ali nismo izabrali grupu -> prikaži grupe za taj dan
+        if (selectedDate !== null && selectedGroupNum === null) {
+          let dayMeasurements = measurements.filter(m => m.dateStr === selectedDate);
+          
+          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 style="margin:0; font-size:18px;">📊 Izveštaj za dan: ${selectedDate}</h3>
+            <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow3(null, null)">← Nazad na dane</button>
+          </div>
+          <p style="font-size:14px; color:#666; margin-bottom:12px;">Izaberite grupu za izabrani datum:</p>
+          <div class="report-card-grid">`;
+
+          groups.forEach(g => {
+            let groupNum = g.extra;
+            let leaderName = g.name;
+            let groupPickers = pickers.filter(p => String(p.groupNum) === String(groupNum));
+            let pickerNums = groupPickers.map(p => p.pickerNum);
+            let groupMeasurements = dayMeasurements.filter(m => pickerNums.includes(String(m.pickerNum)));
+            
+            let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+            let totalGroupInputKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.inputWeight) || (parseFloat(m.weight) + parseFloat(m.kalo || 0)) || 0), 0);
+            let totalGroupKalo = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.kalo) || 0), 0);
+
+            html += `<div class="report-group-card" onclick="loadWindow3('${selectedDate}', '${groupNum}')">
+              <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
+              <div style="font-size:15px; color:#333; margin-bottom:6px;">Vođa: <b>${leaderName}</b></div>
+              <div style="font-size:14px; color:#2c3e50; margin-bottom:4px;">👥 Berača: <b>${groupPickers.length}</b></div>
+              <div style="font-size:14px; color:#2c3e50; margin-bottom:2px;">Ukupno ubrano: <b>${totalGroupInputKg.toFixed(2)} kg</b></div>
+              <div style="font-size:14px; color:#27ae60; font-weight:bold;">Prebrano: ${totalGroupKg.toFixed(2)} kg</div>
+              <div style="font-size:13px; color:#e74c3c; font-weight:bold; margin-top:2px;">Kalo: ${totalGroupKalo.toFixed(2)} kg</div>
+            </div>`;
+          });
+          html += `</div>`;
+          document.getElementById('modalBodyContent').innerHTML = html;
+          return;
+        }
+
+        // 2. Ako imamo izabran i datum i grupu -> prikaži berače te grupe za taj dan
+        if (selectedDate !== null && selectedGroupNum !== null) {
+          let dayMeasurements = measurements.filter(m => m.dateStr === selectedDate);
           let targetGroup = groups.find(g => String(g.extra) === String(selectedGroupNum));
           let groupPickers = pickers.filter(p => String(p.groupNum) === String(selectedGroupNum));
           let pickerNums = groupPickers.map(p => p.pickerNum);
-          let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
+          let groupMeasurements = dayMeasurements.filter(m => pickerNums.includes(String(m.pickerNum)));
+          
           let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
           let totalGroupInputKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.inputWeight) || (parseFloat(m.weight) + parseFloat(m.kalo || 0)) || 0), 0);
           let totalGroupKalo = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.kalo) || 0), 0);
@@ -1015,8 +1082,8 @@
           });
 
           let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="margin:0; font-size:18px;">📊 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})</h3>
-            <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow3(null)">← Nazad na grupe</button>
+            <h3 style="margin:0; font-size:18px;">📊 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''}) — ${selectedDate}</h3>
+            <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow3('${selectedDate}', null)">← Nazad na grupe</button>
           </div>
           <div class="section-card" style="border: 2px solid #2980b9;">
             <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; flex-direction:column; gap:4px;">
@@ -1044,35 +1111,254 @@
           return;
         }
 
+        // 3. Početni prikaz: Prikaz svih dana u formi kockica (najnoviji datum na vrhu)
+        let daysMap = {};
+        measurements.forEach(m => {
+          let d = m.dateStr || "Nepoznat datum";
+          if (!daysMap[d]) daysMap[d] = { count: 0, kg: 0 };
+          daysMap[d].count++;
+          daysMap[d].kg += parseFloat(m.weight) || 0;
+        });
+
+        let sortedDays = Object.keys(daysMap).sort((a, b) => {
+          // Format DD.MM.YYYY
+          let pA = a.split('.'), pB = b.split('.');
+          if (pA.length === 3 && pB.length === 3) {
+            let dateA = new Date(pA[2], pA[1]-1, pA[0]);
+            let dateB = new Date(pB[2], pB[1]-1, pB[0]);
+            return dateB - dateA; // Najnoviji prvi
+          }
+          return b.localeCompare(a);
+        });
+
+        // Ako nema merenja, dodaj bar današnji dan
+        let todayStrTag = getTodayDateFormatted();
+        if (sortedDays.length === 0) {
+          sortedDays = [todayStrTag];
+          daysMap[todayStrTag] = { count: 0, kg: 0 };
+        }
+
         let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="margin:0; font-size:18px;">📊 Izveštaj o branju po grupama</h3>
+          <h3 style="margin:0; font-size:18px;">📊 Izveštaji po danima berbe</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
         </div>
-        <p style="font-size:14px; color:#666; margin-bottom:12px;">Izaberite grupu da vidite učinak pojedinačnih berača:</p>
-        <div class="report-card-grid">`;
+        <p style="font-size:14px; color:#666; margin-bottom:12px;">Kliknite na željeni dan da otvorite izveštaj:</p>
+        <div class="date-tiles-grid">`;
 
-        groups.forEach(g => {
-          let groupNum = g.extra;
-          let leaderName = g.name;
-          let groupPickers = pickers.filter(p => String(p.groupNum) === String(groupNum));
-          let pickerNums = groupPickers.map(p => p.pickerNum);
-          let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
-          let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
-          let totalGroupInputKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.inputWeight) || (parseFloat(m.weight) + parseFloat(m.kalo || 0)) || 0), 0);
-          let totalGroupKalo = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.kalo) || 0), 0);
-
-          html += `<div class="report-group-card" onclick="loadWindow3('${groupNum}')">
-            <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
-            <div style="font-size:15px; color:#333; margin-bottom:6px;">Vođa: <b>${leaderName}</b></div>
-            <div style="font-size:14px; color:#2c3e50; margin-bottom:4px;">👥 Berača: <b>${groupPickers.length}</b></div>
-            <div style="font-size:14px; color:#2c3e50; margin-bottom:2px;">Ukupno ubrano: <b>${totalGroupInputKg.toFixed(2)} kg</b></div>
-            <div style="font-size:14px; color:#27ae60; font-weight:bold;">Prebrano: ${totalGroupKg.toFixed(2)} kg</div>
-            <div style="font-size:13px; color:#e74c3c; font-weight:bold; margin-top:2px;">Kalo: ${totalGroupKalo.toFixed(2)} kg</div>
+        sortedDays.forEach(d => {
+          let info = daysMap[d] || { count: 0, kg: 0 };
+          html += `<div class="date-tile" onclick="loadWindow3('${d}', null)">
+            <div class="date-val">📅 ${d}</div>
+            <div class="date-stats">⚖️ ${info.kg.toFixed(1)} kg (${info.count} merenja)</div>
           </div>`;
         });
         html += `</div>`;
         document.getElementById('modalBodyContent').innerHTML = html;
       });
+    }
+
+    function loadWindow6(selectedDate = null, selectedGroupNum = null) {
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna...</p>`;
+      document.getElementById('menuModal').style.display = 'flex';
+
+      Promise.all([
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json()),
+        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
+      ])
+      .then(([resGroups, resPickers, resMeas]) => {
+        let groups = resGroups.success ? resGroups.groups : [];
+        let pickers = resPickers.success ? resPickers.pickers : [];
+        let measurements = (resMeas.success && resMeas.measurements) ? resMeas.measurements : [];
+        let currentPricePerKg = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
+
+        measurements.forEach(m => {
+          if (!m.dateStr) {
+            let rawTime = String(m.time || m.date || "").trim();
+            if (rawTime.includes('.')) {
+              m.dateStr = rawTime.split(' ')[0];
+            } else if (rawTime.includes('-')) {
+              let parts = rawTime.split(' ')[0].split('-');
+              if (parts.length === 3) m.dateStr = parts[2] + '.' + parts[1] + '.' + parts[0];
+              else m.dateStr = rawTime.split(' ')[0];
+            } else {
+              m.dateStr = getTodayDateFormatted();
+            }
+          }
+        });
+
+        // 1. Ako imamo izabran dan, ali nju grupu -> prikaži grupe za taj dan
+        if (selectedDate !== null && selectedGroupNum === null) {
+          let dayMeasurements = measurements.filter(m => m.dateStr === selectedDate);
+
+          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 style="margin:0; font-size:18px;">💰 Obračun dana: ${selectedDate}</h3>
+            <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow6(null, null)">← Nazad na dane</button>
+          </div>
+          <div class="report-card-grid">`;
+
+          groups.forEach(g => {
+            let groupNum = g.extra;
+            let leaderName = g.name;
+            let groupPickers = pickers.filter(p => String(p.groupNum) === String(groupNum));
+            let pickerNums = groupPickers.map(p => p.pickerNum);
+            let groupMeasurements = dayMeasurements.filter(m => pickerNums.includes(String(m.pickerNum)));
+            let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+            let totalGroupPay = totalGroupKg * currentPricePerKg;
+
+            html += `<div class="report-group-card" onclick="loadWindow6('${selectedDate}', '${groupNum}')">
+              <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
+              <div style="font-size:15px; color:#333; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
+              <div style="display:flex; justify-content:space-between; font-size:14px; border-top:2px solid #dfe6e9; padding-top:8px; color:#2c3e50;">
+                <span>👥 Berača: <b>${groupPickers.length}</b></span>
+                <span style="color:#27ae60; font-weight:bold; font-size:15px;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:16px; margin-top:8px; color:#2980b9; font-weight:bold; border-top:1px dashed #b2bec3; padding-top:6px;">
+                <span>Isplata:</span><span>${totalGroupPay.toFixed(2)} RSD</span>
+              </div>
+            </div>`;
+          });
+          html += `</div>`;
+          document.getElementById('modalBodyContent').innerHTML = html;
+          return;
+        }
+
+        // 2. Ako imamo izabran i dan i grupu -> prikaži berače te grupe za taj dan sa obračunom
+        if (selectedDate !== null && selectedGroupNum !== null) {
+          let dayMeasurements = measurements.filter(m => m.dateStr === selectedDate);
+          let targetGroup = groups.find(g => String(g.extra) === String(selectedGroupNum));
+          let groupPickers = pickers.filter(p => String(p.groupNum) === String(selectedGroupNum));
+          let pickerNums = groupPickers.map(p => p.pickerNum);
+          let groupMeasurements = dayMeasurements.filter(m => pickerNums.includes(String(m.pickerNum)));
+          let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+          let totalGroupPay = totalGroupKg * currentPricePerKg;
+
+          let pickerStats = {};
+          groupPickers.forEach(p => { pickerStats[p.pickerNum] = { kg: 0, crates: 0 }; });
+          groupMeasurements.forEach(m => {
+            if (pickerStats[m.pickerNum]) {
+              pickerStats[m.pickerNum].kg += parseFloat(m.weight) || 0;
+              pickerStats[m.pickerNum].crates++;
+            }
+          });
+
+          let viberText = `*Obračun berbe — ${selectedDate} - Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})*%0A` +
+                          `Ukupno: ${totalGroupKg.toFixed(2)} kg%0A` +
+                          `Isplata: ${totalGroupPay.toFixed(2)} RSD%0A` +
+                          `Broj berača: ${groupPickers.length}`;
+          let viberUrl = `viber://forward?text=` + encodeURIComponent(viberText);
+
+          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <h3 style="margin:0; font-size:16px;">💰 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''}) — ${selectedDate}</h3>
+              <a href="${viberUrl}" class="btn-action" style="background:#7360f2; padding:6px 12px; font-size:12px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">💬 Viber</a>
+            </div>
+            <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:12px;" onclick="loadWindow6('${selectedDate}', null)">← Nazad</button>
+          </div>
+          
+          <div class="section-card" style="padding:10px 14px; margin-bottom:10px; border: 2px solid #2980b9;">
+            <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:bold; color:#2c3e50;">
+              <span>Ukupno: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span></span>
+              <span style="color:#2980b9;">Isplata (${currentPricePerKg} din/kg): ${totalGroupPay.toFixed(2)} RSD</span>
+            </div>
+          </div>
+          <div class="section-card" style="padding:10px;">
+            <h4 style="margin:0 0 8px 0; font-size:14px;">Berači u grupi</h4>`;
+
+          groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
+          groupPickers.forEach(p => {
+            let stats = pickerStats[p.pickerNum] || { kg: 0, crates: 0 };
+            let pay = stats.kg * currentPricePerKg;
+            
+            html += `<div style="background:white; border:1px solid #dcdde1; border-radius:6px; padding:8px 12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; font-size:14px;">
+              <div><b>#${p.pickerNum}</b> <span style="font-size:12px; color:#666;">(${stats.crates}g)</span></div>
+              <div style="text-align:right;">
+                <span style="color:#27ae60; font-weight:bold;">${stats.kg.toFixed(2)} kg</span> | 
+                <span style="color:#2980b9; font-weight:bold;">${pay.toFixed(2)} RSD</span>
+              </div>
+            </div>`;
+          });
+          html += `</div>`;
+          document.getElementById('modalBodyContent').innerHTML = html;
+          return;
+        }
+
+        // 3. Početni prikaz: Prikaz dana u obliku kockica (najnoviji na vrhu) + podešavanje cene
+        let daysMap = {};
+        measurements.forEach(m => {
+          let d = m.dateStr || "Nepoznat datum";
+          if (!daysMap[d]) daysMap[d] = { count: 0, kg: 0 };
+          daysMap[d].count++;
+          daysMap[d].kg += parseFloat(m.weight) || 0;
+        });
+
+        let sortedDays = Object.keys(daysMap).sort((a, b) => {
+          let pA = a.split('.'), pB = b.split('.');
+          if (pA.length === 3 && pB.length === 3) {
+            let dateA = new Date(pA[2], pA[1]-1, pA[0]);
+            let dateB = new Date(pB[2], pB[1]-1, pB[0]);
+            return dateB - dateA;
+          }
+          return b.localeCompare(a);
+        });
+
+        let todayStrTag = getTodayDateFormatted();
+        if (sortedDays.length === 0) {
+          sortedDays = [todayStrTag];
+          daysMap[todayStrTag] = { count: 0, kg: 0 };
+        }
+
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin:0; font-size:18px;">💰 Obračun dana po danima berbe</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
+        </div>
+
+        <div class="section-card" style="border: 2px solid #27ae60; background:#f4f6f9;">
+          <h4 style="color:#27ae60;">Cena branja po kilogramu</h4>
+          <div class="form-row">
+            <div class="form-group-col"><label>Cena (RSD / kg)</label><input type="number" id="globalPricePerKgInput" step="0.5" value="${currentPricePerKg}"></div>
+            <div style="flex:0 0 auto;"><button class="btn" style="background:#27ae60; padding:12px 20px;" onclick="saveGlobalPrice()">Sačuvaj cenu</button></div>
+          </div>
+        </div>
+
+        <p style="font-size:14px; color:#666; margin:12px 0 8px 0;">Izaberite dan berbe za obračun:</p>
+        <div class="date-tiles-grid">`;
+
+        sortedDays.forEach(d => {
+          let info = daysMap[d] || { count: 0, kg: 0 };
+          let dayPay = info.kg * currentPricePerKg;
+          html += `<div class="date-tile" onclick="loadWindow6('${d}', null)">
+            <div class="date-val">📅 ${d}</div>
+            <div class="date-stats">⚖️ ${info.kg.toFixed(1)} kg</div>
+            <div class="date-stats" style="color:#ffeaa7; font-weight:bold;">${dayPay.toFixed(0)} RSD</div>
+          </div>`;
+        });
+        html += `</div>`;
+        document.getElementById('modalBodyContent').innerHTML = html;
+      });
+    }
+
+    function getTodayDateFormatted() {
+      let d = new Date();
+      let dd = String(d.getDate()).padStart(2, '0');
+      let mm = String(d.getMonth() + 1).padStart(2, '0');
+      let yyyy = d.getFullYear();
+      return dd + '.' + mm + '.' + yyyy;
+    }
+
+    function UtilitiesFormatDate(d) {
+      let dd = String(d.getDate()).padStart(2, '0');
+      let mm = String(d.getMonth() + 1).padStart(2, '0');
+      let yyyy = d.getFullYear();
+      return dd + '.' + mm + '.' + yyyy;
+    }
+
+    function saveGlobalPrice() {
+      let val = parseFloat(document.getElementById('globalPricePerKgInput').value);
+      if (isNaN(val) || val <= 0) { alert("Unesite validnu cenu!"); return; }
+      localStorage.setItem('savedPricePerKg', val);
+      alert("Cena od " + val + " RSD/kg je uspešno sačuvana!");
+      loadWindow6(null, null);
     }
 
     function loadWindow4SubMenu() {
@@ -1418,128 +1704,6 @@
         if (res.success) { alert("Uspešno izmenjeno!"); loadWindow5(); }
         else { alert(res.error || "Pogrešan PIN!"); }
       });
-    }
-
-    function loadWindow6(selectedGroupNum = null) {
-      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna...</p>`;
-      document.getElementById('menuModal').style.display = 'flex';
-
-      Promise.all([
-        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getWorkersAndGroups" }) }).then(r => r.json()),
-        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getPickersData" }) }).then(r => r.json()),
-        fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "getAllMeasurements" }) }).then(r => r.json()).catch(() => ({ success: true, measurements: [] }))
-      ])
-      .then(([resGroups, resPickers, resMeas]) => {
-        let groups = resGroups.success ? resGroups.groups : [];
-        let pickers = resPickers.success ? resPickers.pickers : [];
-        let measurements = resMeas.success ? resMeas.measurements : [];
-        let currentPricePerKg = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
-
-        if (selectedGroupNum !== null) {
-          let targetGroup = groups.find(g => String(g.extra) === String(selectedGroupNum));
-          let groupPickers = pickers.filter(p => String(p.groupNum) === String(selectedGroupNum));
-          let pickerNums = groupPickers.map(p => p.pickerNum);
-          let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
-          let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
-          let totalGroupPay = totalGroupKg * currentPricePerKg;
-
-          let pickerStats = {};
-          groupPickers.forEach(p => { pickerStats[p.pickerNum] = { kg: 0, crates: 0 }; });
-          groupMeasurements.forEach(m => {
-            if (pickerStats[m.pickerNum]) {
-              pickerStats[m.pickerNum].kg += parseFloat(m.weight) || 0;
-              pickerStats[m.pickerNum].crates++;
-            }
-          });
-
-          let viberText = `*Obračun berbe - Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})*%0A` +
-                          `Ukupno: ${totalGroupKg.toFixed(2)} kg%0A` +
-                          `Isplata: ${totalGroupPay.toFixed(2)} RSD%0A` +
-                          `Broj berača: ${groupPickers.length}`;
-          let viberUrl = `viber://forward?text=` + encodeURIComponent(viberText);
-
-          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <h3 style="margin:0; font-size:16px;">💰 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''})</h3>
-              <a href="${viberUrl}" class="btn-action" style="background:#7360f2; padding:6px 12px; font-size:12px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">💬 Viber</a>
-            </div>
-            <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:12px;" onclick="loadWindow6(null)">← Nazad</button>
-          </div>
-          
-          <div class="section-card" style="padding:10px 14px; margin-bottom:10px; border: 2px solid #2980b9;">
-            <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:bold; color:#2c3e50;">
-              <span>Ukupno: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span></span>
-              <span style="color:#2980b9;">Isplata (${currentPricePerKg} din/kg): ${totalGroupPay.toFixed(2)} RSD</span>
-            </div>
-          </div>
-          <div class="section-card" style="padding:10px;">
-            <h4 style="margin:0 0 8px 0; font-size:14px;">Berači u grupi</h4>`;
-
-          groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
-          groupPickers.forEach(p => {
-            let stats = pickerStats[p.pickerNum] || { kg: 0, crates: 0 };
-            let pay = stats.kg * currentPricePerKg;
-            
-            html += `<div style="background:white; border:1px solid #dcdde1; border-radius:6px; padding:8px 12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; font-size:14px;">
-              <div><b>#${p.pickerNum}</b> <span style="font-size:12px; color:#666;">(${stats.crates}g)</span></div>
-              <div style="text-align:right;">
-                <span style="color:#27ae60; font-weight:bold;">${stats.kg.toFixed(2)} kg</span> | 
-                <span style="color:#2980b9; font-weight:bold;">${pay.toFixed(2)} RSD</span>
-              </div>
-            </div>`;
-          });
-          html += `</div>`;
-          document.getElementById('modalBodyContent').innerHTML = html;
-          return;
-        }
-
-        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="margin:0; font-size:18px;">💰 Obračun dana - Unos cene i izaberite grupu</h3>
-          <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
-        </div>
-
-        <div class="section-card" style="border: 2px solid #27ae60; background:#f4f6f9;">
-          <h4 style="color:#27ae60;">Cena branja po kilogramu</h4>
-          <div class="form-row">
-            <div class="form-group-col"><label>Cena (RSD / kg)</label><input type="number" id="globalPricePerKgInput" step="0.5" value="${currentPricePerKg}"></div>
-            <div style="flex:0 0 auto;"><button class="btn" style="background:#27ae60; padding:12px 20px;" onclick="saveGlobalPrice()">Sačuvaj cenu</button></div>
-          </div>
-        </div>
-
-        <div class="report-card-grid">`;
-
-        groups.forEach(g => {
-          let groupNum = g.extra;
-          let leaderName = g.name;
-          let groupPickers = pickers.filter(p => String(p.groupNum) === String(groupNum));
-          let pickerNums = groupPickers.map(p => p.pickerNum);
-          let groupMeasurements = measurements.filter(m => pickerNums.includes(String(m.pickerNum)));
-          let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
-          let totalGroupPay = totalGroupKg * currentPricePerKg;
-
-          html += `<div class="report-group-card" onclick="loadWindow6('${groupNum}')">
-            <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
-            <div style="font-size:15px; color:#333; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
-            <div style="display:flex; justify-content:space-between; font-size:14px; border-top:2px solid #dfe6e9; padding-top:8px; color:#2c3e50;">
-              <span>👥 Berača: <b>${groupPickers.length}</b></span>
-              <span style="color:#27ae60; font-weight:bold; font-size:15px;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:16px; margin-top:8px; color:#2980b9; font-weight:bold; border-top:1px dashed #b2bec3; padding-top:6px;">
-              <span>Isplata:</span><span>${totalGroupPay.toFixed(2)} RSD</span>
-            </div>
-          </div>`;
-        });
-        html += `</div>`;
-        document.getElementById('modalBodyContent').innerHTML = html;
-      });
-    }
-
-    function saveGlobalPrice() {
-      let val = parseFloat(document.getElementById('globalPricePerKgInput').value);
-      if (isNaN(val) || val <= 0) { alert("Unesite validnu cenu!"); return; }
-      localStorage.setItem('savedPricePerKg', val);
-      alert("Cena od " + val + " RSD/kg je uspešno sačuvana!");
-      loadWindow6(null);
     }
 
     function loadWindow7() {
