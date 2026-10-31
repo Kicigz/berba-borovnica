@@ -2128,23 +2128,26 @@ function updateAutoPrebranaKg() {
     }
 
     let bluetoothDataBuffer = "";
-    function handleBluetoothData(event) {
-      const value = event.target.value;
-      const decoder = new TextDecoder('utf-8');
-      const chunk = decoder.decode(value);
-      
-      bluetoothDataBuffer += chunk;
-      let lines = bluetoothDataBuffer.split('\n');
-      bluetoothDataBuffer = lines.pop();
-
-      for (let line of lines) {
+  function handleBluetoothData(event) {
+    const value = event.target.value;
+    const decoder = new TextDecoder('utf-8');
+    const chunk = decoder.decode(value);
+    bluetoothDataBuffer += chunk;
+    let lines = bluetoothDataBuffer.split('\n');
+    bluetoothDataBuffer = lines.pop();
+    for (let line of lines) {
         let clean = line.trim();
         if (clean) {
-          document.getElementById('debugLog').innerText = "BLE: " + clean;
-          parseWeightData(clean);
+            // Ako slučajno naiđe višak teksta, uzmi samo deo od prvog '{' do kraja
+            let jsonStart = clean.indexOf('{');
+            if (jsonStart !== -1) {
+                clean = clean.substring(jsonStart);
+            }
+            document.getElementById('debugLog').innerText = "BLE: " + clean;
+            parseWeightData(clean);
         }
-      }
     }
+}
 
     async function tareScale() {
       cancelWorkflow();
