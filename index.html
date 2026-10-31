@@ -249,7 +249,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 4.1)</h3>
+            <h3>Vaga i Kontrola (ver 4.2)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -1493,7 +1493,7 @@
 
             html += `<div class="fields-detail-container">
               <div style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-size:14px; font-weight:bold; color:#2c3e50;">Polja u redu ${activeRow.rowNum} ${canModifySubFields ? '(Klikni na polje da promeniš status):' : '(Pregled polja):'}</span>
+                <span style="font-size:14px; font-weight:bold; color:#2c3e50;">Polja u redu ${activeRow.rowNum} ${canModifySubFields ? '(Klikni na polje koje bereš):' : '(Pregled polja):'}</span>
                 ${isAdminMode ? `<div style="display:flex; gap:8px;"><button class="btn-action btn-edit" style="background:#27ae60; padding:4px 8px; font-size:12px;" onclick="addSubField(${fIdx}, ${selectedRowForPreview.rIdx})">➕ Dodaj polje</button><button class="btn-action btn-del" style="padding:4px 8px; font-size:12px;" onclick="removeSubField(${fIdx}, ${selectedRowForPreview.rIdx})">➖ Obriši polje</button></div>` : ''}
               </div>`;
 
