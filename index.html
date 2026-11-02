@@ -233,7 +233,7 @@
       <div>📅 <span id="hdrDate">-</span></div>
       <div>👤 <span id="hdrUser" style="color: #2ecc71;">-</span></div>
       <div>👥 Berača: <span id="hdrTotalPickers" style="color: #3498db;">0</span></div>
-      <div>⚖️ Prebrano Danas: <span id="hdrTotalKg">0.00</span> kg</div>
+      <div>⚖️ Prebrano Dan: <span id="hdrTotalKg">0.00</span> kg</div>
       <div style="display: flex; gap: 8px;">
         <button class="btn" style="background:#2980b9; padding:6px 12px; font-size:14px;" onclick="toggleFullScreen()">🖥️ Full</button>
         <button class="btn" style="background:#e74c3c; padding:6px 12px; font-size:14px;" onclick="logout()">Izlaz</button>
@@ -244,7 +244,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola v4.4</h3>
+            <h3>Vaga i Kontrola (ver 4.5)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -553,12 +553,12 @@
 
       const menuItems = [
         { id: "1", label: "1. Dodaj berača u grupu" },
-        { id: "2", label: "2. Registracija Radnika na vagi i Grupovođa" },
+        { id: "2", label: "2. Radnici na vagi i Grupovođe" },
         { id: "3", label: "3. Izveštaj o branju (sa kalom)" },
         { id: "4", label: "4. Zasad i mapa" },
         { id: "5", label: "5. Izmene merenja na vagi" },
-        { id: "6", label: "6. Obračun dana (po kg)" },
-        { id: "7", label: "7. Završni obračun" }
+        { id: "6", label: "6. Obračun dana (sa cenom)" },
+        { id: "7", label: "7. Obračun za hladnjaču" }
       ];
 
       menuItems.forEach(item => {
@@ -1010,6 +1010,7 @@
       });
     }
 
+    // MODUL 3: IZVEŠTAJ SA ZBIRNIM PREGLEDOM NA VRHU
     function loadWindow3(selectedDate = null, selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja (Optimizovano)...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -1026,11 +1027,36 @@
         if (selectedDate !== null && selectedGroupNum === null) {
           let dayMeasurements = measurements.filter(m => m.normalizedDate === selectedDate || m.dateStr === selectedDate);
           
+          let totalDayInputKg = 0;
+          let totalDayKg = 0;
+          let totalDayKalo = 0;
+          let totalDayPickersCount = 0;
+
+          groups.forEach(g => {
+            let gPickers = pickers.filter(p => String(p.groupNum) === String(g.extra));
+            totalDayPickersCount += gPickers.length;
+            let pNums = gPickers.map(p => p.pickerNum);
+            let gMeas = dayMeasurements.filter(m => pNums.includes(String(m.pickerNum)));
+            totalDayKg += gMeas.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+            totalDayInputKg += gMeas.reduce((sum, m) => sum + (parseFloat(m.inputWeight) || (parseFloat(m.weight) + parseFloat(m.kalo || 0)) || 0), 0);
+            totalDayKalo += gMeas.reduce((sum, m) => sum + (parseFloat(m.kalo) || 0), 0);
+          });
+
           let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <h3 style="margin:0; font-size:18px;">📊 Izveštaj za dan: ${selectedDate}</h3>
             <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow3(null, null)">← Nazad na dane</button>
           </div>
-          <p style="font-size:14px; color:#666; margin-bottom:12px;">Izaberite grupu za izabrani datum:</p>
+
+          <div class="section-card" style="border: 2px solid #27ae60; background:#e8f8f5; margin-bottom:14px;">
+            <h4 style="color:#27ae60; margin-top:0;">🌟 Zbirni izveštaj dana za sve grupe</h4>
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; flex-direction:column; gap:4px;">
+              <div>👥 Ukupno berača: <b>${totalDayPickersCount}</b></div>
+              <div>Ukupno ubrano: <span style="color:#2c3e50;">${totalDayInputKg.toFixed(2)} kg</span></div>
+              <div>Prebrano (Neto): <span style="color:#27ae60;">${totalDayKg.toFixed(2)} kg</span> | Kalo: <span style="color:#e74c3c;">${totalDayKalo.toFixed(2)} kg</span></div>
+            </div>
+          </div>
+
+          <p style="font-size:14px; color:#666; margin-bottom:12px;">Izaberite grupu za detaljan pregled:</p>
           <div class="report-card-grid">`;
 
           let cardsHtml = "";
@@ -1159,6 +1185,7 @@
       });
     }
 
+    // MODUL 6: OBRAČUN DANA SA ZBIRNIM PREGLEDOM NA VRHU
     function loadWindow6(selectedDate = null, selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna (Optimizovano)...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -1177,13 +1204,37 @@
           let dayMeasurements = measurements.filter(m => m.normalizedDate === selectedDate || m.dateStr === selectedDate);
           let currentPricePerKg = parseFloat(dayPrices[selectedDate]) || parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
 
+          // Računanje zbirnih vrednosti za sve grupe za taj dan
+          let totalDayKg = 0;
+          let totalDayPay = 0;
+          let totalDayCrates = dayMeasurements.length;
+
+          groups.forEach(g => {
+            let gPickers = pickers.filter(p => String(p.groupNum) === String(g.extra));
+            let pNums = gPickers.map(p => p.pickerNum);
+            let gMeas = dayMeasurements.filter(m => pNums.includes(String(m.pickerNum)));
+            let gKg = gMeas.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+            totalDayKg += gKg;
+            totalDayPay += gKg * currentPricePerKg;
+          });
+
           let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <h3 style="margin:0; font-size:18px;">💰 Obračun dana: ${selectedDate}</h3>
             <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow6(null, null)">← Nazad na dane</button>
           </div>
 
-          <div class="section-card" style="border: 2px solid #27ae60; background:#f4f6f9; margin-bottom:12px;">
-            <h4 style="color:#27ae60;">Cena branja za ${selectedDate}</h4>
+          <div class="section-card" style="border: 2px solid #27ae60; background:#e8f8f5; margin-bottom:12px;">
+            <h4 style="color:#27ae60; margin-top:0;">🌟 Zbirni obračun dana (Sve grupe)</h4>
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; flex-direction:column; gap:4px; margin-bottom:10px;">
+              <div>Ukupno gajbica: <b>${totalDayCrates}</b></div>
+              <div>Ukupna prebrana količina: <span style="color:#27ae60;">${totalDayKg.toFixed(2)} kg</span></div>
+              <div>Dnevna cena branja: <b>${currentPricePerKg} RSD/kg</b></div>
+              <div>Ukupno za isplatu (Sve grupe): <span style="color:#2980b9; font-size:18px;">${totalDayPay.toFixed(2)} RSD</span></div>
+            </div>
+          </div>
+
+          <div class="section-card" style="border: 2px solid #2980b9; background:#f4f6f9; margin-bottom:12px;">
+            <h4 style="color:#2980b9;">Podešavanje cene branja za ${selectedDate}</h4>
             <div class="form-row">
               <div class="form-group-col"><label>Cena (RSD / kg)</label><input type="number" id="dayPricePerKgInput_${selectedDate}" step="0.5" value="${currentPricePerKg}"></div>
               <div style="flex:0 0 auto;"><button class="btn" style="background:#27ae60; padding:12px 20px;" onclick="saveDayPrice('${selectedDate}')">Sačuvaj cenu za ovaj dan</button></div>
@@ -1691,8 +1742,8 @@
       });
     }
 
-    // --- MODUL 7: GAZDINSTVA, PDV I UPLATE ---
-    let currentFarmsTab = 'dani'; // 'dani' | 'gazdinstva' | 'uplate'
+    // MODUL 7: GAZDINSTVA, PDV I UPLATE
+    let currentFarmsTab = 'dani';
 
     function loadWindow7(subTab = 'dani') {
       currentFarmsTab = subTab;
@@ -1774,7 +1825,6 @@
           html += `</div>`;
 
         } else {
-          // 'dani' subTab
           let farmOptions = `<option value="">-- Izaberi gazdinstvo --</option>`;
           storedFarms.forEach((f, idx) => { farmOptions += `<option value="${idx}">${f.name} (${f.pdv}% PDV)</option>`; });
 
@@ -1792,7 +1842,6 @@
             <button class="btn" style="background:#27ae60; margin-top:12px;" onclick="addHladnjacaDay()">Dodaj dan ✓</button>
           </div>`;
 
-          // Izračuni po gazdinstvima i zbirno
           let farmStats = {};
           storedFarms.forEach((f, idx) => {
             farmStats[idx] = { name: f.name, pdv: f.pdv, prebrana: 0, otkup: 0, prihodSaPdv: 0 };
@@ -1805,7 +1854,7 @@
           storedDays.forEach(d => {
             let pKg = parseFloat(d.prebrana) || 0;
             let oKg = parseFloat(d.otkup) || 0;
-            let cRsd = parseFloat(d.cena) || 0; // cena bez PDV-a
+            let cRsd = parseFloat(d.cena) || 0;
             let fIdx = d.farmIndex;
 
             let pdvRate = 8;
@@ -1827,7 +1876,6 @@
             }
           });
 
-          // Izračun uplata po gazdinstvima
           let farmPaymentsSum = {};
           storedPayments.forEach(p => {
             let fIdx = p.farmIndex;
