@@ -182,7 +182,7 @@
     .report-group-card:hover { transform: translateY(-1px); border-color: #0984e3; }
     .picker-detail-row { background: white; border: 1px solid #dcdde1; border-radius: 6px; padding: 6px 10px; margin-bottom: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); border-left: 4px solid #0984e3; }
     
-    /* Dve kolone za dane u Modulu 3 */
+    /* Dve kolone za dane u Modulu 3 i Modulu 6 */
     .date-two-col-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 8px; margin-top: 8px; }
     .date-compact-row {
       background: white; border: 1px solid #dcdde1; border-radius: 6px; padding: 8px 12px;
@@ -247,7 +247,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 4.8)</h3>
+            <h3>Vaga i Kontrola (ver 4.9)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -1222,7 +1222,7 @@
       });
     }
 
-    // MODUL 6: OBRAČUN DANA SA ZBIRNIM PREGLEDOM SVIH DANA NA VRHU I KOMPAKTNIM LISTAMA
+    // MODUL 6: OBRAČUN DANA SA DVE KOLONE ZA DANE I NEPROMENJENIM SADRŽAJEM REDOVA
     function loadWindow6(selectedDate = null, selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna (Kompaktno)...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -1414,7 +1414,7 @@
         </div>
 
         <p style="font-size:13px; color:#666; margin:0 0 6px 0;">Izaberite dan berbe:</p>
-        <div class="date-compact-list">`;
+        <div class="date-two-col-grid">`;
 
         let listHtml = "";
         sortedDays.forEach(d => {
