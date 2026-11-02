@@ -244,7 +244,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 4.3 Optimized)</h3>
+            <h3>Vaga i Kontrola (ver 4.4 Optimized)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -1171,15 +1171,25 @@
       .then(([resGroups, resPickers, measurements]) => {
         let groups = resGroups.success ? resGroups.groups : [];
         let pickers = resPickers.success ? resPickers.pickers : [];
-        let currentPricePerKg = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
+        let dayPrices = JSON.parse(localStorage.getItem('savedDayPricesMap')) || {};
 
         if (selectedDate !== null && selectedGroupNum === null) {
           let dayMeasurements = measurements.filter(m => m.normalizedDate === selectedDate || m.dateStr === selectedDate);
+          let currentPricePerKg = parseFloat(dayPrices[selectedDate]) || parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
 
           let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <h3 style="margin:0; font-size:18px;">💰 Obračun dana: ${selectedDate}</h3>
             <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow6(null, null)">← Nazad na dane</button>
           </div>
+
+          <div class="section-card" style="border: 2px solid #27ae60; background:#f4f6f9; margin-bottom:12px;">
+            <h4 style="color:#27ae60;">Cena branja za ${selectedDate}</h4>
+            <div class="form-row">
+              <div class="form-group-col"><label>Cena (RSD / kg)</label><input type="number" id="dayPricePerKgInput_${selectedDate}" step="0.5" value="${currentPricePerKg}"></div>
+              <div style="flex:0 0 auto;"><button class="btn" style="background:#27ae60; padding:12px 20px;" onclick="saveDayPrice('${selectedDate}')">Sačuvaj cenu za ovaj dan</button></div>
+            </div>
+          </div>
+
           <div class="report-card-grid">`;
 
           let cardsHtml = "";
@@ -1216,6 +1226,7 @@
           let pickerNums = groupPickers.map(p => p.pickerNum);
           let groupMeasurements = dayMeasurements.filter(m => pickerNums.includes(String(m.pickerNum)));
           let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+          let currentPricePerKg = parseFloat(dayPrices[selectedDate]) || parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
           let totalGroupPay = totalGroupKg * currentPricePerKg;
 
           let pickerStats = {};
@@ -1297,25 +1308,18 @@
           <h3 style="margin:0; font-size:18px;">💰 Obračun dana po danima berbe</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
         </div>
-
-        <div class="section-card" style="border: 2px solid #27ae60; background:#f4f6f9;">
-          <h4 style="color:#27ae60;">Cena branja po kilogramu</h4>
-          <div class="form-row">
-            <div class="form-group-col"><label>Cena (RSD / kg)</label><input type="number" id="globalPricePerKgInput" step="0.5" value="${currentPricePerKg}"></div>
-            <div style="flex:0 0 auto;"><button class="btn" style="background:#27ae60; padding:12px 20px;" onclick="saveGlobalPrice()">Sačuvaj cenu</button></div>
-          </div>
-        </div>
-
-        <p style="font-size:14px; color:#666; margin:12px 0 8px 0;">Izaberite dan berbe za obračun:</p>
+        <p style="font-size:14px; color:#666; margin:0 0 12px 0;">Izaberite dan berbe za podešavanje cene i obračun:</p>
         <div class="date-tiles-grid">`;
 
+        let defaultGlobalPrice = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
         let tilesHtml = "";
         sortedDays.forEach(d => {
           let info = daysMap[d] || { count: 0, kg: 0 };
-          let dayPay = info.kg * currentPricePerKg;
+          let dayPrice = parseFloat(dayPrices[d]) || defaultGlobalPrice;
+          let dayPay = info.kg * dayPrice;
           tilesHtml += `<div class="date-tile" onclick="loadWindow6('${d}', null)">
             <div class="date-val">📅 ${d}</div>
-            <div class="date-stats">⚖️ ${info.kg.toFixed(1)} kg</div>
+            <div class="date-stats">⚖️ ${info.kg.toFixed(1)} kg (${dayPrice} din/kg)</div>
             <div class="date-stats" style="color:#ffeaa7; font-weight:bold;">${dayPay.toFixed(0)} RSD</div>
           </div>`;
         });
@@ -1332,12 +1336,15 @@
       return dd + '.' + mm + '.' + yyyy;
     }
 
-    function saveGlobalPrice() {
-      let val = parseFloat(document.getElementById('globalPricePerKgInput').value);
-      if (isNaN(val) || val <= 0) { alert("Unesite validnu cenu!"); return; }
-      localStorage.setItem('savedPricePerKg', val);
-      alert("Cena od " + val + " RSD/kg je uspešno sačuvana!");
-      loadWindow6(null, null);
+    function saveDayPrice(dateStr) {
+      let inputVal = parseFloat(document.getElementById('dayPricePerKgInput_' + dateStr).value);
+      if (isNaN(inputVal) || inputVal <= 0) { alert("Unesite validnu cenu!"); return; }
+      
+      let dayPrices = JSON.parse(localStorage.getItem('savedDayPricesMap')) || {};
+      dayPrices[dateStr] = inputVal;
+      localStorage.setItem('savedDayPricesMap', JSON.stringify(dayPrices));
+      alert("Cena od " + inputVal + " RSD/kg za dan " + dateStr + " je uspešno sačuvana!");
+      loadWindow6(dateStr, null);
     }
 
     function loadWindow4SubMenu() {
@@ -1684,81 +1691,260 @@
       });
     }
 
-    function loadWindow7() {
+    // --- MODUL 7: GAZDINSTVA, PDV I UPLATE ---
+    let currentFarmsTab = 'dani'; // 'dani' | 'gazdinstva' | 'uplate'
+
+    function loadWindow7(subTab = 'dani') {
+      currentFarmsTab = subTab;
+      let storedFarms = JSON.parse(localStorage.getItem('savedFarmsList')) || [];
       let storedDays = JSON.parse(localStorage.getItem('hladnjacaDaysData')) || [];
+      let storedPayments = JSON.parse(localStorage.getItem('savedFarmsPayments')) || [];
       let todayStr = new Date().toISOString().split('T')[0];
 
       fetchAllMeasurementsCached().then(measurements => {
         let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="margin:0; font-size:18px;">❄️ Obračun za hladnjaču</h3>
+          <h3 style="margin:0; font-size:18px;">❄️ Obračun za hladnjaču i Gazdinstva</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
         </div>
 
-        <div class="section-card">
-          <h4>Unos podataka po danima</h4>
-          <div class="form-row">
-            <div class="form-group-col"><label>Datum</label><input type="date" id="hDate" value="${todayStr}" onchange="updateAutoPrebranaKg()"></div>
-            <div class="form-group-col"><label>Prebrana količina (kg) [Automatski sa vage]</label><input type="number" id="hPrebrana" step="0.01" value="0" style="background:#e9ecef; font-weight:bold;"></div>
-            <div class="form-group-col"><label>Otkupni list (kg) [Ručno]</label><input type="number" id="hOtkup" step="0.01" value="0"></div>
-            <div class="form-group-col"><label>Cena otkupa (RSD) [Ručno]</label><input type="number" id="hCena" step="0.01" value="0"></div>
-          </div>
-          <button class="btn" style="background:#27ae60; margin-top:12px;" onclick="addHladnjacaDay()">Dodaj dan ✓</button>
+        <div class="tab-header">
+          <button class="tab-btn ${currentFarmsTab === 'dani' ? 'active' : ''}" onclick="loadWindow7('dani')">📅 Dnevni unosi</button>
+          <button class="tab-btn ${currentFarmsTab === 'gazdinstva' ? 'active' : ''}" onclick="loadWindow7('gazdinstva')">🚜 Registar gazdinstava</button>
+          <button class="tab-btn ${currentFarmsTab === 'uplate' ? 'active' : ''}" onclick="loadWindow7('uplate')">💵 Evidencija uplata</button>
         </div>`;
 
-        let totalPrebranaAll = 0;
-        let totalOtkupAll = 0;
-        let totalZaradaAll = 0;
-
-        storedDays.forEach(d => {
-          let pKg = parseFloat(d.prebrana) || 0;
-          let oKg = parseFloat(d.otkup) || 0;
-          let cRsd = parseFloat(d.cena) || 0;
-          let dnevnaZarada = oKg * cRsd;
-
-          totalPrebranaAll += pKg;
-          totalOtkupAll += oKg;
-          totalZaradaAll += dnevnaZarada;
-        });
-
-        html += `<div class="section-card" style="border: 2px solid #2980b9; background:#eaf2f8;">
-          <h4 style="color:#2980b9;">Zbirni rezultati cele berbe</h4>
-          <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; flex-direction:column; gap:6px;">
-            <div>Ukupna prebrana količina: <span style="color:#27ae60;">${totalPrebranaAll.toFixed(2)} kg</span></div>
-            <div>Ukupna količina iz otkupnog lista: <span style="color:#27ae60;">${totalOtkupAll.toFixed(2)} kg</span></div>
-            <div>Ukupna zarada (otkup x cena): <span style="color:#2980b9; font-size:18px;">${totalZaradaAll.toFixed(2)} RSD</span></div>
+        if (currentFarmsTab === 'gazdinstva') {
+          html += `<div class="section-card">
+            <h4>Dodaj poljoprivredno gazdinstvo</h4>
+            <div class="form-row">
+              <div class="form-group-col"><label>Naziv gazdinstva</label><input type="text" id="farmNameInput" placeholder="npr. PG Aleksandar Stanišić"></div>
+              <div class="form-group-col"><label>PDV Stopa</label><select id="farmPdvInput" style="padding:12px; font-size:17px; border:1px solid #bdc3c7; border-radius:8px; width:100%;"><option value="8">8% PDV</option><option value="10">10% PDV</option></select></div>
+            </div>
+            <button class="btn" style="background:#27ae60; margin-top:12px;" onclick="addNewFarm()">Sačuvaj gazdinstvo</button>
           </div>
-        </div>
+          <div class="section-card">
+            <h4>Uneta gazdinstva (${storedFarms.length})</h4>`;
 
-        <div class="section-card">
-          <h4>Evidentirani dani (${storedDays.length})</h4>`;
+          if (storedFarms.length === 0) {
+            html += `<p style="text-align:center; color:#7f8c8d; font-size:14px;">Nema unetih gazdinstava. Dodajte prvo gazdinstvo iznad.</p>`;
+          } else {
+            storedFarms.forEach((f, idx) => {
+              html += `<div class="mobile-card-item">
+                <div class="mobile-card-header">
+                  <span>🚜 ${f.name} (PDV: ${f.pdv}%)</span>
+                  <button class="btn-action btn-del" onclick="deleteFarm(${idx})">Obriši</button>
+                </div>
+              </div>`;
+            });
+          }
+          html += `</div>`;
 
-        if (storedDays.length === 0) {
-          html += `<p style="text-align:center; color:#7f8c8d; font-size:14px;">Nema unetih dana za hladnjaču.</p>`;
+        } else if (currentFarmsTab === 'uplate') {
+          let farmOptions = `<option value="">-- Izaberi gazdinstvo --</option>`;
+          storedFarms.forEach((f, idx) => { farmOptions += `<option value="${idx}">${f.name}</option>`; });
+
+          html += `<div class="section-card">
+            <h4>Evidentiraj uplatu od hladnjače</h4>
+            <div class="form-row">
+              <div class="form-group-col"><label>Gazdinstvo</label><select id="payFarmSelect" style="padding:12px; font-size:17px; border:1px solid #bdc3c7; border-radius:8px; width:100%;">${farmOptions}</select></div>
+              <div class="form-group-col"><label>Datum uplate</label><input type="date" id="payDate" value="${todayStr}"></div>
+              <div class="form-group-col"><label>Iznos uplate (RSD)</label><input type="number" id="payAmount" step="0.01" placeholder="0.00"></div>
+            </div>
+            <button class="btn" style="background:#27ae60; margin-top:12px;" onclick="addPaymentRecord()">Unesi uplatu ✓</button>
+          </div>
+
+          <div class="section-card">
+            <h4>Pregled uplata po gazdinstvima</h4>`;
+
+          if (storedPayments.length === 0) {
+            html += `<p style="text-align:center; color:#7f8c8d; font-size:14px;">Nema evidentiranih uplata.</p>`;
+          } else {
+            storedPayments.forEach((p, idx) => {
+              let fObj = storedFarms[p.farmIndex];
+              let fName = fObj ? fObj.name : "Nepoznato gazdinstvo";
+              html += `<div class="mobile-card-item">
+                <div class="mobile-card-header">
+                  <span>📅 ${p.datum} — ${fName}</span>
+                  <button class="btn-action btn-del" onclick="deletePaymentRecord(${idx})">Obriši</button>
+                </div>
+                <div style="font-size:15px; color:#27ae60; font-weight:bold;">Uplaćeno: ${parseFloat(p.amount).toFixed(2)} RSD</div>
+              </div>`;
+            });
+          }
+          html += `</div>`;
+
         } else {
-          storedDays.forEach((d, idx) => {
-            let dnevnaZarada = (parseFloat(d.otkup) || 0) * (parseFloat(d.cena) || 0);
-            html += `<div class="mobile-card-item">
+          // 'dani' subTab
+          let farmOptions = `<option value="">-- Izaberi gazdinstvo --</option>`;
+          storedFarms.forEach((f, idx) => { farmOptions += `<option value="${idx}">${f.name} (${f.pdv}% PDV)</option>`; });
+
+          html += `<div class="section-card">
+            <h4>Unos podataka po danima</h4>
+            <div class="form-row">
+              <div class="form-group-col"><label>Datum</label><input type="date" id="hDate" value="${todayStr}" onchange="updateAutoPrebranaKg()"></div>
+              <div class="form-group-col"><label>Gazdinstvo</label><select id="hFarmIndex" style="padding:12px; font-size:17px; border:1px solid #bdc3c7; border-radius:8px; width:100%;">${farmOptions}</select></div>
+            </div>
+            <div class="form-row" style="margin-top:10px;">
+              <div class="form-group-col"><label>Prebrana količina (kg) [Sa vage]</label><input type="number" id="hPrebrana" step="0.01" value="0" style="background:#e9ecef; font-weight:bold;"></div>
+              <div class="form-group-col"><label>Otkupni list (kg) [Ručno]</label><input type="number" id="hOtkup" step="0.01" value="0"></div>
+              <div class="form-group-col"><label>Osnovna otkupna cena (RSD/kg bez PDV)</label><input type="number" id="hCena" step="0.01" value="0"></div>
+            </div>
+            <button class="btn" style="background:#27ae60; margin-top:12px;" onclick="addHladnjacaDay()">Dodaj dan ✓</button>
+          </div>`;
+
+          // Izračuni po gazdinstvima i zbirno
+          let farmStats = {};
+          storedFarms.forEach((f, idx) => {
+            farmStats[idx] = { name: f.name, pdv: f.pdv, prebrana: 0, otkup: 0, prihodSaPdv: 0 };
+          });
+
+          let totalPrebranaAll = 0;
+          let totalOtkupAll = 0;
+          let totalPrihodAll = 0;
+
+          storedDays.forEach(d => {
+            let pKg = parseFloat(d.prebrana) || 0;
+            let oKg = parseFloat(d.otkup) || 0;
+            let cRsd = parseFloat(d.cena) || 0; // cena bez PDV-a
+            let fIdx = d.farmIndex;
+
+            let pdvRate = 8;
+            if (storedFarms[fIdx]) {
+              pdvRate = parseFloat(storedFarms[fIdx].pdv) || 8;
+            }
+
+            let cenaSaPdv = cRsd * (1 + pdvRate / 100);
+            let dnevniPrihod = oKg * cenaSaPdv;
+
+            totalPrebranaAll += pKg;
+            totalOtkupAll += oKg;
+            totalPrihodAll += dnevniPrihod;
+
+            if (farmStats[fIdx]) {
+              farmStats[fIdx].prebrana += pKg;
+              farmStats[fIdx].otkup += oKg;
+              farmStats[fIdx].prihodSaPdv += dnevniPrihod;
+            }
+          });
+
+          // Izračun uplata po gazdinstvima
+          let farmPaymentsSum = {};
+          storedPayments.forEach(p => {
+            let fIdx = p.farmIndex;
+            if (!farmPaymentsSum[fIdx]) farmPaymentsSum[fIdx] = 0;
+            farmPaymentsSum[fIdx] += parseFloat(p.amount) || 0;
+          });
+
+          html += `<div class="section-card" style="border: 2px solid #2980b9; background:#eaf2f8;">
+            <h4 style="color:#2980b9;">Zbirni rezultati za sva gazdinstva</h4>
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; flex-direction:column; gap:6px;">
+              <div>Ukupna prebrana količina (sa vage): <span style="color:#27ae60;">${totalPrebranaAll.toFixed(2)} kg</span></div>
+              <div>Ukupna količina sa otkupnih lista: <span style="color:#27ae60;">${totalOtkupAll.toFixed(2)} kg</span></div>
+              <div>Ukupan prihod (sa PDV-om): <span style="color:#2980b9; font-size:18px;">${totalPrihodAll.toFixed(2)} RSD</span></div>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <h4>Pregled po pojedinačnim gazdinstvima</h4>`;
+
+          storedFarms.forEach((f, idx) => {
+            let stats = farmStats[idx] || { prebrana: 0, otkup: 0, prihodSaPdv: 0 };
+            let upecanoUplata = farmPaymentsSum[idx] || 0;
+            let saldo = stats.prihodSaPdv - upecanoUplata;
+
+            html += `<div class="mobile-card-item" style="border-left: 6px solid #2980b9;">
               <div class="mobile-card-header">
-                <span>📅 Datum: ${d.datum}</span>
-                <button class="btn-action btn-del" onclick="deleteHladnjacaDay(${idx})">Obriši</button>
+                <span>🚜 ${f.name} (${f.pdv}% PDV)</span>
               </div>
-              <div style="font-size:14px; color:#444; display:flex; flex-direction:column; gap:4px;">
-                <div>Prebrana količina: <b>${parseFloat(d.prebrana).toFixed(2)} kg</b></div>
-                <div>Količina sa otkupnog lista: <b>${parseFloat(d.otkup).toFixed(2)} kg</b></div>
-                <div>Cena otkupa: <b>${parseFloat(d.cena).toFixed(2)} RSD</b></div>
-                <div style="color:#2980b9; font-weight:bold;">Dnevna zarada: ${dnevnaZarada.toFixed(2)} RSD</div>
+              <div style="font-size:14px; color:#444; display:flex; flex-direction:column; gap:3px; margin-top:4px;">
+                <div>Prebrano sa vage: <b>${stats.prebrana.toFixed(2)} kg</b></div>
+                <div>Otkupni list: <b>${stats.otkup.toFixed(2)} kg</b></div>
+                <div>Ukupan prihod (sa PDV): <b style="color:#2980b9;">${stats.prihodSaPdv.toFixed(2)} RSD</b></div>
+                <div>Ukupno uplaćeno: <b style="color:#27ae60;">${upecanoUplata.toFixed(2)} RSD</b></div>
+                <div>Preostalo za naplatu (Saldo): <b style="color:${saldo > 0 ? '#e74c3c' : '#27ae60'};">${saldo.toFixed(2)} RSD</b></div>
               </div>
             </div>`;
           });
+
+          html += `</div>
+          <div class="section-card">
+            <h4>Evidentirani dnevni unosi (${storedDays.length})</h4>`;
+
+          if (storedDays.length === 0) {
+            html += `<p style="text-align:center; color:#7f8c8d; font-size:14px;">Nema unetih dana za hladnjaču.</p>`;
+          } else {
+            storedDays.forEach((d, idx) => {
+              let fObj = storedFarms[d.farmIndex];
+              let fName = fObj ? fObj.name : "Nepoznato gazdinstvo";
+              let pdvRate = fObj ? parseFloat(fObj.pdv) || 8 : 8;
+              let cenaSaPdv = (parseFloat(d.cena) || 0) * (1 + pdvRate / 100);
+              let dnevnaZarada = (parseFloat(d.otkup) || 0) * cenaSaPdv;
+
+              html += `<div class="mobile-card-item">
+                <div class="mobile-card-header">
+                  <span>📅 ${d.datum} — ${fName}</span>
+                  <button class="btn-action btn-del" onclick="deleteHladnjacaDay(${idx})">Obriši</button>
+                </div>
+                <div style="font-size:14px; color:#444; display:flex; flex-direction:column; gap:3px;">
+                  <div>Prebrana količina: <b>${parseFloat(d.prebrana).toFixed(2)} kg</b></div>
+                  <div>Otkupni list: <b>${parseFloat(d.otkup).toFixed(2)} kg</b></div>
+                  <div>Osnovna cena: <b>${parseFloat(d.cena).toFixed(2)} RSD/kg</b> (Sa ${pdvRate}% PDV: <b>${cenaSaPdv.toFixed(2)} RSD</b>)</div>
+                  <div style="color:#2980b9; font-weight:bold;">Ukupan dnevni prihod: ${dnevnaZarada.toFixed(2)} RSD</div>
+                </div>
+              </div>`;
+            });
+          }
+          html += `</div>`;
         }
-        html += `</div>`;
 
         document.getElementById('modalBodyContent').innerHTML = html;
         document.getElementById('menuModal').style.display = 'flex';
 
         window._cachedMeasurementsForHladnjaca = measurements;
-        updateAutoPrebranaKg();
+        if (currentFarmsTab === 'dani') {
+          updateAutoPrebranaKg();
+        }
       });
+    }
+
+    function addNewFarm() {
+      let name = document.getElementById('farmNameInput').value.trim();
+      let pdv = document.getElementById('farmPdvInput').value;
+      if (!name) { alert("Unesite naziv gazdinstva!"); return; }
+
+      let storedFarms = JSON.parse(localStorage.getItem('savedFarmsList')) || [];
+      storedFarms.push({ name, pdv });
+      localStorage.setItem('savedFarmsList', JSON.stringify(storedFarms));
+      loadWindow7('gazdinstva');
+    }
+
+    function deleteFarm(index) {
+      if (!confirm("Obrisati ovo gazdinstvo?")) return;
+      let storedFarms = JSON.parse(localStorage.getItem('savedFarmsList')) || [];
+      storedFarms.splice(index, 1);
+      localStorage.setItem('savedFarmsList', JSON.stringify(storedFarms));
+      loadWindow7('gazdinstva');
+    }
+
+    function addPaymentRecord() {
+      let farmIndex = document.getElementById('payFarmSelect').value;
+      let datum = document.getElementById('payDate').value;
+      let amount = document.getElementById('payAmount').value;
+
+      if (farmIndex === "" || !datum || !amount) { alert("Popunite sva polja za uplatu!"); return; }
+
+      let storedPayments = JSON.parse(localStorage.getItem('savedFarmsPayments')) || [];
+      storedPayments.push({ farmIndex: parseInt(farmIndex), datum, amount: parseFloat(amount) });
+      localStorage.setItem('savedFarmsPayments', JSON.stringify(storedPayments));
+      loadWindow7('uplate');
+    }
+
+    function deletePaymentRecord(index) {
+      if (!confirm("Obrisati ovaj zapis o uplati?")) return;
+      let storedPayments = JSON.parse(localStorage.getItem('savedFarmsPayments')) || [];
+      storedPayments.splice(index, 1);
+      localStorage.setItem('savedFarmsPayments', JSON.stringify(storedPayments));
+      loadWindow7('uplate');
     }
 
     function updateAutoPrebranaKg() {
@@ -1795,17 +1981,18 @@
 
     function addHladnjacaDay() {
       let datum = document.getElementById('hDate').value;
+      let farmIndex = document.getElementById('hFarmIndex').value;
       let prebrana = document.getElementById('hPrebrana').value;
       let otkup = document.getElementById('hOtkup').value;
       let cena = document.getElementById('hCena').value;
 
-      if (!datum) { alert("Unesite datum!"); return; }
+      if (!datum || farmIndex === "") { alert("Unesite datum i izaberite gazdinstvo!"); return; }
 
       let storedDays = JSON.parse(localStorage.getItem('hladnjacaDaysData')) || [];
-      storedDays.push({ datum, prebrana, otkup, cena });
+      storedDays.push({ datum, farmIndex: parseInt(farmIndex), prebrana, otkup, cena });
       localStorage.setItem('hladnjacaDaysData', JSON.stringify(storedDays));
 
-      loadWindow7();
+      loadWindow7('dani');
     }
 
     function deleteHladnjacaDay(index) {
@@ -1813,7 +2000,7 @@
       let storedDays = JSON.parse(localStorage.getItem('hladnjacaDaysData')) || [];
       storedDays.splice(index, 1);
       localStorage.setItem('hladnjacaDaysData', JSON.stringify(storedDays));
-      loadWindow7();
+      loadWindow7('dani');
     }
 
     window.onload = function() {
