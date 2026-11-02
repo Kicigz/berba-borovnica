@@ -177,17 +177,17 @@
       font-size: 13px; font-weight: bold; color: white; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     
-    .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
-    .report-group-card { background: white; border-radius: 14px; padding: 18px; border: 1px solid #b2bec3; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; border-left: 8px solid #2980b9; transition: transform 0.1s; }
-    .report-group-card:hover { transform: translateY(-2px); border-color: #0984e3; }
-    .picker-detail-row { background: white; border: 1px solid #b2bec3; border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border-left: 5px solid #0984e3; }
+    /* Optimizovane i sabijene kartice i redovi za izveštaje (Modul 3 i Modul 6) da se smanji skrolovanje */
+    .report-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
+    .report-group-card { background: white; border-radius: 10px; padding: 10px 12px; border: 1px solid #b2bec3; box-shadow: 0 2px 6px rgba(0,0,0,0.06); cursor: pointer; border-left: 6px solid #2980b9; transition: transform 0.1s; }
+    .report-group-card:hover { transform: translateY(-1px); border-color: #0984e3; }
+    .picker-detail-row { background: white; border: 1px solid #dcdde1; border-radius: 6px; padding: 6px 10px; margin-bottom: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); border-left: 4px solid #0984e3; }
     
-    /* Kompaktne list-tile kartice za dane (da ne bude prevelik scroll za 30+ dana) */
-    .date-compact-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .date-compact-list { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
     .date-compact-row {
-      background: white; border: 1px solid #dcdde1; border-radius: 8px; padding: 10px 14px;
+      background: white; border: 1px solid #dcdde1; border-radius: 6px; padding: 6px 10px;
       display: flex; justify-content: space-between; align-items: center; cursor: pointer;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.03); transition: background 0.1s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: background 0.1s;
     }
     .date-compact-row:hover { background: #f1f2f6; border-color: #2980b9; }
   </style>
@@ -247,7 +247,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 4.6)</h3>
+            <h3>Vaga i Kontrola (ver 4.7)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -1013,9 +1013,9 @@
       });
     }
 
-    // MODUL 3: IZVEŠTAJ SA ZBIRNIM PREGLEDOM SVIH DANA NA VRHU I KOMPAKTNIM LISTAMA
+    // MODUL 3: IZVEŠTAJ SA SABIJENIM REDOVIMA I KARTICAMA
     function loadWindow3(selectedDate = null, selectedGroupNum = null) {
-      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja (Optimizovano)...</p>`;
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja (Kompaktno)...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
 
       Promise.all([
@@ -1045,21 +1045,22 @@
             totalDayKalo += gMeas.reduce((sum, m) => sum + (parseFloat(m.kalo) || 0), 0);
           });
 
-          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="margin:0; font-size:18px;">📊 Izveštaj za dan: ${selectedDate}</h3>
-            <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow3(null, null)">← Nazad na dane</button>
+          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0; font-size:17px;">📊 Izveštaj za dan: ${selectedDate}</h3>
+            <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:12px;" onclick="loadWindow3(null, null)">← Nazad na dane</button>
           </div>
 
-          <div class="section-card" style="border: 2px solid #27ae60; background:#e8f8f5; margin-bottom:14px;">
-            <h4 style="color:#27ae60; margin-top:0;">🌟 Zbirni izveštaj dana za sve grupe</h4>
-            <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; flex-direction:column; gap:4px;">
-              <div>👥 Ukupno berača: <b>${totalDayPickersCount}</b></div>
-              <div>Ukupno ubrano: <span style="color:#2c3e50;">${totalDayInputKg.toFixed(2)} kg</span></div>
-              <div>Prebrano (Neto): <span style="color:#27ae60;">${totalDayKg.toFixed(2)} kg</span> | Kalo: <span style="color:#e74c3c;">${totalDayKalo.toFixed(2)} kg</span></div>
+          <div class="section-card" style="border: 2px solid #27ae60; background:#e8f8f5; padding:10px 14px; margin-bottom:10px;">
+            <h4 style="color:#27ae60; margin:0 0 4px 0; font-size:15px;">🌟 Zbirni izveštaj dana za sve grupe</h4>
+            <div style="font-size:14px; font-weight:bold; color:#2c3e50; display:flex; flex-wrap:wrap; gap:12px;">
+              <div>👥 Berača: <b>${totalDayPickersCount}</b></div>
+              <div>Ubrano: ${totalDayInputKg.toFixed(2)} kg</div>
+              <div>Prebrano: <span style="color:#27ae60;">${totalDayKg.toFixed(2)} kg</span></div>
+              <div>Kalo: <span style="color:#e74c3c;">${totalDayKalo.toFixed(2)} kg</span></div>
             </div>
           </div>
 
-          <p style="font-size:14px; color:#666; margin-bottom:12px;">Izaberite grupu za detaljan pregled:</p>
+          <p style="font-size:13px; color:#666; margin:0 0 8px 0;">Izaberite grupu:</p>
           <div class="report-card-grid">`;
 
           let cardsHtml = "";
@@ -1075,12 +1076,15 @@
             let totalGroupKalo = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.kalo) || 0), 0);
 
             cardsHtml += `<div class="report-group-card" onclick="loadWindow3('${selectedDate}', '${groupNum}')">
-              <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
-              <div style="font-size:15px; color:#333; margin-bottom:6px;">Vođa: <b>${leaderName}</b></div>
-              <div style="font-size:14px; color:#2c3e50; margin-bottom:4px;">👥 Berača: <b>${groupPickers.length}</b></div>
-              <div style="font-size:14px; color:#2c3e50; margin-bottom:2px;">Ukupno ubrano: <b>${totalGroupInputKg.toFixed(2)} kg</b></div>
-              <div style="font-size:14px; color:#27ae60; font-weight:bold;">Prebrano: ${totalGroupKg.toFixed(2)} kg</div>
-              <div style="font-size:13px; color:#e74c3c; font-weight:bold; margin-top:2px;">Kalo: ${totalGroupKalo.toFixed(2)} kg</div>
+              <div style="font-size:15px; font-weight:bold; color:#2c3e50; margin-bottom:2px;">Grupa ${groupNum} (${leaderName})</div>
+              <div style="font-size:13px; color:#555; display:flex; justify-content:space-between;">
+                <span>👥 ${groupPickers.length} berača</span>
+                <span>Ubrano: <b>${totalGroupInputKg.toFixed(2)} kg</b></span>
+              </div>
+              <div style="font-size:13px; display:flex; justify-content:space-between; margin-top:2px;">
+                <span style="color:#27ae60; font-weight:bold;">Prebrano: ${totalGroupKg.toFixed(2)} kg</span>
+                <span style="color:#e74c3c; font-weight:bold;">Kalo: ${totalGroupKalo.toFixed(2)} kg</span>
+              </div>
             </div>`;
           });
           html += cardsHtml + `</div>`;
@@ -1113,26 +1117,27 @@
             }
           });
 
-          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="margin:0; font-size:18px;">📊 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''}) — ${selectedDate}</h3>
-            <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow3('${selectedDate}', null)">← Nazad na grupe</button>
+          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0; font-size:16px;">📊 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''}) — ${selectedDate}</h3>
+            <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:12px;" onclick="loadWindow3('${selectedDate}', null)">← Nazad</button>
           </div>
-          <div class="section-card" style="border: 2px solid #2980b9;">
-            <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; flex-direction:column; gap:4px;">
-              <div>Ukupno ubrano: <span style="color:#2c3e50;">${totalGroupInputKg.toFixed(2)} kg</span></div>
-              <div>Prebrano: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span> | Kalo: <span style="color:#e74c3c;">${totalGroupKalo.toFixed(2)} kg</span></div>
+          <div class="section-card" style="padding:10px 14px; margin-bottom:10px; border: 2px solid #2980b9;">
+            <div style="font-size:14px; font-weight:bold; color:#2c3e50; display:flex; justify-content:space-between; flex-wrap:wrap;">
+              <span>Ubrano: ${totalGroupInputKg.toFixed(2)} kg</span>
+              <span style="color:#27ae60;">Prebrano: ${totalGroupKg.toFixed(2)} kg</span>
+              <span style="color:#e74c3c;">Kalo: ${totalGroupKalo.toFixed(2)} kg</span>
             </div>
           </div>
-          <div class="section-card">
-            <h4>Učinak po beračima</h4>`;
+          <div class="section-card" style="padding:10px;">
+            <h4 style="margin:0 0 6px 0; font-size:14px;">Učinak po beračima</h4>`;
 
           groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
           let pickersHtml = "";
           groupPickers.forEach(p => {
             let stats = pickerStats[p.pickerNum] || { inputKg: 0, kg: 0, kalo: 0, crates: 0 };
             pickersHtml += `<div class="picker-detail-row" style="display:flex; justify-content:space-between; align-items:center;">
-              <div><b style="font-size:15px; color:#2c3e50;">#${p.pickerNum}</b> <span style="font-size:12px; color:#666;">(${stats.crates}g)</span></div>
-              <div style="text-align:right; font-size:14px;">
+              <div><b style="font-size:14px; color:#2c3e50;">#${p.pickerNum}</b> <span style="font-size:11px; color:#666;">(${stats.crates}g)</span></div>
+              <div style="text-align:right; font-size:13px;">
                 <span>Ukupno: <b>${stats.inputKg.toFixed(2)} kg</b></span> | 
                 <span style="color:#27ae60; font-weight:bold;">Prebrano: ${stats.kg.toFixed(2)} kg</span> | 
                 <span style="color:#e74c3c; font-weight:bold;">Kalo: ${stats.kalo.toFixed(2)} kg</span>
@@ -1173,29 +1178,29 @@
           daysMap[todayStrTag] = { count: 0, kg: 0 };
         }
 
-        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="margin:0; font-size:18px;">📊 Izveštaji po danima berbe</h3>
-          <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:17px;">📊 Izveštaji po danima berbe</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
         </div>
 
-        <div class="section-card" style="border: 2px solid #27ae60; background:#e8f8f5; margin-bottom:12px;">
-          <h4 style="color:#27ae60; margin-top:0;">🌟 Zbirni obračun za sve dane berbe ukupno</h4>
-          <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; gap:20px; flex-wrap:wrap;">
-            <div>Ukupno dana: <b>${sortedDays.length}</b></div>
-            <div>Ukupno merenja: <b>${totalAllDaysCrates}</b></div>
-            <div>Ukupno prebrano: <span style="color:#27ae60;">${totalAllDaysKg.toFixed(2)} kg</span></div>
+        <div class="section-card" style="border: 2px solid #27ae60; background:#e8f8f5; padding:10px 14px; margin-bottom:10px;">
+          <h4 style="color:#27ae60; margin:0 0 4px 0; font-size:15px;">🌟 Zbirni obračun za sve dane berbe ukupno</h4>
+          <div style="font-size:14px; font-weight:bold; color:#2c3e50; display:flex; gap:16px; flex-wrap:wrap;">
+            <div>Dana: <b>${sortedDays.length}</b></div>
+            <div>Merenja: <b>${totalAllDaysCrates}</b></div>
+            <div>Prebrano: <span style="color:#27ae60;">${totalAllDaysKg.toFixed(2)} kg</span></div>
           </div>
         </div>
 
-        <p style="font-size:14px; color:#666; margin-bottom:8px;">Izaberite dan:</p>
+        <p style="font-size:13px; color:#666; margin:0 0 6px 0;">Izaberite dan:</p>
         <div class="date-compact-list">`;
 
         let listHtml = "";
         sortedDays.forEach(d => {
           let info = daysMap[d] || { count: 0, kg: 0 };
           listHtml += `<div class="date-compact-row" onclick="loadWindow3('${d}', null)">
-            <div style="font-weight:bold; color:#2c3e50;">📅 ${d}</div>
-            <div style="font-size:15px; color:#27ae60; font-weight:bold;">⚖️ ${info.kg.toFixed(2)} kg <span style="font-size:13px; color:#7f8c8d; font-weight:normal;">(${info.count} merenja)</span></div>
+            <div style="font-weight:bold; color:#2c3e50; font-size:14px;">📅 ${d}</div>
+            <div style="font-size:14px; color:#27ae60; font-weight:bold;">⚖️ ${info.kg.toFixed(2)} kg <span style="font-size:12px; color:#7f8c8d; font-weight:normal;">(${info.count}m)</span></div>
           </div>`;
         });
         html += listHtml + `</div>`;
@@ -1203,9 +1208,9 @@
       });
     }
 
-    // MODUL 6: OBRAČUN DANA SA ZBIRNIM PREGLEDOM SVIH DANA NA VRHU I KOMPAKTNIM LISTAMA
+    // MODUL 6: OBRAČUN DANA SA SABIJENIM REDOVIMA I KARTICAMA
     function loadWindow6(selectedDate = null, selectedGroupNum = null) {
-      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna (Optimizovano)...</p>`;
+      document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna (Kompaktno)...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
 
       Promise.all([
@@ -1236,26 +1241,24 @@
             totalDayPay += gKg * currentPricePerKg;
           });
 
-          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="margin:0; font-size:18px;">💰 Obračun dana: ${selectedDate}</h3>
-            <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="loadWindow6(null, null)">← Nazad na dane</button>
+          let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0; font-size:17px;">💰 Obračun dana: ${selectedDate}</h3>
+            <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:12px;" onclick="loadWindow6(null, null)">← Nazad na dane</button>
           </div>
 
-          <div class="section-card" style="border: 2px solid #27ae60; background:#e8f8f5; margin-bottom:12px;">
-            <h4 style="color:#27ae60; margin-top:0;">🌟 Zbirni obračun dana (Sve grupe)</h4>
-            <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; flex-direction:column; gap:4px; margin-bottom:10px;">
-              <div>Ukupno gajbica: <b>${totalDayCrates}</b></div>
-              <div>Ukupna prebrana količina: <span style="color:#27ae60;">${totalDayKg.toFixed(2)} kg</span></div>
-              <div>Dnevna cena branja: <b>${currentPricePerKg} RSD/kg</b></div>
-              <div>Ukupno za isplatu (Sve grupe): <span style="color:#2980b9; font-size:18px;">${totalDayPay.toFixed(2)} RSD</span></div>
+          <div class="section-card" style="border: 2px solid #27ae60; background:#e8f8f5; padding:10px 14px; margin-bottom:10px;">
+            <h4 style="color:#27ae60; margin:0 0 4px 0; font-size:15px;">🌟 Zbirni obračun dana (Sve grupe)</h4>
+            <div style="font-size:14px; font-weight:bold; color:#2c3e50; display:flex; flex-direction:column; gap:3px;">
+              <div>Gajbica: <b>${totalDayCrates}</b> | Prebrano: <span style="color:#27ae60;">${totalDayKg.toFixed(2)} kg</span> | Cena: <b>${currentPricePerKg} RSD/kg</b></div>
+              <div>Ukupno za isplatu: <span style="color:#2980b9; font-size:16px;">${totalDayPay.toFixed(2)} RSD</span></div>
             </div>
           </div>
 
-          <div class="section-card" style="border: 2px solid #2980b9; background:#f4f6f9; margin-bottom:12px;">
-            <h4 style="color:#2980b9;">Podešavanje cene branja za ${selectedDate}</h4>
-            <div class="form-row">
-              <div class="form-group-col"><label>Cena (RSD / kg)</label><input type="number" id="dayPricePerKgInput_${selectedDate}" step="0.5" value="${currentPricePerKg}"></div>
-              <div style="flex:0 0 auto;"><button class="btn" style="background:#27ae60; padding:12px 20px;" onclick="saveDayPrice('${selectedDate}')">Sačuvaj cenu za ovaj dan</button></div>
+          <div class="section-card" style="border: 2px solid #2980b9; background:#f4f6f9; padding:10px; margin-bottom:10px;">
+            <h4 style="color:#2980b9; margin:0 0 6px 0; font-size:14px;">Podešavanje cene branja za ${selectedDate}</h4>
+            <div class="form-row" style="margin-top:0;">
+              <div class="form-group-col"><label>Cena (RSD / kg)</label><input type="number" id="dayPricePerKgInput_${selectedDate}" step="0.5" value="${currentPricePerKg}" style="padding:8px 12px; font-size:15px;"></div>
+              <div style="flex:0 0 auto;"><button class="btn" style="background:#27ae60; padding:10px 16px; font-size:14px;" onclick="saveDayPrice('${selectedDate}')">Sačuvaj</button></div>
             </div>
           </div>
 
@@ -1272,13 +1275,12 @@
             let totalGroupPay = totalGroupKg * currentPricePerKg;
 
             cardsHtml += `<div class="report-group-card" onclick="loadWindow6('${selectedDate}', '${groupNum}')">
-              <div style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">Grupa ${groupNum}</div>
-              <div style="font-size:15px; color:#333; margin-bottom:8px;">Vođa: <b>${leaderName}</b></div>
-              <div style="display:flex; justify-content:space-between; font-size:14px; border-top:2px solid #dfe6e9; padding-top:8px; color:#2c3e50;">
-                <span>👥 Berača: <b>${groupPickers.length}</b></span>
-                <span style="color:#27ae60; font-weight:bold; font-size:15px;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
+              <div style="font-size:15px; font-weight:bold; color:#2c3e50; margin-bottom:2px;">Grupa ${groupNum} (${leaderName})</div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; color:#2c3e50;">
+                <span>👥 ${groupPickers.length} berača</span>
+                <span style="color:#27ae60; font-weight:bold;">⚖️ ${totalGroupKg.toFixed(2)} kg</span>
               </div>
-              <div style="display:flex; justify-content:space-between; font-size:16px; margin-top:8px; color:#2980b9; font-weight:bold; border-top:1px dashed #b2bec3; padding-top:6px;">
+              <div style="display:flex; justify-content:space-between; font-size:14px; margin-top:4px; color:#2980b9; font-weight:bold; border-top:1px dashed #dfe6e9; padding-top:4px;">
                 <span>Isplata:</span><span>${totalGroupPay.toFixed(2)} RSD</span>
               </div>
             </div>`;
@@ -1314,21 +1316,21 @@
           let viberUrl = `viber://forward?text=` + encodeURIComponent(viberText);
 
           let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <h3 style="margin:0; font-size:16px;">💰 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''}) — ${selectedDate}</h3>
-              <a href="${viberUrl}" class="btn-action" style="background:#7360f2; padding:6px 12px; font-size:12px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">💬 Viber</a>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h3 style="margin:0; font-size:15px;">💰 Grupa ${selectedGroupNum} (${targetGroup ? targetGroup.name : ''}) — ${selectedDate}</h3>
+              <a href="${viberUrl}" class="btn-action" style="background:#7360f2; padding:4px 10px; font-size:11px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">💬 Viber</a>
             </div>
             <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:12px;" onclick="loadWindow6('${selectedDate}', null)">← Nazad</button>
           </div>
           
-          <div class="section-card" style="padding:10px 14px; margin-bottom:10px; border: 2px solid #2980b9;">
-            <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:bold; color:#2c3e50;">
+          <div class="section-card" style="padding:8px 12px; margin-bottom:8px; border: 2px solid #2980b9;">
+            <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:bold; color:#2c3e50;">
               <span>Ukupno: <span style="color:#27ae60;">${totalGroupKg.toFixed(2)} kg</span></span>
-              <span style="color:#2980b9;">Isplata (${currentPricePerKg} din/kg): ${totalGroupPay.toFixed(2)} RSD</span>
+              <span style="color:#2980b9;">Isplata: ${totalGroupPay.toFixed(2)} RSD</span>
             </div>
           </div>
           <div class="section-card" style="padding:10px;">
-            <h4 style="margin:0 0 8px 0; font-size:14px;">Berači u grupi</h4>`;
+            <h4 style="margin:0 0 6px 0; font-size:14px;">Berači u grupi</h4>`;
 
           groupPickers.sort((a, b) => parseInt(a.pickerNum) - parseInt(b.pickerNum));
           let pickersPayHtml = "";
@@ -1336,8 +1338,8 @@
             let stats = pickerStats[p.pickerNum] || { kg: 0, crates: 0 };
             let pay = stats.kg * currentPricePerKg;
             
-            pickersPayHtml += `<div style="background:white; border:1px solid #dcdde1; border-radius:6px; padding:8px 12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; font-size:14px;">
-              <div><b>#${p.pickerNum}</b> <span style="font-size:12px; color:#666;">(${stats.crates}g)</span></div>
+            pickersPayHtml += `<div style="background:white; border:1px solid #dcdde1; border-radius:6px; padding:6px 10px; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+              <div><b>#${p.pickerNum}</b> <span style="font-size:11px; color:#666;">(${stats.crates}g)</span></div>
               <div style="text-align:right;">
                 <span style="color:#27ae60; font-weight:bold;">${stats.kg.toFixed(2)} kg</span> | 
                 <span style="color:#2980b9; font-weight:bold;">${pay.toFixed(2)} RSD</span>
@@ -1383,21 +1385,21 @@
           daysMap[todayStrTag] = { count: 0, kg: 0 };
         }
 
-        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="margin:0; font-size:18px;">💰 Obračun dana po danima berbe</h3>
-          <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:17px;">💰 Obračun dana po danima berbe</h3>
+          <button class="btn" style="background:#34495e; width:auto; padding:6px 12px; font-size:12px;" onclick="openMenuModal()">← Meni</button>
         </div>
 
-        <div class="section-card" style="border: 2px solid #27ae60; background:#e8f8f5; margin-bottom:12px;">
-          <h4 style="color:#27ae60; margin-top:0;">🌟 Zbirni finansijski obračun za sve dane ukupno</h4>
-          <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; gap:20px; flex-wrap:wrap;">
-            <div>Ukupno dana: <b>${sortedDays.length}</b></div>
-            <div>Ukupno prebrano: <span style="color:#27ae60;">${totalAllDaysKg.toFixed(2)} kg</span></div>
-            <div>Ukupno isplaćeno: <span style="color:#2980b9;">${totalAllDaysPay.toFixed(2)} RSD</span></div>
+        <div class="section-card" style="border: 2px solid #27ae60; background:#e8f8f5; padding:10px 14px; margin-bottom:10px;">
+          <h4 style="color:#27ae60; margin:0 0 4px 0; font-size:15px;">🌟 Zbirni finansijski obračun za sve dane ukupno</h4>
+          <div style="font-size:14px; font-weight:bold; color:#2c3e50; display:flex; gap:16px; flex-wrap:wrap;">
+            <div>Dana: <b>${sortedDays.length}</b></div>
+            <div>Prebrano: <span style="color:#27ae60;">${totalAllDaysKg.toFixed(2)} kg</span></div>
+            <div>Isplaćeno: <span style="color:#2980b9;">${totalAllDaysPay.toFixed(2)} RSD</span></div>
           </div>
         </div>
 
-        <p style="font-size:14px; color:#666; margin:0 0 8px 0;">Izaberite dan berbe:</p>
+        <p style="font-size:13px; color:#666; margin:0 0 6px 0;">Izaberite dan berbe:</p>
         <div class="date-compact-list">`;
 
         let listHtml = "";
@@ -1406,10 +1408,10 @@
           let dayPrice = parseFloat(dayPrices[d]) || defaultGlobalPrice;
           let dayPay = info.kg * dayPrice;
           listHtml += `<div class="date-compact-row" onclick="loadWindow6('${d}', null)">
-            <div style="font-weight:bold; color:#2c3e50;">📅 ${d} <span style="font-weight:normal; font-size:13px; color:#7f8c8d;">(${dayPrice} din/kg)</span></div>
+            <div style="font-weight:bold; color:#2c3e50; font-size:14px;">📅 ${d} <span style="font-weight:normal; font-size:12px; color:#7f8c8d;">(${dayPrice} din/kg)</span></div>
             <div style="text-align:right;">
-              <span style="color:#27ae60; font-weight:bold; font-size:15px;">${info.kg.toFixed(2)} kg</span> 
-              <span style="color:#2980b9; font-weight:bold; font-size:15px; margin-left:8px;">[${dayPay.toFixed(0)} RSD]</span>
+              <span style="color:#27ae60; font-weight:bold; font-size:14px;">${info.kg.toFixed(2)} kg</span> 
+              <span style="color:#2980b9; font-weight:bold; font-size:14px; margin-left:6px;">[${dayPay.toFixed(0)} RSD]</span>
             </div>
           </div>`;
         });
