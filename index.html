@@ -30,16 +30,12 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
       margin-bottom: 12px;
-      position: relative;
-      z-index: 10003;
     }
     .num-btn {
       background: #34495e; color: white; border: none; font-size: 24px; font-weight: bold;
       padding: 16px 0; border-radius: 8px; cursor: pointer; text-align: center;
       user-select: none; -webkit-tap-highlight-color: transparent;
       width: 100%; display: flex; justify-content: center; align-items: center;
-      position: relative; z-index: 10004;
-      pointer-events: auto !important;
     }
     .num-btn:active { background: #2c3e50; transform: scale(0.96); }
     .num-btn.enter { background: #27ae60; grid-column: span 3; font-size: 22px; padding: 16px 0; }
@@ -248,7 +244,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 4.2 Optimized)</h3>
+            <h3>Vaga i Kontrola (ver 4.3 Optimized)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -345,11 +341,10 @@
     let cachedPickersGlobal = [];
     let currentTotalPickersLimit = parseInt(localStorage.getItem('savedTotalPickersLimit')) || 150;
 
-    // GLOBALNI KEŠ ZA MERENJA (Ubrzava Modul 3 i 6)
     let measurementsCache = {
       data: null,
       timestamp: 0,
-      TTL: 30000 // 30 sekundi keša
+      TTL: 30000
     };
 
     function clearMeasurementsCache() {
@@ -513,7 +508,7 @@
       .then(res => res.json())
       .then(res => {
         if (res.success) {
-          clearMeasurementsCache(); // Osveži keš merenja nakon snimanja
+          clearMeasurementsCache();
           let leaderNameStr = res.leaderName || "-";
           document.getElementById('valLeader').innerText = leaderNameStr;
           document.getElementById('valSector').innerText = getActiveSectorForLeader(leaderNameStr);
@@ -1015,7 +1010,6 @@
       });
     }
 
-    // OPTIMIZOVANI MODUL 3 SA KEŠIRANJEM I BRŽIM RENDEROM
     function loadWindow3(selectedDate = null, selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja (Optimizovano)...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -1029,7 +1023,6 @@
         let groups = resWorkers.success ? resWorkers.groups : [];
         let pickers = resPickers.success ? resPickers.pickers : [];
 
-        // 1. Ako imamo izabran datum, ali nismo izabrali grupu -> prikaži grupe za taj dan
         if (selectedDate !== null && selectedGroupNum === null) {
           let dayMeasurements = measurements.filter(m => m.normalizedDate === selectedDate || m.dateStr === selectedDate);
           
@@ -1066,7 +1059,6 @@
           return;
         }
 
-        // 2. Ako imamo izabran i datum i grupu -> prikaži berače te grupe za taj dan
         if (selectedDate !== null && selectedGroupNum !== null) {
           let dayMeasurements = measurements.filter(m => m.normalizedDate === selectedDate || m.dateStr === selectedDate);
           let targetGroup = groups.find(g => String(g.extra) === String(selectedGroupNum));
@@ -1123,7 +1115,6 @@
           return;
         }
 
-        // 3. Početni prikaz: Prikaz svih dana u formi kockica (najnoviji datum na vrhu)
         let daysMap = {};
         measurements.forEach(m => {
           let d = m.normalizedDate || m.dateStr || "Nepoznat datum";
@@ -1168,7 +1159,6 @@
       });
     }
 
-    // OPTIMIZOVANI MODUL 6 SA KEŠIRANJEM I BRŽIM RENDEROM
     function loadWindow6(selectedDate = null, selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna (Optimizovano)...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -1183,7 +1173,6 @@
         let pickers = resPickers.success ? resPickers.pickers : [];
         let currentPricePerKg = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
 
-        // 1. Ako imamo izabran dan, ali ne i grupu -> prikaži grupe za taj dan
         if (selectedDate !== null && selectedGroupNum === null) {
           let dayMeasurements = measurements.filter(m => m.normalizedDate === selectedDate || m.dateStr === selectedDate);
 
@@ -1220,7 +1209,6 @@
           return;
         }
 
-        // 2. Ako imamo izabran i dan i grupu -> prikaži berače te grupe za taj dan sa obračunom
         if (selectedDate !== null && selectedGroupNum !== null) {
           let dayMeasurements = measurements.filter(m => m.normalizedDate === selectedDate || m.dateStr === selectedDate);
           let targetGroup = groups.find(g => String(g.extra) === String(selectedGroupNum));
@@ -1281,7 +1269,6 @@
           return;
         }
 
-        // 3. Početni prikaz: Prikaz dana u obliku kockica (najnoviji na vrhu) + podešavanje cene
         let daysMap = {};
         measurements.forEach(m => {
           let d = m.normalizedDate || m.dateStr || "Nepoznat datum";
@@ -2002,8 +1989,7 @@
             if (done) break;
             if (value) {
               lineBuffer += decoder.decode(value, { stream: true });
-              let lines = lineBuffer.split("
-");
+              let lines = lineBuffer.split("\n");
               lineBuffer = lines.pop();
               for (let line of lines) {
                 let clean = line.trim();
