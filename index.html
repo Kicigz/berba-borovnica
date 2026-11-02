@@ -182,11 +182,14 @@
     .report-group-card:hover { transform: translateY(-2px); border-color: #0984e3; }
     .picker-detail-row { background: white; border: 1px solid #b2bec3; border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border-left: 5px solid #0984e3; }
     
-    .date-tiles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 12px; }
-    .date-tile { background: #2980b9; color: white; padding: 14px 10px; border-radius: 10px; text-align: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: transform 0.1s, background 0.1s; display: flex; flex-direction: column; gap: 4px; }
-    .date-tile:hover { transform: translateY(-2px); background: #2471a3; }
-    .date-tile .date-val { font-size: 16px; font-weight: bold; }
-    .date-tile .date-stats { font-size: 12px; opacity: 0.9; }
+    /* Kompaktne list-tile kartice za dane (da ne bude prevelik scroll za 30+ dana) */
+    .date-compact-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .date-compact-row {
+      background: white; border: 1px solid #dcdde1; border-radius: 8px; padding: 10px 14px;
+      display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03); transition: background 0.1s;
+    }
+    .date-compact-row:hover { background: #f1f2f6; border-color: #2980b9; }
   </style>
 </head>
 <body>
@@ -244,7 +247,7 @@
       <div class="panel">
         <div>
           <div class="panel-header">
-            <h3>Vaga i Kontrola (ver 4.5)</h3>
+            <h3>Vaga i Kontrola (ver 4.6)</h3>
             <button class="btn btn-tare" onclick="tareScale()">⚖️ Tariraj (Nula)</button>
           </div>
           <div class="weight-box">
@@ -1010,7 +1013,7 @@
       });
     }
 
-    // MODUL 3: IZVEŠTAJ SA ZBIRNIM PREGLEDOM NA VRHU
+    // MODUL 3: IZVEŠTAJ SA ZBIRNIM PREGLEDOM SVIH DANA NA VRHU I KOMPAKTNIM LISTAMA
     function loadWindow3(selectedDate = null, selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje izveštaja (Optimizovano)...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -1142,11 +1145,16 @@
         }
 
         let daysMap = {};
+        let totalAllDaysKg = 0;
+        let totalAllDaysCrates = measurements.length;
+
         measurements.forEach(m => {
           let d = m.normalizedDate || m.dateStr || "Nepoznat datum";
           if (!daysMap[d]) daysMap[d] = { count: 0, kg: 0 };
           daysMap[d].count++;
-          daysMap[d].kg += parseFloat(m.weight) || 0;
+          let w = parseFloat(m.weight) || 0;
+          daysMap[d].kg += w;
+          totalAllDaysKg += w;
         });
 
         let sortedDays = Object.keys(daysMap).sort((a, b) => {
@@ -1169,23 +1177,33 @@
           <h3 style="margin:0; font-size:18px;">📊 Izveštaji po danima berbe</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
         </div>
-        <p style="font-size:14px; color:#666; margin-bottom:12px;">Kliknite na željeni dan da otvorite izveštaj:</p>
-        <div class="date-tiles-grid">`;
 
-        let tilesHtml = "";
+        <div class="section-card" style="border: 2px solid #27ae60; background:#e8f8f5; margin-bottom:12px;">
+          <h4 style="color:#27ae60; margin-top:0;">🌟 Zbirni obračun za sve dane berbe ukupno</h4>
+          <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; gap:20px; flex-wrap:wrap;">
+            <div>Ukupno dana: <b>${sortedDays.length}</b></div>
+            <div>Ukupno merenja: <b>${totalAllDaysCrates}</b></div>
+            <div>Ukupno prebrano: <span style="color:#27ae60;">${totalAllDaysKg.toFixed(2)} kg</span></div>
+          </div>
+        </div>
+
+        <p style="font-size:14px; color:#666; margin-bottom:8px;">Izaberite dan:</p>
+        <div class="date-compact-list">`;
+
+        let listHtml = "";
         sortedDays.forEach(d => {
           let info = daysMap[d] || { count: 0, kg: 0 };
-          tilesHtml += `<div class="date-tile" onclick="loadWindow3('${d}', null)">
-            <div class="date-val">📅 ${d}</div>
-            <div class="date-stats">⚖️ ${info.kg.toFixed(1)} kg (${info.count} merenja)</div>
+          listHtml += `<div class="date-compact-row" onclick="loadWindow3('${d}', null)">
+            <div style="font-weight:bold; color:#2c3e50;">📅 ${d}</div>
+            <div style="font-size:15px; color:#27ae60; font-weight:bold;">⚖️ ${info.kg.toFixed(2)} kg <span style="font-size:13px; color:#7f8c8d; font-weight:normal;">(${info.count} merenja)</span></div>
           </div>`;
         });
-        html += tilesHtml + `</div>`;
+        html += listHtml + `</div>`;
         document.getElementById('modalBodyContent').innerHTML = html;
       });
     }
 
-    // MODUL 6: OBRAČUN DANA SA ZBIRNIM PREGLEDOM NA VRHU
+    // MODUL 6: OBRAČUN DANA SA ZBIRNIM PREGLEDOM SVIH DANA NA VRHU I KOMPAKTNIM LISTAMA
     function loadWindow6(selectedDate = null, selectedGroupNum = null) {
       document.getElementById('modalBodyContent').innerHTML = `<p>Učitavanje obračuna (Optimizovano)...</p>`;
       document.getElementById('menuModal').style.display = 'flex';
@@ -1199,12 +1217,12 @@
         let groups = resGroups.success ? resGroups.groups : [];
         let pickers = resPickers.success ? resPickers.pickers : [];
         let dayPrices = JSON.parse(localStorage.getItem('savedDayPricesMap')) || {};
+        let defaultGlobalPrice = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
 
         if (selectedDate !== null && selectedGroupNum === null) {
           let dayMeasurements = measurements.filter(m => m.normalizedDate === selectedDate || m.dateStr === selectedDate);
-          let currentPricePerKg = parseFloat(dayPrices[selectedDate]) || parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
+          let currentPricePerKg = parseFloat(dayPrices[selectedDate]) || defaultGlobalPrice;
 
-          // Računanje zbirnih vrednosti za sve grupe za taj dan
           let totalDayKg = 0;
           let totalDayPay = 0;
           let totalDayCrates = dayMeasurements.length;
@@ -1277,7 +1295,7 @@
           let pickerNums = groupPickers.map(p => p.pickerNum);
           let groupMeasurements = dayMeasurements.filter(m => pickerNums.includes(String(m.pickerNum)));
           let totalGroupKg = groupMeasurements.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
-          let currentPricePerKg = parseFloat(dayPrices[selectedDate]) || parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
+          let currentPricePerKg = parseFloat(dayPrices[selectedDate]) || defaultGlobalPrice;
           let totalGroupPay = totalGroupKg * currentPricePerKg;
 
           let pickerStats = {};
@@ -1332,6 +1350,9 @@
         }
 
         let daysMap = {};
+        let totalAllDaysKg = 0;
+        let totalAllDaysPay = 0;
+
         measurements.forEach(m => {
           let d = m.normalizedDate || m.dateStr || "Nepoznat datum";
           if (!daysMap[d]) daysMap[d] = { count: 0, kg: 0 };
@@ -1349,6 +1370,13 @@
           return b.localeCompare(a);
         });
 
+        sortedDays.forEach(d => {
+          let info = daysMap[d] || { count: 0, kg: 0 };
+          let dPrice = parseFloat(dayPrices[d]) || defaultGlobalPrice;
+          totalAllDaysKg += info.kg;
+          totalAllDaysPay += info.kg * dPrice;
+        });
+
         let todayStrTag = getTodayDateFormatted();
         if (sortedDays.length === 0) {
           sortedDays = [todayStrTag];
@@ -1359,22 +1387,33 @@
           <h3 style="margin:0; font-size:18px;">💰 Obračun dana po danima berbe</h3>
           <button class="btn" style="background:#34495e; width:auto; padding:8px 12px; font-size:13px;" onclick="openMenuModal()">← Meni</button>
         </div>
-        <p style="font-size:14px; color:#666; margin:0 0 12px 0;">Izaberite dan berbe za podešavanje cene i obračun:</p>
-        <div class="date-tiles-grid">`;
 
-        let defaultGlobalPrice = parseFloat(localStorage.getItem('savedPricePerKg')) || 120.0;
-        let tilesHtml = "";
+        <div class="section-card" style="border: 2px solid #27ae60; background:#e8f8f5; margin-bottom:12px;">
+          <h4 style="color:#27ae60; margin-top:0;">🌟 Zbirni finansijski obračun za sve dane ukupno</h4>
+          <div style="font-size:15px; font-weight:bold; color:#2c3e50; display:flex; gap:20px; flex-wrap:wrap;">
+            <div>Ukupno dana: <b>${sortedDays.length}</b></div>
+            <div>Ukupno prebrano: <span style="color:#27ae60;">${totalAllDaysKg.toFixed(2)} kg</span></div>
+            <div>Ukupno isplaćeno: <span style="color:#2980b9;">${totalAllDaysPay.toFixed(2)} RSD</span></div>
+          </div>
+        </div>
+
+        <p style="font-size:14px; color:#666; margin:0 0 8px 0;">Izaberite dan berbe:</p>
+        <div class="date-compact-list">`;
+
+        let listHtml = "";
         sortedDays.forEach(d => {
           let info = daysMap[d] || { count: 0, kg: 0 };
           let dayPrice = parseFloat(dayPrices[d]) || defaultGlobalPrice;
           let dayPay = info.kg * dayPrice;
-          tilesHtml += `<div class="date-tile" onclick="loadWindow6('${d}', null)">
-            <div class="date-val">📅 ${d}</div>
-            <div class="date-stats">⚖️ ${info.kg.toFixed(1)} kg (${dayPrice} din/kg)</div>
-            <div class="date-stats" style="color:#ffeaa7; font-weight:bold;">${dayPay.toFixed(0)} RSD</div>
+          listHtml += `<div class="date-compact-row" onclick="loadWindow6('${d}', null)">
+            <div style="font-weight:bold; color:#2c3e50;">📅 ${d} <span style="font-weight:normal; font-size:13px; color:#7f8c8d;">(${dayPrice} din/kg)</span></div>
+            <div style="text-align:right;">
+              <span style="color:#27ae60; font-weight:bold; font-size:15px;">${info.kg.toFixed(2)} kg</span> 
+              <span style="color:#2980b9; font-weight:bold; font-size:15px; margin-left:8px;">[${dayPay.toFixed(0)} RSD]</span>
+            </div>
           </div>`;
         });
-        html += tilesHtml + `</div>`;
+        html += listHtml + `</div>`;
         document.getElementById('modalBodyContent').innerHTML = html;
       });
     }
